@@ -1,125 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Base Application Theme -->
-    <style name="Theme.Binti" parent="Theme.MaterialComponents.Light.NoActionBar">
-        <!-- Primary brand colors -->
+    <style name="Theme.Binti" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryDark">@color/primary_dark</item>
-        <item name="colorPrimaryVariant">@color/primary_light</item>
         <item name="colorAccent">@color/accent</item>
-        
-        <!-- Background colors -->
         <item name="android:colorBackground">@color/background</item>
-        <item name="colorSurface">@color/card_background</item>
-        
-        <!-- Text colors -->
-        <item name="android:textColorPrimary">@color/text_primary</item>
-        <item name="android:textColorSecondary">@color/text_secondary</item>
-        
-        <!-- Status bar -->
         <item name="android:statusBarColor">@color/primary_dark</item>
         <item name="android:navigationBarColor">@color/background</item>
-        
-        <!-- Window -->
-        <item name="android:windowLightStatusBar">true</item>
-        <item name="android:windowLightNavigationBar">true</item>
-        
-        <!-- Fonts -->
-        <item name="fontFamily">sans-serif</item>
-        <item name="android:fontFamily">sans-serif</item>
-        
-        <!-- Ripple -->
-        <item name="colorControlHighlight">@color/ripple</item>
     </style>
 
-    <!-- Voice Interaction Theme -->
     <style name="Theme.Binti.Voice" parent="Theme.MaterialComponents.NoActionBar">
-        <!-- Primary brand colors -->
-        <item name="colorPrimary">@color/primary</item>
-        <item name="colorPrimaryDark">@color/background_dark</item>
-        <item name="colorAccent">@color/accent</item>
-        
-        <!-- Background -->
-        <item name="android:colorBackground">@color/background_dark</item>
-        <item name="colorSurface">@color/background_dark</item>
-        
-        <!-- Text colors -->
-        <item name="android:textColorPrimary">@color/white</item>
-        <item name="android:textColorSecondary">@color/white_transparent</item>
-        
-        <!-- Full screen -->
-        <item name="android:windowFullscreen">true</item>
-        <item name="android:windowContentOverlay">@null</item>
-        
-        <!-- Status bar -->
-        <item name="android:statusBarColor">@color/transparent</item>
-        <item name="android:navigationBarColor">@color/transparent</item>
-        
-        <!-- Animation -->
-        <item name="android:windowAnimationStyle">@style/VoiceAnimation</item>
-    </style>
-
-    <!-- Voice Activity Animation -->
-    <style name="VoiceAnimation" parent="@android:style/Animation.Activity">
-        <item name="android:activityOpenEnterAnimation">@anim/slide_up</item>
-        <item name="android:activityOpenExitAnimation">@anim/fade_out</item>
-        <item name="android:activityCloseEnterAnimation">@anim/fade_in</item>
-        <item name="android:activityCloseExitAnimation">@anim/slide_down</item>
-    </style>
-
-    <!-- Card Styles -->
-    <style name="CardStyle" parent="Widget.MaterialComponents.CardView">
-        <item name="cardCornerRadius">16dp</item>
-        <item name="cardElevation">4dp</item>
-        <item name="cardBackgroundColor">@color/card_background</item>
-        <item name="contentPadding">16dp</item>
-    </style>
-
-    <!-- Button Styles -->
-    <style name="PrimaryButton" parent="Widget.MaterialComponents.Button">
-        <item name="backgroundTint">@color/primary</item>
-        <item name="android:textColor">@color/white</item>
-        <item name="cornerRadius">24dp</item>
-        <item name="android:paddingStart">24dp</item>
-        <item name="android:paddingEnd">24dp</item>
-        <item name="android:paddingTop">12dp</item>
-        <item name="android:paddingBottom">12dp</item>
-        <item name="android:textAllCaps">false</item>
-        <item name="android:textSize">16sp</item>
-    </style>
-
-    <style name="SecondaryButton" parent="Widget.MaterialComponents.Button.OutlinedButton">
-        <item name="strokeColor">@color/primary</item>
-        <item name="android:textColor">@color/primary</item>
-        <item name="cornerRadius">24dp</item>
-        <item name="android:paddingStart">24dp</item>
-        <item name="android:paddingEnd">24dp</item>
-        <item name="android:textAllCaps">false</item>
-        <item name="android:textSize">16sp</item>
-    </style>
-
-    <!-- Text Styles -->
-    <style name="TextAppearance.Binti.Title" parent="TextAppearance.MaterialComponents.Headline5">
-        <item name="android:textColor">@color/text_primary</item>
-        <item name="android:textStyle">bold</item>
-        <item name="android:textSize">24sp</item>
-    </style>
-
-    <style name="TextAppearance.Binti.Subtitle" parent="TextAppearance.MaterialComponents.Subtitle1">
-        <item name="android:textColor">@color/text_secondary</item>
-        <item name="android:textSize">16sp</item>
-    </style>
-
-    <style name="TextAppearance.Binti.Body" parent="TextAppearance.MaterialComponents.Body1">
-        <item name="android:textColor">@color/text_primary</item>
-        <item name="android:textSize">14sp</item>
-    </style>
-
-    <!-- RTL Support -->
-    <style name="TextAppearance.Binti.RTL" parent="TextAppearance.Binti.Body">
-        <item name="android:textDirection">locale</item>
-        <item name="android:textAlignment">viewStart</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:backgroundDimEnabled">true</item>
     </style>
 
 </resources>

@@ -2,28 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Voice & Audio Permissions -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
-    
-    <!-- Network Permissions for Model Downloads -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    
-    <!-- Foreground Service Permissions -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    
-    <!-- Overlay Permission -->
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-    
-    <!-- Wake Lock for Voice Detection -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    
-    <!-- Vibration for Feedback -->
     <uses-permission android:name="android.permission.VIBRATE" />
-    
-    <!-- Receive Boot Completed for Auto-Start -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <uses-feature
@@ -40,11 +24,9 @@
         android:theme="@style/Theme.Binti"
         tools:targetApi="34">
 
-        <!-- Main Activity - Setup Wizard -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:launchMode="singleTask"
             android:theme="@style/Theme.Binti">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -52,26 +34,11 @@
             </intent-filter>
         </activity>
 
-        <!-- Voice Interaction Activity -->
-        <activity
-            android:name=".voice.VoiceInteractionActivity"
-            android:exported="false"
-            android:theme="@style/Theme.Binti.Voice"
-            android:excludeFromRecents="true"
-            android:launchMode="singleInstance" />
-
-        <!-- Binti Foreground Service for Voice Listening -->
         <service
             android:name=".BintiService"
             android:enabled="true"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.binti.dilink.action.START_LISTENING" />
-                <action android:name="com.binti.dilink.action.STOP_LISTENING" />
-            </intent-filter>
-        </service>
+            android:exported="false" />
 
-        <!-- Accessibility Service for DiLink Control -->
         <service
             android:name=".dilink.DiLinkAccessibilityService"
             android:exported="false"
@@ -84,31 +51,18 @@
                 android:resource="@xml/accessibility_service_config" />
         </service>
 
-        <!-- Overlay Service -->
         <service
             android:name=".overlay.BintiOverlayService"
             android:exported="false" />
 
-        <!-- Boot Receiver for Auto-Start -->
         <receiver
             android:name=".utils.BootReceiver"
             android:enabled="true"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
             </intent-filter>
         </receiver>
-
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.fileprovider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths" />
-        </provider>
 
     </application>
 
