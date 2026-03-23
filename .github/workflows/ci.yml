@@ -26,17 +26,16 @@ jobs:
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
-          cache: gradle
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
 
       - name: Run ktlint
-        run: ./gradlew ktlintCheck
+        run: gradle ktlintCheck
         continue-on-error: true
 
       - name: Run detekt
-        run: ./gradlew detekt
+        run: gradle detekt
         continue-on-error: true
 
       - name: Egyptian Arabic Lint
@@ -59,13 +58,12 @@ jobs:
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
-          cache: gradle
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
 
       - name: Run unit tests
-        run: ./gradlew testDebugUnitTest --stacktrace
+        run: gradle testDebugUnitTest --stacktrace
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -88,13 +86,12 @@ jobs:
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
-          cache: gradle
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug
+        run: gradle assembleDebug
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
@@ -103,7 +100,7 @@ jobs:
           path: app/build/outputs/apk/debug/*.apk
 
       - name: Build Release APK
-        run: ./gradlew assembleRelease
+        run: gradle assembleRelease
         env:
           SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
@@ -172,10 +169,9 @@ jobs:
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
-          cache: gradle
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
 
       - name: Run instrumented tests
         uses: reactivecircus/android-emulator-runner@v2
@@ -183,5 +179,5 @@ jobs:
           api-level: 30
           arch: x86_64
           profile: pixel_4
-          script: ./gradlew connectedDebugAndroidTest
+          script: gradle connectedDebugAndroidTest
         continue-on-error: true
