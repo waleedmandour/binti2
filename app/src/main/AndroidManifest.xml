@@ -13,8 +13,6 @@
     
     <!-- Foreground Service Permissions -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     
     <!-- Overlay Permission -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
@@ -22,23 +20,11 @@
     <!-- Wake Lock for Voice Detection -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     
-    <!-- Storage for Model Caching -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="28" />
-    
     <!-- Vibration for Feedback -->
     <uses-permission android:name="android.permission.VIBRATE" />
     
     <!-- Receive Boot Completed for Auto-Start -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    
-    <!-- Bluetooth for Car Integration -->
-    <uses-permission android:name="android.permission.BLUETOOTH" />
-    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-    
-    <!-- ADB Wireless Debugging (optional) -->
-    <uses-permission android:name="android.permission.INTERNET" />
 
     <uses-feature
         android:name="android.hardware.microphone"
@@ -52,8 +38,6 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Binti"
-        android:usesCleartextTraffic="true"
-        android:requestLegacyExternalStorage="true"
         tools:targetApi="34">
 
         <!-- Main Activity - Setup Wizard -->
@@ -74,22 +58,16 @@
             android:exported="false"
             android:theme="@style/Theme.Binti.Voice"
             android:excludeFromRecents="true"
-            android:launchMode="singleInstance"
-            android:taskAffinity="com.binti.dilink.voice" />
+            android:launchMode="singleInstance" />
 
         <!-- Binti Foreground Service for Voice Listening -->
         <service
             android:name=".BintiService"
             android:enabled="true"
-            android:exported="false"
-            android:foregroundServiceType="microphone|specialUse">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="voice_assistant" />
+            android:exported="false">
             <intent-filter>
                 <action android:name="com.binti.dilink.action.START_LISTENING" />
                 <action android:name="com.binti.dilink.action.STOP_LISTENING" />
-                <action android:name="com.binti.dilink.action.EXECUTE_COMMAND" />
             </intent-filter>
         </service>
 
@@ -111,11 +89,6 @@
             android:name=".overlay.BintiOverlayService"
             android:exported="false" />
 
-        <!-- Model Download Service -->
-        <service
-            android:name=".utils.ModelDownloadService"
-            android:exported="false" />
-
         <!-- Boot Receiver for Auto-Start -->
         <receiver
             android:name=".utils.BootReceiver"
@@ -127,7 +100,6 @@
             </intent-filter>
         </receiver>
 
-        <!-- Notification Channel for Service -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
