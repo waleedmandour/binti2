@@ -2,7 +2,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.serialization")
-    id("kotlin-kapt")
+    id("org.jetbrains.kotlin.kapt")
 }
 
 android {
@@ -18,11 +18,6 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
-        // Enable native AI model support
-        ndk {
-            abiFilters += listOf("armeabi-v7a", "arm64-v8a")
-        }
-        
         // Build config fields
         buildConfigField("String", "GITHUB_REPO", "\"waleedmandour/binti2\"")
         buildConfigField("String", "MODEL_VERSION", "\"v1.0\"")
@@ -30,8 +25,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
+            isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -39,7 +33,6 @@ android {
         }
         debug {
             isDebuggable = true
-            enableUnitTestCoverage = true
         }
     }
 
@@ -50,16 +43,11 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
-        freeCompilerArgs += listOf(
-            "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
-            "-opt-in=kotlinx.coroutines.FlowPreview"
-        )
     }
 
     buildFeatures {
         viewBinding = true
         buildConfig = true
-        aidl = true
     }
 
     packaging {
@@ -69,14 +57,8 @@ android {
         }
     }
     
-    // Configure APK splits for smaller downloads
-    splits {
-        abi {
-            isEnable = true
-            reset()
-            include("armeabi-v7a", "arm64-v8a")
-            isUniversalApk = true
-        }
+    lint {
+        abortOnError = false
     }
 }
 
@@ -96,6 +78,9 @@ dependencies {
     // Material Design
     implementation("com.google.android.material:material:1.11.0")
     
+    // CardView
+    implementation("androidx.cardview:cardview:1.0.0")
+    
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
@@ -106,17 +91,12 @@ dependencies {
     // TensorFlow Lite for Wake Word & NLU
     implementation("org.tensorflow:tensorflow-lite:2.14.0")
     implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
-    implementation("org.tensorflow:tensorflow-lite-select-tf-ops:2.14.0")
     
     // ONNX Runtime for ASR
     implementation("com.microsoft.onnxruntime:onnxruntime-android:1.16.3")
     
     // OkHttp for model downloads
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("com.squareup.okhttp3:okhttp-coroutines:4.12.0")
-    
-    // Coil for image loading (overlay UI)
-    implementation("io.coil-kt:coil:2.5.0")
     
     // Lottie for animations
     implementation("com.airbnb.android:lottie:6.3.0")
@@ -124,35 +104,11 @@ dependencies {
     // Timber for logging
     implementation("com.jakewharton.timber:timber:5.0.1")
     
-    // Kotlin Result
-    implementation("com.michael-bull.kotlin-result:kotlin-result:1.1.18")
-    
     // DataStore for preferences
     implementation("androidx.datastore:datastore-preferences:1.0.0")
     
     // Testing
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
-    testImplementation("app.cash.turbine:turbine:1.0.0")
-    
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
-    androidTestImplementation("androidx.test:runner:1.5.2")
-    androidTestImplementation("androidx.test:rules:1.5.0")
-}
-
-// Custom task for downloading AI models
-tasks.register("downloadModels") {
-    group = "binti"
-    description = "Download required AI models from GitHub Releases"
-    
-    doLast {
-        val modelsDir = file("src/main/assets/models")
-        modelsDir.mkdirs()
-        
-        println("Downloading Binti AI models...")
-        println("Models will be stored in: ${modelsDir.absolutePath}")
-        // Model download logic executed at runtime via DownloadManager
-    }
 }
