@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Name -->
+    <string name="app_name">بنتي</string>
+    <string name="app_description">مساعد صوتي مصري لسيارات BYD DiLink</string>
+    
+    <!-- Welcome Messages -->
+    <string name="welcome_message">أهلاً وسهلاً! أنا بنتي، مساعدتك الشخصية في السيارة 🚗</string>
+    <string name="wake_word">يا بنتي</string>
+    
+    <!-- Setup Wizard -->
+    <string name="setup_title">إعداد بنتي</string>
+    <string name="setup_welcome">نورتنا! خلينا نجهز بنتي عشان تساعدك في السواقة</string>
+    <string name="btn_start_setup">ابدأ الإعداد</string>
+    <string name="btn_settings">الإعدادات</string>
+    
+    <!-- Permissions -->
+    <string name="permission_required">إذن مطلوب</string>
+    <string name="permission_microphone_title">إذن الميكروفون</string>
+    <string name="permission_microphone_desc">بنتي محتاجة الميكروفون عشان تسمعك وتنفذ أوامرك</string>
+    <string name="permission_microphone_required">بنتي محتاجة الميكروفون عشان تشتغل. ممكن تسمح بالميكروفون من الإعدادات؟</string>
+    <string name="permission_overlay_title">إذن العرض فوق التطبيقات</string>
+    <string name="permission_overlay_desc">عشان بنتي تقدر تظهرلك وهي بتسمعك وتجاوبك</string>
+    <string name="permission_overlay_required">بنتي محتاجة تظهر فوق التطبيقات. سمحلي من الإعدادات؟</string>
+    <string name="permission_accessibility_title">خدمة الوصول</string>
+    <string name="permission_accessibility_desc">عشان بنتي تقدر تتحكم في شاشة السيارة</string>
+    
+    <!-- Accessibility Setup -->
+    <string name="accessibility_setup_title">تفعيل خدمة الوصول</string>
+    <string name="accessibility_setup_message">1. افتح إعدادات الوصول\n2. دور على "بنتي"\n3. فعّل الخدمة</string>
+    <string name="open_settings">افتح الإعدادات</string>
+    <string name="skip">تخطي</string>
+    
+    <!-- Model Download -->
+    <string name="download_models_title">تحميل ملفات الصوت والذكاء</string>
+    <string name="download_models_message">بنتي محتاجة تحمل ملفات الذكاء الاصطناعي (~180MB).\nيُفضل استخدام الواي فاي.</string>
+    <string name="download">تحميل</string>
+    <string name="download_progress">جاري التحميل… %1$d%% (%2$s / %3$s)</string>
+    <string name="download_error">حدث خطأ أثناء التحميل</string>
+    <string name="later">لاحقاً</string>
+    <string name="cancel">إلغاء</string>
+    <string name="retry">إعادة المحاولة</string>
+    
+    <!-- Status Messages -->
+    <string name="status_ready">جاهزة! قولي "يا بنتي" وابدأ 😊</string>
+    <string name="status_listening">اسمعك…</string>
+    <string name="status_processing">جاري المعالجة…</string>
+    <string name="status_speaking">بتكلم…</string>
+    <string name="status_error">حصل خطأ</string>
+    
+    <!-- Setup States -->
+    <string name="setup_error">حدث خطأ في الإعداد</string>
+    <string name="exit">خروج</string>
+    
+    <!-- Notifications -->
+    <string name="notification_channel_service">خدمة بنتي</string>
+    <string name="notification_channel_service_description">إشعار خدمة المساعد الصوتي</string>
+    <string name="notification_channel_models">تحديثات الذكاء</string>
+    <string name="notification_channel_models_description">إشعارات تحديث ملفات الذكاء الاصطناعي</string>
+    <string name="notification_title">بنتي شغالة</string>
+    <string name="notification_listening">بانتظار "يا بنتي"…</string>
+    <string name="notification_idle">جاهزة للعمل</string>
+    <string name="notification_processing">جاري تنفيذ الأمر…</string>
+    <string name="notification_executing">تنفيذ…</string>
+    <string name="notification_speaking">التحدث…</string>
+    <string name="notification_error">خطأ</string>
+    
+    <!-- Overlay Messages -->
+    <string name="overlay_listening">قولي اللي في بالك… 🎧</string>
+    <string name="overlay_processing">جاري الفهم… 🤔</string>
+    <string name="overlay_speaking">بجاوبك… 💬</string>
+    <string name="overlay_success">تمام! ✅</string>
+    <string name="overlay_error">معلش، حصل خطأ 😕</string>
+    
+    <!-- Voice Interaction -->
+    <string name="voice_listening">قولي اللي عايزه…</string>
+    <string name="voice_processing">جاري الفهم…</string>
+    <string name="voice_error">معلش، معرفتش أفهم. جرب تاني؟</string>
+    
+    <!-- Commands -->
+    <string name="command_navigate">توجه إلى</string>
+    <string name="command_climate_on">شغّل التكييف</string>
+    <string name="command_climate_off">أطفئ التكييف</string>
+    <string name="command_music_play">شغّل الموسيقى</string>
+    <string name="command_music_pause">إيقاف الموسيقى</string>
+    <string name="command_volume_up">ارفع الصوت</string>
+    <string name="command_volume_down">اخفض الصوت</string>
+    
+    <!-- Settings -->
+    <string name="settings_title">الإعدادات</string>
+    <string name="settings_wake_word">تفعيل كلمة التنبيه</string>
+    <string name="settings_wake_word_desc">قولي "يا بنتي" لتفعيل المساعد</string>
+    <string name="settings_sensitivity">حساسية الاستماع</string>
+    <string name="settings_voice_speed">سرعة الصوت</string>
+    <string name="settings_voice_pitch">نبرة الصوت</string>
+    <string name="settings_formality">أسلوب الرد</string>
+    <string name="settings_formality_casual">ودي (مصري)</string>
+    <string name="settings_formality_formal">رسمي</string>
+    <string name="settings_about">عن بنتي</string>
+    <string name="settings_version">الإصدار</string>
+    
+    <!-- About -->
+    <string name="about_title">عن بنتي</string>
+    <string name="about_description">بنتي هي مساعد صوتي مصري لسيارات BYD DiLink. بتشتغل أوفلاين وبتفهم المصري!</string>
+    <string name="about_credits">طور بحب للمجتمع المصري 🇪🇬</string>
+    <string name="about_github">مفتوح المصدر على GitHub</string>
+    
+    <!-- Errors -->
+    <string name="error_generic">حصل خطأ، جرب تاني</string>
+    <string name="error_no_internet">مفيش إنترنت، حاول بعدين</string>
+    <string name="error_models_not_downloaded">الملفات مش محملة</string>
+    
+    <!-- Common -->
+    <string name="ok">تمام</string>
+    <string name="yes">أيوه</string>
+    <string name="no">لأ</string>
+    <string name="done">خلاص</string>
+    <string name="next">التالي</string>
+    <string name="previous">السابق</string>
+    <string name="close">إغلاق</string>
+</resources>

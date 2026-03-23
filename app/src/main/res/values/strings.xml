@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Name -->
+    <string name="app_name">Binti</string>
+    <string name="app_description">Egyptian Arabic Voice Assistant for BYD DiLink</string>
+    
+    <!-- Welcome Messages -->
+    <string name="welcome_message">Welcome! I\'m Binti, your personal car assistant 🚗</string>
+    <string name="wake_word">Ya Binti</string>
+    
+    <!-- Setup Wizard -->
+    <string name="setup_title">Binti Setup</string>
+    <string name="setup_welcome">Welcome! Let\'s set up Binti to help you while driving</string>
+    <string name="btn_start_setup">Start Setup</string>
+    <string name="btn_settings">Settings</string>
+    
+    <!-- Permissions -->
+    <string name="permission_required">Permission Required</string>
+    <string name="permission_microphone_title">Microphone Permission</string>
+    <string name="permission_microphone_desc">Binti needs microphone access to hear your commands</string>
+    <string name="permission_microphone_required">Binti needs microphone permission to work. Please grant it in settings.</string>
+    <string name="permission_overlay_title">Overlay Permission</string>
+    <string name="permission_overlay_desc">Binti needs to display over other apps to show voice feedback</string>
+    <string name="permission_overlay_required">Binti needs overlay permission to show voice UI. Please grant it.</string>
+    <string name="permission_accessibility_title">Accessibility Service</string>
+    <string name="permission_accessibility_desc">Binti needs accessibility to control DiLink screen</string>
+    
+    <!-- Accessibility Setup -->
+    <string name="accessibility_setup_title">Enable Accessibility Service</string>
+    <string name="accessibility_setup_message">1. Open Accessibility Settings\n2. Find "Binti"\n3. Enable the service</string>
+    <string name="open_settings">Open Settings</string>
+    <string name="skip">Skip</string>
+    
+    <!-- Model Download -->
+    <string name="download_models_title">Download AI Models</string>
+    <string name="download_models_message">Binti needs to download AI model files (~180MB).\nWiFi connection recommended.</string>
+    <string name="download">Download</string>
+    <string name="download_progress">Downloading… %1$d%% (%2$s / %3$s)</string>
+    <string name="download_error">Download failed</string>
+    <string name="later">Later</string>
+    <string name="cancel">Cancel</string>
+    <string name="retry">Retry</string>
+    
+    <!-- Status Messages -->
+    <string name="status_ready">Ready! Say "Ya Binti" to start 😊</string>
+    <string name="status_listening">Listening…</string>
+    <string name="status_processing">Processing…</string>
+    <string name="status_speaking">Speaking…</string>
+    <string name="status_error">Error occurred</string>
+    
+    <!-- Setup States -->
+    <string name="setup_error">Setup error occurred</string>
+    <string name="exit">Exit</string>
+    
+    <!-- Notifications -->
+    <string name="notification_channel_service">Binti Service</string>
+    <string name="notification_channel_service_description">Voice assistant service notification</string>
+    <string name="notification_channel_models">AI Model Updates</string>
+    <string name="notification_channel_models_description">AI model update notifications</string>
+    <string name="notification_title">Binti is running</string>
+    <string name="notification_listening">Waiting for "Ya Binti"…</string>
+    <string name="notification_idle">Ready to help</string>
+    <string name="notification_processing">Processing command…</string>
+    <string name="notification_executing">Executing…</string>
+    <string name="notification_speaking">Speaking…</string>
+    <string name="notification_error">Error</string>
+    
+    <!-- Overlay Messages -->
+    <string name="overlay_listening">Tell me what you need… 🎧</string>
+    <string name="overlay_processing">Understanding… 🤔</string>
+    <string name="overlay_speaking">Responding… 💬</string>
+    <string name="overlay_success">Done! ✅</string>
+    <string name="overlay_error">Sorry, an error occurred 😕</string>
+    
+    <!-- Voice Interaction -->
+    <string name="voice_listening">Tell me what you want…</string>
+    <string name="voice_processing">Understanding…</string>
+    <string name="voice_error">Sorry, I couldn\'t understand. Please try again.</string>
+    
+    <!-- Commands -->
+    <string name="command_navigate">Navigate to</string>
+    <string name="command_climate_on">Turn on AC</string>
+    <string name="command_climate_off">Turn off AC</string>
+    <string name="command_music_play">Play music</string>
+    <string name="command_music_pause">Pause music</string>
+    <string name="command_volume_up">Volume up</string>
+    <string name="command_volume_down">Volume down</string>
+    
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_wake_word">Wake Word Enabled</string>
+    <string name="settings_wake_word_desc">Say "Ya Binti" to activate</string>
+    <string name="settings_sensitivity">Listening Sensitivity</string>
+    <string name="settings_voice_speed">Voice Speed</string>
+    <string name="settings_voice_pitch">Voice Pitch</string>
+    <string name="settings_formality">Response Style</string>
+    <string name="settings_formality_casual">Casual (Egyptian)</string>
+    <string name="settings_formality_formal">Formal</string>
+    <string name="settings_about">About Binti</string>
+    <string name="settings_version">Version</string>
+    
+    <!-- About -->
+    <string name="about_title">About Binti</string>
+    <string name="about_description">Binti is an Egyptian Arabic voice assistant for BYD DiLink. It works offline and understands Egyptian Arabic!</string>
+    <string name="about_credits">Made with love for the Egyptian community 🇪🇬</string>
+    <string name="about_github">Open source on GitHub</string>
+    
+    <!-- Errors -->
+    <string name="error_generic">An error occurred, please try again</string>
+    <string name="error_no_internet">No internet connection, please try again later</string>
+    <string name="error_models_not_downloaded">AI models not downloaded</string>
+    
+    <!-- Common -->
+    <string name="ok">OK</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="done">Done</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+    <string name="close">Close</string>
+</resources>
