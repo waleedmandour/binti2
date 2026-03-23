@@ -1,74 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background_dark"
-    tools:context=".voice.VoiceInteractionActivity">
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="24dp"
+    android:background="#CC000000">
 
-    <!-- Voice Animation -->
-    <com.airbnb.lottie.LottieAnimationView
+    <ImageView
         android:id="@+id/voice_animation"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
-        app:lottie_rawRes="@raw/voice_listening"
-        app:lottie_loop="true"
-        app:lottie_autoPlay="true"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/status_text"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintVerticalChainStyle="packed" />
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:src="@drawable/ic_mic"
+        android:contentDescription="Voice" />
 
-    <!-- Status Text -->
     <TextView
         android:id="@+id/status_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="@string/voice_listening"
-        android:textColor="@color/white"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:textAlignment="center"
-        app:layout_constraintTop_toBottomOf="@id/voice_animation"
-        app:layout_constraintBottom_toTopOf="@id/transcription_text"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <!-- Transcription Text -->
-    <TextView
-        android:id="@+id/transcription_text"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:layout_marginStart="32dp"
-        android:layout_marginEnd="32dp"
-        android:text=""
-        android:textColor="@color/white_transparent"
-        android:textSize="18sp"
-        android:textAlignment="center"
-        android:maxLines="3"
-        android:ellipsize="end"
-        app:layout_constraintTop_toBottomOf="@id/status_text"
-        app:layout_constraintBottom_toTopOf="@id/cancel_button"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        android:text="@string/overlay_listening"
+        android:textColor="@android:color/white"
+        android:textSize="18sp" />
 
-    <!-- Cancel Button -->
-    <Button
-        android:id="@+id/cancel_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="48dp"
-        android:text="@string/cancel"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-        android:textColor="@color/white"
-        app:strokeColor="@color/white_transparent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>

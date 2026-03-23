@@ -13,16 +13,11 @@ import androidx.core.content.ContextCompat
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var welcomeText: TextView
-    private lateinit var startButton: Button
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        welcomeText = findViewById(R.id.welcome_text)
-        startButton = findViewById(R.id.btn_start_setup)
-
+        
+        val startButton = findViewById<Button>(R.id.btn_start_setup)
         startButton.setOnClickListener {
             checkPermissionsAndStart()
         }
@@ -32,27 +27,17 @@ class MainActivity : AppCompatActivity() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) 
             != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.RECORD_AUDIO),
-                REQUEST_MICROPHONE
+                this, arrayOf(Manifest.permission.RECORD_AUDIO), 100
             )
         } else {
             startBintiService()
         }
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == REQUEST_MICROPHONE) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                startBintiService()
-            } else {
-                Toast.makeText(this, R.string.permission_microphone_required, Toast.LENGTH_LONG).show()
-            }
+        if (requestCode == 100 && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            startBintiService()
         }
     }
 
@@ -62,9 +47,5 @@ class MainActivity : AppCompatActivity() {
         }
         startService(intent)
         Toast.makeText(this, R.string.status_ready, Toast.LENGTH_SHORT).show()
-    }
-
-    companion object {
-        private const val REQUEST_MICROPHONE = 100
     }
 }
