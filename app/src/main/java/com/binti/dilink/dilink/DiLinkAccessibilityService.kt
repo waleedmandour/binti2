@@ -6,16 +6,32 @@ import timber.log.Timber
 
 class DiLinkAccessibilityService : AccessibilityService() {
     
+    companion object {
+        @Volatile
+        private var instance: DiLinkAccessibilityService? = null
+        
+        fun getInstance(): DiLinkAccessibilityService? = instance
+        fun isServiceEnabled(): Boolean = instance != null
+    }
+    
     override fun onServiceConnected() {
         super.onServiceConnected()
+        instance = this
         Timber.i("DiLink Accessibility Service connected")
     }
     
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        // Placeholder - would handle accessibility events
+        event ?: return
+        // Handle DiLink screen events
     }
     
     override fun onInterrupt() {
         Timber.w("Accessibility service interrupted")
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        instance = null
+        Timber.i("DiLink Accessibility Service destroyed")
     }
 }

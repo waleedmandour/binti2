@@ -16,14 +16,11 @@ class BintiApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         
-        // Initialize logging
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
         }
         
-        // Create notification channels
         createNotificationChannels()
-        
         Timber.i("Binti Application initialized")
     }
 
