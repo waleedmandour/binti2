@@ -3,7 +3,9 @@ plugins {
     id("com.android.application") version "8.2.1" apply false
     id("org.jetbrains.kotlin.android") version "1.9.22" apply false
     id("org.jetbrains.kotlin.plugin.serialization") version "1.9.22" apply false
-    id("com.huawei.agconnect") version "1.9.1.301" apply false // Huawei AGConnect plugin
+    // Huawei AGConnect plugin - commented out for local debug builds
+    // Requires agconnect-services.json and Huawei developer account
+    // id("com.huawei.agconnect") version "1.9.1.301" apply false
 }
 
 tasks.register("clean", Delete::class) {

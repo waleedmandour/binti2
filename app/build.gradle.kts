@@ -2,7 +2,9 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.serialization")
-    id("com.huawei.agconnect") version "1.9.1.301" // Huawei AGConnect for AppGallery
+    // Huawei AGConnect plugin - commented out for local debug builds
+    // Requires agconnect-services.json and Huawei developer account
+    // id("com.huawei.agconnect") version "1.9.1.301"
 }
 
 android {

@@ -3,9 +3,9 @@ name: Binti2 CI/CD Pipeline
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, master, develop]
   pull_request:
-    branches: [main]
+    branches: [main, master]
   release:
     types: [created]
 
