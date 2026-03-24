@@ -12,12 +12,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import org.tensorflow.lite.Interpreter
-import org.tensorflow.lite.gpu.CompatibilityList
-import org.tensorflow.lite.gpu.GpuDelegate
 import java.io.FileInputStream
 import java.io.IOException
 import java.nio.MappedByteBuffer
 import java.nio.channels.FileChannel
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sqrt
 
 /**
  * Wake Word Detector - "يا بنتي" (Ya Binti)
@@ -51,6 +52,7 @@ class WakeWordDetector(private val context: Context) {
         private const val MODEL_PATH = "ya_binti_detector.tflite"
         private const val CONFIDENCE_THRESHOLD = 0.85f
         private const val COOLDOWN_MS = 3000L
+        private const val REQUIRED_CONSECUTIVE = 2
         
         // Feature extraction parameters (matching training)
         private const val NUM_MFCC = 40
@@ -59,7 +61,6 @@ class WakeWordDetector(private val context: Context) {
 
     // TFLite interpreter
     private var interpreter: Interpreter? = null
-    private var gpuDelegate: GpuDelegate? = null
     
     // Audio recording
     private var audioRecord: AudioRecord? = null
@@ -71,7 +72,6 @@ class WakeWordDetector(private val context: Context) {
     
     private var lastDetectionTime = 0L
     private var consecutiveDetections = 0
-    private const val REQUIRED_CONSECUTIVE = 2
 
     /**
      * Initialize the wake word detector
@@ -83,19 +83,10 @@ class WakeWordDetector(private val context: Context) {
             // Load TFLite model
             val modelBuffer = loadModelFile()
             
-            // Configure interpreter options
+            // Configure interpreter options - use CPU only for compatibility
             val options = Interpreter.Options().apply {
-                // Try to use GPU delegate for better performance
-                val compatList = CompatibilityList()
-                if (compatList.isDelegateSupportedOnThisDevice) {
-                    gpuDelegate = GpuDelegate(compatList.bestOptionsForThisDevice)
-                    addDelegate(gpuDelegate!!)
-                    Log.d(TAG, "Using GPU delegate for wake word detection")
-                } else {
-                    // Fallback to CPU with multiple threads
-                    setNumThreads(4)
-                    Log.d(TAG, "Using CPU with 4 threads for wake word detection")
-                }
+                setNumThreads(4)
+                Log.d(TAG, "Using CPU with 4 threads for wake word detection")
             }
             
             interpreter = Interpreter(modelBuffer, options)
@@ -222,8 +213,8 @@ class WakeWordDetector(private val context: Context) {
         }
         
         // Frame the signal (25ms frames with 10ms hop)
-        val frameLength = (0.025 * SAMPLE_RATE).toInt()
-        val hopLength = (0.010 * SAMPLE_RATE).toInt()
+        val frameLength = (0.025f * SAMPLE_RATE).toInt()
+        val hopLength = (0.010f * SAMPLE_RATE).toInt()
         val numFrames = (floatAudio.size - frameLength) / hopLength + 1
         
         // Apply Hamming window and compute FFT-based MFCC
@@ -234,9 +225,7 @@ class WakeWordDetector(private val context: Context) {
             val start = i * hopLength
             val frame = FloatArray(frameLength) { j ->
                 if (start + j < preEmphasis.size) {
-                    val hamming = 0.54f - 0.46f * kotlin.math.cos(
-                        2 * kotlin.math.PI * j / (frameLength - 1)
-                    )
+                    val hamming = 0.54f - 0.46f * cos(2 * PI * j / (frameLength - 1)).toFloat()
                     preEmphasis[start + j] * hamming
                 } else 0f
             }
@@ -267,7 +256,7 @@ class WakeWordDetector(private val context: Context) {
             for (j in binStart until minOf(binEnd, fftSize / 2)) {
                 val real = frame.getOrElse(j) { 0f }
                 val imag = frame.getOrElse(j + fftSize / 2) { 0f }
-                sum += kotlin.math.sqrt(real * real + imag * imag)
+                sum += sqrt(real * real + imag * imag)
             }
             
             // Apply mel filter bank weights (simplified)
@@ -278,9 +267,7 @@ class WakeWordDetector(private val context: Context) {
         return mfcc.mapIndexed { i, v ->
             var dctSum = 0f
             mfcc.forEachIndexed { j, mj ->
-                dctSum += mj * kotlin.math.cos(
-                    kotlin.math.PI * i * (j + 0.5f) / NUM_MFCC
-                ).toFloat()
+                dctSum += mj * cos(PI * i * (j + 0.5f) / NUM_MFCC).toFloat()
             }
             dctSum
         }.toFloatArray()
@@ -330,8 +317,6 @@ class WakeWordDetector(private val context: Context) {
         stopListening()
         interpreter?.close()
         interpreter = null
-        gpuDelegate?.close()
-        gpuDelegate = null
         
         Log.d(TAG, "Wake word detector released")
     }

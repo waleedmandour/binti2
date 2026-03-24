@@ -264,6 +264,8 @@ class ModelManager(private val context: Context) {
         Log.d(TAG, "   URL: ${model.downloadUrl}")
         Log.d(TAG, "   Size: ~${model.sizeMB}MB")
         
+        var totalRead = 0L
+        
         val request = Request.Builder()
             .url(model.downloadUrl)
             .header("User-Agent", "Binti/1.0 Android")
@@ -289,7 +291,6 @@ class ModelManager(private val context: Context) {
                 )
             }
             
-            var totalRead = 0L
             val buffer = ByteArray(8192)
             
             FileOutputStream(targetFile).use { output ->

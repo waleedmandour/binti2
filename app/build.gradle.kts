@@ -94,7 +94,7 @@ dependencies {
     // TensorFlow Lite for Wake Word & NLU
     implementation("org.tensorflow:tensorflow-lite:2.14.0")
     implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
-    implementation("org.tensorflow:tensorflow-lite-gpu:2.14.0") // GPU delegate
+    // GPU delegate removed for compatibility - use CPU inference
     
     // ONNX Runtime for ASR
     implementation("com.microsoft.onnxruntime:onnxruntime-android:1.16.3")

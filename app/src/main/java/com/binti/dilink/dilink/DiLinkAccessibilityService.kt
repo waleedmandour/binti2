@@ -79,9 +79,8 @@ class DiLinkAccessibilityService : AccessibilityService() {
             // Feedback type
             feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
             
-            // Flags
-            flags = AccessibilityServiceInfo.FLAG_DEFAULT or
-                    AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS or
+            // Flags - use appropriate flags for accessibility service
+            flags = AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS or
                     AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or
                     AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
             
