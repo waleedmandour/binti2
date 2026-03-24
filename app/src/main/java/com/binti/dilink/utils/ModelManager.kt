@@ -50,13 +50,13 @@ class ModelManager(private val context: Context) {
                 relativePath = "models/wake",
                 sizeMB = 5,
                 sha256 = "",
-                required = true,
+                required = false,  // Optional - manual activation available
                 description = "Detects 'يا بنتي' wake word"
             ),
             ModelDefinition(
                 name = "Arabic ASR (Vosk MGB2)",
-                fileName = "vosk-model-ar-mgb2.zip",
-                downloadUrl = "$B2_BASE_URL/asr/vosk-model-ar-mgb2.zip",
+                fileName = "vosk-model-ar-mgb2-0.4.zip",
+                downloadUrl = "$B2_BASE_URL/asr/vosk-model-ar-mgb2-0.4.zip",
                 relativePath = "models",
                 sizeMB = 1247,
                 sha256 = "",
@@ -71,7 +71,7 @@ class ModelManager(private val context: Context) {
                 relativePath = "models/nlu",
                 sizeMB = 25,
                 sha256 = "",
-                required = true,
+                required = false,  // Optional - rule-based NLU available
                 description = "Egyptian Arabic intent classification"
             ),
             ModelDefinition(
