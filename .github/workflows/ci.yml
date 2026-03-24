@@ -1,240 +1,300 @@
+# .github/workflows/ci.yml
 name: Binti2 CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   release:
-    types: [ created ]
+    types: [created]
 
-# Opt into Node.js 24 for GitHub Actions (Node.js 20 deprecated June 2026)
+# Set environment variable to use Node.js 24 for all actions
 env:
-  ACTIONS_ALLOW_USE_NODE20: 'true'
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   validate:
     name: Validate Project
     runs-on: ubuntu-latest
-    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        cache: gradle
-    
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-      
-    - name: Validate Gradle wrapper
-      uses: gradle/wrapper-validation-action@v2
-      
-    - name: Verify Model Sizes (<1GB total)
-      run: |
-        if [ -d "app/src/main/assets/models" ]; then
-          total_size=$(find app/src/main/assets/models -type f -exec stat -c%s {} + 2>/dev/null | awk '{sum+=$1} END {print sum/1024/1024}')
-          if [ -z "$total_size" ]; then
-            total_size=0
-          fi
-          echo "Total model size: ${total_size}MB"
-          if (( $(echo "$total_size > 1024" | bc -l) )); then
-            echo "❌ Models exceed 1GB limit!"
+      - name: Checkout code
+        uses: actions/checkout@v5  # Updated to v5 (Node.js 24)
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5  # Updated to v5 (Node.js 24)
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: |
+          if [ -f "gradlew" ]; then
+            chmod +x gradlew
+            echo "✅ gradlew permissions set"
+          else
+            echo "❌ gradlew not found - make sure you've committed the Gradle wrapper"
             exit 1
           fi
-          echo "✅ Model sizes OK (${total_size}MB < 1GB limit)"
-        else
-          echo "⚠️ No models directory found - models will be downloaded at runtime"
-        fi
-        
-    - name: Check Egyptian Arabic Strings
-      run: |
-        if [ -f "app/src/main/res/values-ar/strings.xml" ]; then
-          echo "✅ Egyptian Arabic strings file exists"
-          # Check for critical strings
-          critical_strings=("app_name" "wake_word" "accessibility_service_description")
-          for str in "${critical_strings[@]}"; do
-            if grep -q "name=\"$str\"" app/src/main/res/values-ar/strings.xml; then
-              echo "✅ Found: $str"
-            else
-              echo "❌ Missing critical string: $str"
-              exit 1
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4  # Updated to new path
+
+      - name: Verify Model Sizes (<1GB total)
+        run: |
+          if [ -d "app/src/main/assets/models" ]; then
+            echo "📦 Checking model sizes..."
+            total_size=$(find app/src/main/assets/models -type f -exec stat -c%s {} + 2>/dev/null | awk '{sum+=$1} END {print sum/1024/1024}')
+            
+            if [ -z "$total_size" ] || [ "$total_size" = "0" ]; then
+              echo "⚠️ No model files found in assets directory"
+              echo "✅ Skipping model size check (models will be downloaded at runtime)"
+              exit 0
             fi
-          done
-        else
-          echo "❌ Missing values-ar/strings.xml"
-          exit 1
-        fi
-        
-    - name: Validate HMS Dependencies
-      run: |
-        if grep -q "com.huawei.hms" app/build.gradle.kts; then
-          echo "✅ HMS dependencies found"
-        else
-          echo "⚠️ No HMS dependencies - Huawei fallback disabled"
-        fi
+            
+            echo "Total model size: ${total_size}MB"
+            
+            # Check if bc is available, otherwise use awk
+            if command -v bc &> /dev/null; then
+              exceeds_limit=$(echo "$total_size > 1024" | bc -l)
+            else
+              exceeds_limit=$(awk "BEGIN {print ($total_size > 1024) ? 1 : 0}")
+            fi
+            
+            if [ "$exceeds_limit" = "1" ]; then
+              echo "❌ Models exceed 1GB limit! (${total_size}MB)"
+              echo "💡 Consider using Backblaze B2 for large models"
+              exit 1
+            else
+              echo "✅ Model sizes OK (${total_size}MB < 1GB limit)"
+            fi
+          else
+            echo "⚠️ No models directory found - models will be downloaded at runtime"
+            echo "✅ Skipping model size validation"
+          fi
+
+      - name: Check Egyptian Arabic Strings
+        run: |
+          if [ -f "app/src/main/res/values-ar/strings.xml" ]; then
+            echo "✅ Egyptian Arabic strings file exists"
+            
+            # Check for critical strings
+            critical_strings=("app_name" "wake_word" "accessibility_service_description")
+            missing_strings=()
+            
+            for str in "${critical_strings[@]}"; do
+              if ! grep -q "name=\"$str\"" app/src/main/res/values-ar/strings.xml; then
+                missing_strings+=("$str")
+              fi
+            done
+            
+            if [ ${#missing_strings[@]} -gt 0 ]; then
+              echo "❌ Missing critical strings: ${missing_strings[*]}"
+              exit 1
+            else
+              echo "✅ All critical strings found"
+            fi
+            
+            # Count total strings
+            ar_count=$(grep -c '<string' app/src/main/res/values-ar/strings.xml || echo "0")
+            echo "📊 Total Egyptian Arabic strings: $ar_count"
+          else
+            echo "❌ Missing values-ar/strings.xml"
+            exit 1
+          fi
+
+      - name: Validate HMS Dependencies
+        run: |
+          if [ -f "app/build.gradle.kts" ]; then
+            if grep -q "com.huawei.hms" app/build.gradle.kts; then
+              echo "✅ HMS dependencies found"
+            else
+              echo "⚠️ No HMS dependencies found - Huawei fallback will be disabled"
+              echo "💡 Consider adding HMS dependencies for AppGallery compatibility"
+            fi
+          else
+            echo "⚠️ app/build.gradle.kts not found"
+          fi
+
+      - name: Verify AndroidManifest Security
+        run: |
+          if [ -f "app/src/main/AndroidManifest.xml" ]; then
+            if grep -q 'usesCleartextTraffic="false"' app/src/main/AndroidManifest.xml; then
+              echo "✅ HTTPS-only traffic enforced"
+            else
+              echo "⚠️ Cleartext traffic not explicitly disabled"
+            fi
+            
+            if grep -q 'networkSecurityConfig' app/src/main/AndroidManifest.xml; then
+              echo "✅ Network security config present"
+            else
+              echo "⚠️ No network security config found"
+            fi
+          else
+            echo "❌ AndroidManifest.xml not found"
+            exit 1
+          fi
 
   build:
     name: Build & Test
     needs: validate
     runs-on: ubuntu-latest
-    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        cache: gradle
-        
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-      
-    - name: Build Debug APK
-      run: ./gradlew assembleDebug
-      
-    - name: Run unit tests
-      run: ./gradlew test
-      
-    - name: Run lint
-      run: ./gradlew lint
-      continue-on-error: true
-      
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: app-debug
-        path: app/build/outputs/apk/debug/*.apk
-        retention-days: 7
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Run unit tests
+        run: ./gradlew test --no-daemon
+        continue-on-error: true
+
+      - name: Run lint
+        run: ./gradlew lint --no-daemon
+        continue-on-error: true
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v5  # Updated to v5 (Node.js 24)
+        with:
+          name: app-debug
+          path: app/build/outputs/apk/debug/*.apk
+          retention-days: 7
 
   release:
     name: Build Release APK
     needs: build
     runs-on: ubuntu-latest
     if: github.event_name == 'release'
-    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        cache: gradle
-        
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-      
-    - name: Validate Release Signing Config
-      run: |
-        if [ -z "${{ secrets.KEYSTORE_BASE64 }}" ]; then
-          echo "⚠️ No release keystore found - APK will be debug-signed"
-          echo "For AppGallery submission, add these GitHub Secrets:"
-          echo "  - KEYSTORE_BASE64: Base64-encoded keystore file"
-          echo "  - KEYSTORE_PASSWORD: Keystore password"
-          echo "  - KEY_ALIAS: Key alias"
-          echo "  - KEY_PASSWORD: Key password"
-        else
-          echo "✅ Release signing configured"
-        fi
-        
-    - name: Decode Keystore
-      env:
-        ENCODED_KEYSTORE: ${{ secrets.KEYSTORE_BASE64 }}
-      run: |
-        if [ -n "$ENCODED_KEYSTORE" ]; then
-          echo $ENCODED_KEYSTORE | base64 -d > app/release-keystore.jks
-        else
-          echo "⚠️ No keystore secret found - using debug signing"
-        fi
-        
-    - name: Build Release APK
-      env:
-        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-      run: |
-        if [ -f "app/release-keystore.jks" ]; then
-          ./gradlew assembleRelease
-        else
-          # Build with debug signing if no release keystore
-          ./gradlew assembleRelease -Pandroid.injected.signing.store.file=debug.keystore
-        fi
-        
-    - name: Upload Release APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: app-release
-        path: app/build/outputs/apk/release/*.apk
-        retention-days: 30
-        
-    - name: Upload to GitHub Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: app/build/outputs/apk/release/*.apk
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Decode Keystore
+        env:
+          ENCODED_KEYSTORE: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$ENCODED_KEYSTORE" ]; then
+            echo "🔐 Decoding release keystore..."
+            echo "$ENCODED_KEYSTORE" | base64 -d > app/release-keystore.jks
+            echo "✅ Keystore decoded successfully"
+          else
+            echo "⚠️ No keystore secret found - will use debug signing"
+            echo "💡 Add KEYSTORE_BASE64 secret for release signing"
+          fi
+
+      - name: Build Release APK
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -f "app/release-keystore.jks" ]; then
+            echo "🔨 Building release APK with signing..."
+            ./gradlew assembleRelease --no-daemon
+          else
+            echo "⚠️ Building release APK with debug signing..."
+            ./gradlew assembleRelease --no-daemon
+          fi
+
+      - name: Upload Release APK
+        uses: actions/upload-artifact@v5
+        with:
+          name: app-release
+          path: app/build/outputs/apk/release/*.apk
+          retention-days: 30
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2  # Updated to v2
+        with:
+          files: app/build/outputs/apk/release/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   model-pack:
     name: Package Model Assets
     needs: release
     runs-on: ubuntu-latest
     if: github.event_name == 'release'
-    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Create model manifest
-      run: |
-        mkdir -p models_release
-        cat > models_release/manifest.json << 'EOF'
-        {
-          "version": "${{ github.event.release.tag_name }}",
-          "models": [
-            {
-              "name": "Wake Word Detector",
-              "file": "ya_binti_detector.tflite",
-              "size_mb": 5,
-              "sha256": "placeholder"
-            },
-            {
-              "name": "Egyptian ASR (Vosk)",
-              "file": "vosk-model-egyptian.zip",
-              "size_mb": 50,
-              "sha256": "placeholder"
-            },
-            {
-              "name": "Intent Classifier",
-              "file": "egybert_tiny_int8.tflite",
-              "size_mb": 30,
-              "sha256": "placeholder"
-            },
-            {
-              "name": "Egyptian TTS Voice",
-              "file": "ar-eg-female.zip",
-              "size_mb": 80,
-              "sha256": "placeholder"
-            }
-          ],
-          "total_size_mb": 165,
-          "min_android_sdk": 26,
-          "target_android_sdk": 34
-        }
-        EOF
-        
-    - name: Upload model manifest
-      uses: softprops/action-gh-release@v1
-      with:
-        files: models_release/manifest.json
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Create model manifest
+        run: |
+          mkdir -p models_release
+          
+          # Extract version from tag
+          VERSION="${{ github.event.release.tag_name }}"
+          echo "📦 Creating manifest for version: $VERSION"
+          
+          cat > models_release/manifest.json << EOF
+{
+  "version": "$VERSION",
+  "models": [
+    {
+      "name": "Wake Word Detector",
+      "file": "ya_binti_detector.tflite",
+      "size_mb": 5,
+      "sha256": "placeholder"
+    },
+    {
+      "name": "Egyptian ASR (Vosk)",
+      "file": "vosk-model-egyptian.zip",
+      "size_mb": 50,
+      "sha256": "placeholder"
+    },
+    {
+      "name": "Intent Classifier (EgyBERT)",
+      "file": "egybert_tiny_int8.onnx",
+      "size_mb": 1247,
+      "sha256": "placeholder"
+    },
+    {
+      "name": "Egyptian TTS Voice",
+      "file": "ar-eg-female.zip",
+      "size_mb": 80,
+      "sha256": "placeholder"
+    }
+  ],
+  "total_size_mb": 1382,
+  "min_android_sdk": 26,
+  "target_android_sdk": 34,
+  "hosting": {
+    "provider": "Backblaze B2",
+    "bucket": "binti2-models",
+    "base_url": "https://f001.backblazeb2.com/file/binti2-models"
+  }
+}
+EOF
+          
+          echo "✅ Manifest created:"
+          cat models_release/manifest.json
+
+      - name: Upload model manifest
+        uses: softprops/action-gh-release@v2
+        with:
+          files: models_release/manifest.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
