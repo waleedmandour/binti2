@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.Credentials
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
@@ -16,6 +17,7 @@ import java.util.concurrent.TimeUnit
  * Model Download Manager
  * 
  * Manages downloading and verification of AI models from Backblaze B2.
+ * Uses B2 API authentication for private bucket access.
  * 
  * Models (Total: ~1.4GB):
  * - Wake Word: ya_binti_detector.tflite (~5MB)
@@ -31,14 +33,15 @@ class ModelManager(private val context: Context) {
         private const val TAG = "ModelManager"
         
         // Backblaze B2 Configuration
-        // Replace with your actual B2 bucket URL
-        private const val B2_BASE_URL = 
-            "https://f001.backblazeb2.com/file/binti2-models"
+        private const val B2_API_URL = "https://api006.backblazeb2.com/b2api/v4"
+        private const val B2_BASE_URL = "https://f006.backblazeb2.com/file/Binti2"
         
-        // Manifest URL
-        private const val MANIFEST_URL = "$B2_BASE_URL/manifest.json"
+        // Read-only application key for model downloads
+        // This key has only readFiles permission on Binti2 bucket
+        private const val B2_KEY_ID = "006e28ae305b3fc0000000001"
+        private const val B2_APP_KEY = "K006z8K/0eO08E9xxwRRcj+c8bEt+60"
         
-        // Model definitions with actual B2 URLs
+        // Model definitions
         val MODELS = listOf(
             ModelDefinition(
                 name = "Wake Word Detector",
@@ -46,7 +49,7 @@ class ModelManager(private val context: Context) {
                 downloadUrl = "$B2_BASE_URL/wake/ya_binti_detector.tflite",
                 relativePath = "models/wake",
                 sizeMB = 5,
-                sha256 = "compute_after_upload",
+                sha256 = "",
                 required = true,
                 description = "Detects 'يا بنتي' wake word"
             ),
@@ -56,7 +59,7 @@ class ModelManager(private val context: Context) {
                 downloadUrl = "$B2_BASE_URL/asr/vosk-model-ar-mgb2.zip",
                 relativePath = "models",
                 sizeMB = 1247,
-                sha256 = "compute_after_upload",
+                sha256 = "",
                 required = true,
                 extract = true,
                 description = "Arabic speech recognition model"
@@ -67,7 +70,7 @@ class ModelManager(private val context: Context) {
                 downloadUrl = "$B2_BASE_URL/nlu/egybert_tiny_int8.onnx",
                 relativePath = "models/nlu",
                 sizeMB = 25,
-                sha256 = "compute_after_upload",
+                sha256 = "",
                 required = true,
                 description = "Egyptian Arabic intent classification"
             ),
@@ -77,7 +80,7 @@ class ModelManager(private val context: Context) {
                 downloadUrl = "$B2_BASE_URL/tts/ar-eg-female.zip",
                 relativePath = "voices",
                 sizeMB = 80,
-                sha256 = "compute_after_upload",
+                sha256 = "",
                 required = false,
                 extract = true,
                 description = "Egyptian female voice for TTS"
@@ -88,7 +91,7 @@ class ModelManager(private val context: Context) {
                 downloadUrl = "$B2_BASE_URL/nlp/dilink_intent_map.json",
                 relativePath = "assets/commands",
                 sizeMB = 0,
-                sha256 = "compute_after_upload",
+                sha256 = "bd0ecfa91e878fe736b6e0dba283fb55",
                 required = true,
                 description = "Intent patterns for command matching"
             )
@@ -104,6 +107,47 @@ class ModelManager(private val context: Context) {
     
     // Model directory in app's files directory
     private val modelsDir = File(context.filesDir, "models")
+    
+    // Cached authorization token
+    private var authToken: String? = null
+    private var tokenExpiry: Long = 0
+
+    /**
+     * Get B2 authorization token
+     * Tokens are valid for 24 hours, we refresh after 23 hours to be safe
+     */
+    private suspend fun getAuthToken(): String = withContext(Dispatchers.IO) {
+        // Check if we have a valid cached token
+        if (authToken != null && System.currentTimeMillis() < tokenExpiry) {
+            return@withContext authToken!!
+        }
+        
+        Log.d(TAG, "🔐 Getting new B2 authorization token...")
+        
+        val request = Request.Builder()
+            .url("$B2_API_URL/b2_authorize_account")
+            .header("Authorization", Credentials.basic(B2_KEY_ID, B2_APP_KEY))
+            .get()
+            .build()
+        
+        httpClient.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) {
+                throw ModelDownloadException("B2 authorization failed: HTTP ${response.code}")
+            }
+            
+            val body = response.body?.string() 
+                ?: throw ModelDownloadException("Empty authorization response")
+            
+            val json = JSONObject(body)
+            authToken = json.getString("authorizationToken")
+            
+            // Token valid for 23 hours (B2 tokens last 24 hours)
+            tokenExpiry = System.currentTimeMillis() + (23 * 60 * 60 * 1000)
+            
+            Log.i(TAG, "✅ B2 authorization successful")
+            return@withContext authToken!!
+        }
+    }
 
     /**
      * Check the status of all models
@@ -151,6 +195,10 @@ class ModelManager(private val context: Context) {
     ) = withContext(Dispatchers.IO) {
         try {
             Log.i(TAG, "🚀 Starting model download from Backblaze B2...")
+            Log.i(TAG, "   Bucket: Binti2 (private, authenticated)")
+            
+            // Get authorization token first
+            val token = getAuthToken()
             
             // Ensure models directory exists
             modelsDir.mkdirs()
@@ -179,7 +227,7 @@ class ModelManager(private val context: Context) {
                 modelFile.parentFile?.mkdirs()
                 
                 // Download model with progress
-                downloadModel(model, modelFile) { progress ->
+                downloadModel(model, modelFile, token) { progress ->
                     val overallProgress = ((index * 100) + progress) / totalModels
                     onProgress(overallProgress, model.name)
                 }
@@ -204,10 +252,12 @@ class ModelManager(private val context: Context) {
 
     /**
      * Download a single model with progress tracking
+     * Uses B2 authorization token for private bucket access
      */
     private suspend fun downloadModel(
         model: ModelDefinition,
         targetFile: File,
+        token: String,
         onProgress: (Int) -> Unit
     ) = withContext(Dispatchers.IO) {
         Log.d(TAG, "📥 Downloading: ${model.name}")
@@ -217,6 +267,7 @@ class ModelManager(private val context: Context) {
         val request = Request.Builder()
             .url(model.downloadUrl)
             .header("User-Agent", "Binti/1.0 Android")
+            .header("Authorization", token)  // B2 authorization token
             .build()
         
         httpClient.newCall(request).execute().use { response ->
@@ -313,8 +364,8 @@ class ModelManager(private val context: Context) {
         val fileSize = file.length()
         if (fileSize == 0L) return false
         
-        // If SHA256 is not computed yet, just check file exists and has content
-        if (model.sha256 == "compute_after_upload" || model.sha256.isBlank()) {
+        // If SHA256 is not set, just check file exists and has content
+        if (model.sha256.isBlank()) {
             Log.d(TAG, "⚠️ SHA256 not set for ${model.name}, skipping hash verification")
             return fileSize > 0
         }
