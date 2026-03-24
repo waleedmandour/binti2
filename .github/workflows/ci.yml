@@ -350,7 +350,7 @@ EOF
 
   notify:
     name: Notify Build Status
-    needs: [build, release]
+    needs: [validate, build]
     runs-on: ubuntu-latest
     if: always()
     steps:
