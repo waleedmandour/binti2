@@ -75,7 +75,7 @@ class EgyptianTTS(private val context: Context) {
     /**
      * Initialize Android TTS
      */
-    private fun initializeAndroidTTS() = suspendCancellableCoroutine<Unit> { continuation ->
+    private suspend fun initializeAndroidTTS() = suspendCancellableCoroutine<Unit> { continuation ->
         androidTTS = TextToSpeech(context) { status ->
             if (status == TextToSpeech.SUCCESS) {
                 // Set language to Arabic (Egypt)
