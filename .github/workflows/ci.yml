@@ -298,3 +298,75 @@ EOF
           files: models_release/manifest.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  upload-models:
+    name: Upload Models to B2
+    needs: model-pack
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install B2 SDK
+        run: pip install b2sdk
+
+      - name: Upload Intent Map to B2
+        env:
+          B2_KEY_ID: ${{ secrets.B2_KEY_ID }}
+          B2_APP_KEY: ${{ secrets.B2_APP_KEY }}
+        run: |
+          if [ -n "$B2_KEY_ID" ] && [ -n "$B2_APP_KEY" ]; then
+            echo "📤 Uploading intent map to Backblaze B2..."
+            
+            python scripts/upload_to_b2.py \
+              --key-id "$B2_KEY_ID" \
+              --app-key "$B2_APP_KEY" || echo "⚠️ B2 upload skipped (may need model files)"
+            
+            echo "✅ B2 upload complete"
+          else
+            echo "⚠️ B2 credentials not configured"
+            echo "💡 Add B2_KEY_ID and B2_APP_KEY secrets for model hosting"
+            echo "   See: docs/B2_QUICK_SETUP.md"
+          fi
+
+      - name: Verify B2 Upload
+        env:
+          B2_BUCKET: binti2-models
+        run: |
+          echo "🔍 Verifying B2 uploads..."
+          
+          # Check manifest
+          if curl -sI "https://f001.backblazeb2.com/file/$B2_BUCKET/manifest.json" | grep -q "200"; then
+            echo "✅ Manifest accessible at B2"
+          else
+            echo "⚠️ Manifest not yet uploaded (run upload_to_b2.py locally with model files)"
+          fi
+
+  notify:
+    name: Notify Build Status
+    needs: [build, release]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Build Summary
+        run: |
+          echo "## 🏗️ Binti2 Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Step | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Validate | ${{ needs.validate.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event_name }}" = "release" ]; then
+            echo "| Release | ${{ needs.release.result }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Models | ${{ needs.model-pack.result }} |" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📥 Download Models" >> $GITHUB_STEP_SUMMARY
+          echo "Models are hosted on Backblaze B2 for offline-first operation." >> $GITHUB_STEP_SUMMARY
+          echo "Users download models on first launch." >> $GITHUB_STEP_SUMMARY

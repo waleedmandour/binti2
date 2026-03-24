@@ -87,9 +87,19 @@ secrets.properties
 *.env
 .env.*
 
+# B2 credentials
+b2_config.env
+
 # ===========================================
 # Binti-specific ignores
 # ===========================================
+
+# B2 model upload directory (local only)
+models_to_upload/**/*.tflite
+models_to_upload/**/*.onnx
+models_to_upload/**/*.zip
+models_to_upload/manifest.json
+models_to_upload/manifest.txt
 
 # AI Models (downloaded from GitHub Releases)
 app/src/main/assets/models/**/*.tflite
