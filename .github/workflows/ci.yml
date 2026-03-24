@@ -9,37 +9,26 @@ on:
   release:
     types: [created]
 
-# Set environment variable to use Node.js 24 for all actions
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   validate:
     name: Validate Project
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5  # Updated to v5 (Node.js 24)
+        uses: actions/checkout@v4
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v5  # Updated to v5 (Node.js 24)
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
           cache: gradle
 
       - name: Grant execute permission for gradlew
-        run: |
-          if [ -f "gradlew" ]; then
-            chmod +x gradlew
-            echo "✅ gradlew permissions set"
-          else
-            echo "❌ gradlew not found - make sure you've committed the Gradle wrapper"
-            exit 1
-          fi
+        run: chmod +x gradlew
 
       - name: Validate Gradle wrapper
-        uses: gradle/actions/wrapper-validation@v4  # Updated to new path
+        uses: gradle/actions/wrapper-validation@v3
 
       - name: Verify Model Sizes (<1GB total)
         run: |
@@ -142,10 +131,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
@@ -166,7 +155,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v5  # Updated to v5 (Node.js 24)
+        uses: actions/upload-artifact@v4
         with:
           name: app-debug
           path: app/build/outputs/apk/debug/*.apk
@@ -179,10 +168,10 @@ jobs:
     if: github.event_name == 'release'
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
@@ -201,7 +190,6 @@ jobs:
             echo "✅ Keystore decoded successfully"
           else
             echo "⚠️ No keystore secret found - will use debug signing"
-            echo "💡 Add KEYSTORE_BASE64 secret for release signing"
           fi
 
       - name: Build Release APK
@@ -219,14 +207,14 @@ jobs:
           fi
 
       - name: Upload Release APK
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v4
         with:
           name: app-release
           path: app/build/outputs/apk/release/*.apk
           retention-days: 30
 
       - name: Upload to GitHub Release
-        uses: softprops/action-gh-release@v2  # Updated to v2
+        uses: softprops/action-gh-release@v2
         with:
           files: app/build/outputs/apk/release/*.apk
         env:
@@ -239,58 +227,22 @@ jobs:
     if: github.event_name == 'release'
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Create model manifest
         run: |
           mkdir -p models_release
-          
-          # Extract version from tag
           VERSION="${{ github.event.release.tag_name }}"
           echo "📦 Creating manifest for version: $VERSION"
           
           cat > models_release/manifest.json << EOF
 {
-  "version": "$VERSION",
-  "models": [
-    {
-      "name": "Wake Word Detector",
-      "file": "ya_binti_detector.tflite",
-      "size_mb": 5,
-      "sha256": "placeholder"
-    },
-    {
-      "name": "Egyptian ASR (Vosk)",
-      "file": "vosk-model-egyptian.zip",
-      "size_mb": 50,
-      "sha256": "placeholder"
-    },
-    {
-      "name": "Intent Classifier (EgyBERT)",
-      "file": "egybert_tiny_int8.onnx",
-      "size_mb": 1247,
-      "sha256": "placeholder"
-    },
-    {
-      "name": "Egyptian TTS Voice",
-      "file": "ar-eg-female.zip",
-      "size_mb": 80,
-      "sha256": "placeholder"
-    }
-  ],
-  "total_size_mb": 1382,
-  "min_android_sdk": 26,
-  "target_android_sdk": 34,
-  "hosting": {
-    "provider": "Backblaze B2",
-    "bucket": "binti2-models",
-    "base_url": "https://f001.backblazeb2.com/file/binti2-models"
-  }
+            "version": "$VERSION",
+            "models": []
 }
 EOF
           
-          echo "✅ Manifest created:"
-          cat models_release/manifest.json
+          echo "✅ Manifest created"
 
       - name: Upload model manifest
         uses: softprops/action-gh-release@v2
@@ -306,7 +258,7 @@ EOF
     if: github.event_name == 'release'
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -316,36 +268,13 @@ EOF
       - name: Install B2 SDK
         run: pip install b2sdk
 
-      - name: Upload Intent Map to B2
+      - name: Upload to B2
         env:
           B2_KEY_ID: ${{ secrets.B2_KEY_ID }}
           B2_APP_KEY: ${{ secrets.B2_APP_KEY }}
         run: |
           if [ -n "$B2_KEY_ID" ] && [ -n "$B2_APP_KEY" ]; then
-            echo "📤 Uploading intent map to Backblaze B2..."
-            
-            python scripts/upload_to_b2.py \
-              --key-id "$B2_KEY_ID" \
-              --app-key "$B2_APP_KEY" || echo "⚠️ B2 upload skipped (may need model files)"
-            
-            echo "✅ B2 upload complete"
-          else
-            echo "⚠️ B2 credentials not configured"
-            echo "💡 Add B2_KEY_ID and B2_APP_KEY secrets for model hosting"
-            echo "   See: docs/B2_QUICK_SETUP.md"
-          fi
-
-      - name: Verify B2 Upload
-        env:
-          B2_BUCKET: binti2-models
-        run: |
-          echo "🔍 Verifying B2 uploads..."
-          
-          # Check manifest
-          if curl -sI "https://f001.backblazeb2.com/file/$B2_BUCKET/manifest.json" | grep -q "200"; then
-            echo "✅ Manifest accessible at B2"
-          else
-            echo "⚠️ Manifest not yet uploaded (run upload_to_b2.py locally with model files)"
+            python scripts/upload_to_b2.py --key-id "$B2_KEY_ID" --app-key "$B2_APP_KEY" || true
           fi
 
   notify:
