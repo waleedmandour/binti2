@@ -63,6 +63,8 @@
     <string name="notification_channel_description">إشعار مساعد بنتي الصوتي</string>
     <string name="notification_title">مساعد بنتي الصوتي</string>
     <string name="notification_listening">سامعة "يا بنتي"… 🎤</string>
+    <string name="notification_tap_to_speak">اضغط للتكلم</string>
+    <string name="manual_listen">اسمع دلوقتي</string>
     
     <!-- Service States -->
     <string name="state_ready">جاهزة ✅</string>

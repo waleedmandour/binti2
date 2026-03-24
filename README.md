@@ -21,9 +21,9 @@
 | Feature | Description | Technology |
 |---------|-------------|------------|
 | 🎤 **Wake Word Detection** | Custom TFLite CNN for "يا بنتي" | TensorFlow Lite (~5 MB) |
-| 🗣️ **Egyptian Arabic ASR** | Offline speech recognition | Vosk Egyptian Model (~50 MB) |
-| 🧠 **Intent Classification** | Egyptian Arabic NLU | EgyBERT-tiny (~30 MB) |
-| 🔊 **Egyptian TTS** | Female voice responses | Coqui TTS (~80 MB) |
+| 🗣️ **Egyptian Arabic ASR** | Offline speech recognition | Vosk Arabic MGB2 (~1.2 GB) |
+| 🧠 **Intent Classification** | Egyptian Arabic NLU | EgyBERT-tiny + Rules (~25 MB) |
+| 🔊 **Egyptian TTS** | Female voice responses | Coqui TTS / Android TTS (~80 MB) |
 | 🚙 **DiLink Integration** | Control vehicle functions | AccessibilityService |
 | ☁️ **Huawei HMS Fallback** | Cloud ASR/TTS when offline unavailable | Huawei ML Kit |
 | 📴 **Offline-First** | Works without internet after model download | All models local |
@@ -115,6 +115,49 @@ cd binti2
 
 ---
 
+## 🎤 Wake Word Activation
+
+Binti supports two activation modes:
+
+### Mode 1: Voice Activation (Automatic)
+Say **"يا بنتي"** (Ya Binti) to activate Binti hands-free.
+
+**How it works:**
+- Uses Vosk keyword spotting (no custom model needed)
+- Continuous background listening with low power consumption
+- Voice Activity Detection (VAD) to skip silence
+- Automatically detects: "يا بنتي", "يابنتي", "بنتي"
+
+**Requirements:**
+- Vosk Arabic model must be downloaded (1.2GB)
+- Service running in foreground
+
+### Mode 2: Manual Activation
+Tap the **"Listen Now"** button in the notification or app.
+
+**Use when:**
+- Models not downloaded yet
+- Wake word detection disabled
+- Noisy environment (reduces false positives)
+
+### Background Operation
+
+Binti runs as a **foreground service** on Android, which means:
+- ✅ Continues running when app is minimized
+- ✅ Continues running when screen is off
+- ✅ Works on BYD DiLink infotainment system
+- ✅ Shows persistent notification (required by Android)
+- ⚠️ May be killed by aggressive battery optimization (add to whitelist)
+
+### Battery Optimization
+
+For best performance, disable battery optimization for Binti:
+1. Go to Settings → Apps → Binti → Battery
+2. Select "Unrestricted" or "Don't optimize"
+3. This ensures continuous wake word detection
+
+---
+
 ## 💬 Supported Commands
 
 ### Air Conditioning
@@ -172,14 +215,16 @@ cd binti2
 
 ## 📦 Model Stack
 
-| Component | Primary (Offline) | License | Size | Cloud Fallback |
-|-----------|-------------------|---------|------|----------------|
-| Wake Word | Custom TFLite CNN | MIT | ~5 MB | N/A |
-| ASR | Vosk Arabic MGB2 | Apache 2.0 | ~1.2 GB | Huawei ML Kit ASR |
-| NLU | EgyBERT-tiny + Rules | MIT | ~25 MB | Rule-based |
-| TTS | Coqui Egyptian Female | MPL 2.0 | ~80 MB | Huawei ML Kit TTS |
+| Component | Primary (Offline) | License | Size | Required |
+|-----------|-------------------|---------|------|----------|
+| Wake Word | Vosk Keyword Spotting | Apache 2.0 | 0 (uses ASR) | ❌ Optional |
+| ASR | Vosk Arabic MGB2 | Apache 2.0 | ~1.2 GB | ✅ Yes |
+| NLU | Rule-based + EgyBERT | MIT | ~25 MB | ❌ Optional |
+| TTS | Android TTS / Coqui | MPL 2.0 | ~80 MB | ❌ Optional |
 
-**Total offline models: ~1.4GB compressed**
+**Minimum download: ~1.2GB (ASR model only)**
+
+**Note:** Wake word detection uses the same Vosk Arabic model as ASR - no separate model needed!
 
 ---
 
@@ -187,12 +232,36 @@ cd binti2
 
 Binti uses **Backblaze B2** for hosting AI models. Models are downloaded on first run for offline privacy.
 
+### B2 Bucket Configuration
+
+| Setting | Value |
+|---------|-------|
+| **Bucket Name** | `Binti2` |
+| **Visibility** | Private (authenticated access) |
+| **Base URL** | `https://f006.backblazeb2.com/file/Binti2` |
+| **API Endpoint** | `https://api006.backblazeb2.com/b2api/v4` |
+
+### Bucket Structure
+
+```
+Binti2/
+├── manifest.json                    # Model manifest
+├── asr/
+│   └── vosk-model-ar-mgb2-0.4.zip   # Arabic ASR model (REQUIRED)
+├── nlp/
+│   └── dilink_intent_map.json       # Intent patterns (REQUIRED)
+├── nlu/
+│   └── egybert_tiny_int8.onnx       # NLU model (OPTIONAL)
+└── tts/
+    └── ar-eg-female.zip             # TTS voice (OPTIONAL)
+```
+
 ### Quick Setup
 
 1. **Create Backblaze B2 Account** (Free: 10GB storage)
    - Sign up at [backblaze.com/b2](https://www.backblaze.com/b2/sign-up.html)
 
-2. **Create a Public Bucket**
+2. **Create a Private Bucket**
    ```bash
    # Install B2 CLI
    pip install b2
@@ -201,44 +270,52 @@ Binti uses **Backblaze B2** for hosting AI models. Models are downloaded on firs
    b2 authorize-account <keyID> <applicationKey>
    
    # Create bucket
-   b2 create-bucket binti2-models allPublic
+   b2 create-bucket Binti2 allPrivate
    ```
 
 3. **Upload Models**
    ```bash
    # Run upload script
-   export B2_BUCKET=binti2-models
+   export B2_BUCKET=Binti2
    ./scripts/upload_models_to_b2.sh
    ```
 
-### Model Files Required
+### Model Files
 
-| File | B2 Path | Size | Source |
-|------|---------|------|--------|
-| `ya_binti_detector.tflite` | `wake/` | 5MB | Train custom |
-| `vosk-model-ar-mgb2.zip` | `asr/` | 1.2GB | [Download](https://alphacephei.com/vosk/models) |
-| `egybert_tiny_int8.onnx` | `nlu/` | 25MB | Train custom |
-| `ar-eg-female.zip` | `tts/` | 80MB | Train custom |
-| `dilink_intent_map.json` | `nlp/` | 10KB | Included in project |
+| File | B2 Path | Size | Required | Source |
+|------|---------|------|----------|--------|
+| `vosk-model-ar-mgb2-0.4.zip` | `asr/` | 1.2GB | ✅ Yes | [Vosk Models](https://alphacephei.com/vosk/models) |
+| `dilink_intent_map.json` | `nlp/` | 10KB | ✅ Yes | Included in project |
+| `egybert_tiny_int8.onnx` | `nlu/` | 25MB | ❌ Optional | Train custom |
+| `ar-eg-female.zip` | `tts/` | 80MB | ❌ Optional | Train custom (Coqui TTS) |
+
+**Note:** Wake word detection uses the Vosk ASR model - no separate model needed!
 
 ### Download Pre-trained Vosk Arabic
 
 ```bash
 # Download Arabic ASR model
 wget https://alphacephei.com/vosk/models/vosk-model-ar-mgb2-0.4.zip
-mv vosk-model-ar-mgb2-0.4.zip models_to_upload/vosk-model-ar-mgb2.zip
 
-# Upload to B2
-b2 upload-file binti2-models models_to_upload/vosk-model-ar-mgb2.zip asr/vosk-model-ar-mgb2.zip
+# Upload to B2 (after authorization)
+b2 upload-file Binti2 vosk-model-ar-mgb2-0.4.zip asr/vosk-model-ar-mgb2-0.4.zip
 ```
+
+### Optional Model Sources
+
+| Model | Training/Download Source |
+|-------|-------------------------|
+| NLU | [AraBERT](https://huggingface.co/aubmindlab/bert-base-arabertv2) - Fine-tune for intents |
+| TTS | [Coqui TTS](https://github.com/coqui-ai/TTS) - Train Egyptian Arabic voice |
 
 ### Update App Configuration
 
-Edit `ModelManager.kt`:
+The app uses read-only B2 credentials embedded in `ModelManager.kt`:
 
 ```kotlin
-private const val B2_BASE_URL = 
-    "https://f001.backblazeb2.com/file/binti2-models"
+private const val B2_BASE_URL = "https://f006.backblazeb2.com/file/Binti2"
+private const val B2_KEY_ID = "006e28ae305b3fc0000000001"
+private const val B2_APP_KEY = "K006z8K/0eO08E9xxwRRcj+c8bEt+60"
 ```
 
 ### Detailed Guide
@@ -258,7 +335,7 @@ binti2/
 │   │   │   ├── BintiService.kt              # Foreground voice service
 │   │   │   ├── MainActivity.kt              # Permission setup wizard
 │   │   │   ├── voice/
-│   │   │   │   ├── WakeWordDetector.kt      # TFLite wake word detection
+│   │   │   │   ├── VoskWakeWordDetector.kt # Vosk keyword spotting
 │   │   │   │   └── VoiceProcessor.kt        # Vosk/Huawei ASR
 │   │   │   ├── nlp/
 │   │   │   │   └── IntentClassifier.kt      # NLU + entity extraction

@@ -23,7 +23,7 @@ import com.binti.dilink.dilink.DiLinkCommandExecutor
 import com.binti.dilink.nlp.IntentClassifier
 import com.binti.dilink.response.EgyptianTTS
 import com.binti.dilink.voice.VoiceProcessor
-import com.binti.dilink.voice.WakeWordDetector
+import com.binti.dilink.voice.VoskWakeWordDetector
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
@@ -47,6 +47,7 @@ class BintiService : Service() {
         const val ACTION_START = "com.binti.dilink.action.START"
         const val ACTION_STOP = "com.binti.dilink.action.STOP"
         const val ACTION_WAKE_WORD_DETECTED = "com.binti.dilink.action.WAKE_WORD_DETECTED"
+        const val ACTION_MANUAL_LISTEN = "com.binti.dilink.action.MANUAL_LISTEN"
         const val EXTRA_COMMAND = "extra_command"
         
         // Intent actions for UI communication
@@ -65,7 +66,7 @@ class BintiService : Service() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     
     // Components
-    private lateinit var wakeWordDetector: WakeWordDetector
+    private lateinit var wakeWordDetector: VoskWakeWordDetector
     private lateinit var voiceProcessor: VoiceProcessor
     private lateinit var intentClassifier: IntentClassifier
     private lateinit var commandExecutor: DiLinkCommandExecutor
@@ -108,6 +109,11 @@ class BintiService : Service() {
             ACTION_START -> startWakeWordDetection()
             ACTION_STOP -> stopSelf()
             ACTION_WAKE_WORD_DETECTED -> onWakeWordDetected()
+            ACTION_MANUAL_LISTEN -> {
+                // Manual activation - start listening immediately
+                Log.i(TAG, "📱 Manual listen activated")
+                onWakeWordDetected()
+            }
         }
         
         return START_STICKY
@@ -139,8 +145,8 @@ class BintiService : Service() {
             try {
                 _serviceState.value = ServiceState.Initializing
                 
-                // Initialize wake word detector
-                wakeWordDetector = WakeWordDetector(this@BintiService)
+                // Initialize wake word detector (Vosk-based keyword spotting)
+                wakeWordDetector = VoskWakeWordDetector(this@BintiService)
                 wakeWordDetector.initialize()
                 Log.d(TAG, "✅ Wake word detector initialized")
                 
@@ -166,8 +172,13 @@ class BintiService : Service() {
                 _serviceState.value = ServiceState.Ready
                 broadcastState("ready")
                 
-                // Auto-start wake word detection
-                startWakeWordDetection()
+                // Auto-start wake word detection if model is available
+                if (wakeWordDetector.isReady()) {
+                    startWakeWordDetection()
+                } else {
+                    Log.w(TAG, "⚠️ Wake word detection not available - models not downloaded")
+                    Log.w(TAG, "   Use manual activation or download models first")
+                }
                 
             } catch (e: Exception) {
                 Log.e(TAG, "❌ Failed to initialize components", e)
@@ -181,6 +192,12 @@ class BintiService : Service() {
      * Start listening for wake word "يا بنتي"
      */
     private fun startWakeWordDetection() {
+        if (!wakeWordDetector.isReady()) {
+            Log.w(TAG, "⚠️ Wake word detector not ready - models not available")
+            Log.w(TAG, "   Voice activation disabled. Use manual mode.")
+            return
+        }
+        
         if (wakeWordJob?.isActive == true) {
             Log.d(TAG, "Wake word detection already running")
             return
@@ -188,6 +205,7 @@ class BintiService : Service() {
         
         wakeWordJob = serviceScope.launch {
             Log.i(TAG, "🎤 Starting wake word detection...")
+            Log.i(TAG, "   Say \"يا بنتي\" to activate")
             _serviceState.value = ServiceState.ListeningForWakeWord
             
             // Start the wake word detector listening
@@ -354,6 +372,14 @@ class BintiService : Service() {
             PendingIntent.FLAG_IMMUTABLE
         )
         
+        // Manual listen action
+        val listenIntent = Intent(this, BintiService::class.java).apply {
+            action = ACTION_MANUAL_LISTEN
+        }
+        val listenPendingIntent = PendingIntent.getService(
+            this, 1, listenIntent, PendingIntent.FLAG_IMMUTABLE
+        )
+        
         return NotificationCompat.Builder(this, BintiApplication.NOTIFICATION_CHANNEL_ID)
             .setContentTitle(getString(R.string.notification_title))
             .setContentText(getString(R.string.notification_listening))
@@ -362,6 +388,11 @@ class BintiService : Service() {
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .addAction(
+                R.drawable.ic_mic,
+                getString(R.string.manual_listen),
+                listenPendingIntent
+            )
             .build()
     }
 

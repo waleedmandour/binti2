@@ -82,6 +82,9 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+    
+    // Track if receiver is registered
+    private var isReceiverRegistered = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -106,7 +109,14 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        unregisterReceiver(stateReceiver)
+        if (isReceiverRegistered) {
+            try {
+                unregisterReceiver(stateReceiver)
+            } catch (e: Exception) {
+                Log.w(TAG, "Receiver already unregistered")
+            }
+            isReceiverRegistered = false
+        }
     }
 
     /**
@@ -501,6 +511,7 @@ class MainActivity : AppCompatActivity() {
         } else {
             registerReceiver(stateReceiver, filter)
         }
+        isReceiverRegistered = true
     }
     
     private val sharedPreferences by lazy {

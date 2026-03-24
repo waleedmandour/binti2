@@ -63,6 +63,8 @@
     <string name="notification_channel_description">Binti voice assistant notification</string>
     <string name="notification_title">Binti Voice Assistant</string>
     <string name="notification_listening">Listening for "Ya Binti"…</string>
+    <string name="notification_tap_to_speak">Tap to speak</string>
+    <string name="manual_listen">Listen Now</string>
     
     <!-- Service States -->
     <string name="state_ready">Ready</string>
@@ -100,4 +102,16 @@
     
     <!-- Accessibility Service -->
     <string name="accessibility_service_description">Binti voice assistant service to control your DiLink vehicle with Egyptian Arabic voice commands</string>
+    
+    <!-- Sample Commands for Help -->
+    <string-array name="sample_commands">
+        <item>Ya Binti, turn on the AC</item>
+        <item>Ya Binti, take me home</item>
+        <item>Ya Binti, nearest gas station</item>
+        <item>Ya Binti, play music</item>
+        <item>Ya Binti, pause the song</item>
+        <item>Ya Binti, what\'s the temperature?</item>
+        <item>Ya Binti, increase the AC</item>
+        <item>Ya Binti, what time is it?</item>
+    </string-array>
 </resources>
