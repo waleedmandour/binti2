@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Info -->
+    <string name="app_name">Binti</string>
+    <string name="app_description">Egyptian Arabic Voice Assistant for BYD DiLink</string>
+    
+    <!-- Wake Word -->
+    <string name="wake_word">Ya Binti</string>
+    <string name="wake_word_arabic">يا بنتي</string>
+    <string name="wake_response">Yes, I\'m listening</string>
+    
+    <!-- Main Activity -->
+    <string name="welcome_message">Welcome! I can help you control your BYD vehicle with your voice in Egyptian Arabic.</string>
+    <string name="listening_hint">I\'m listening… tell me what you need!</string>
+    <string name="start_service">Start Binti</string>
+    <string name="stop_service">Stop Binti</string>
+    <string name="service_started">Binti is now listening</string>
+    <string name="service_stopped">Binti stopped</string>
+    
+    <!-- Permissions -->
+    <string name="permissions_required_title">Permissions Required</string>
+    <string name="permissions_required_message">Binti needs microphone, overlay, and accessibility permissions to work properly.</string>
+    
+    <string name="mic_permission_title">Microphone</string>
+    <string name="mic_permission_desc">Required for voice recognition</string>
+    <string name="overlay_permission_title">Display Over Apps</string>
+    <string name="overlay_permission_desc">Required for voice feedback overlay</string>
+    <string name="accessibility_permission_title">Accessibility</string>
+    <string name="accessibility_permission_desc">Required to control DiLink interface</string>
+    <string name="notification_permission_title">Notifications</string>
+    <string name="notification_permission_desc">Required for service notification</string>
+    
+    <string name="permission_granted">Granted</string>
+    <string name="grant_permission">Grant</string>
+    <string name="ok">OK</string>
+    <string name="got_it">Got it</string>
+    
+    <!-- Accessibility Guide -->
+    <string name="accessibility_guide_title">Enable Accessibility</string>
+    <string name="accessibility_guide_message">
+        1. Find "Binti" in the list\n
+        2. Tap to open\n
+        3. Enable the accessibility service\n
+        4. Confirm the permission dialog
+    </string>
+    
+    <!-- Battery Optimization -->
+    <string name="battery_optimization_title">Battery Optimization</string>
+    <string name="battery_optimization_message">For best results, allow Binti to run in the background by disabling battery optimization.</string>
+    <string name="allow">Allow</string>
+    <string name="skip">Skip</string>
+    
+    <!-- Model Download -->
+    <string name="download_models_title">Download AI Models?</string>
+    <string name="download_models_message">To work offline, Binti needs to download AI models (~160MB). Continue?</string>
+    <string name="download_now">Download Now</string>
+    <string name="use_cloud_only">Use Cloud Only</string>
+    <string name="downloading_file">Downloading %1$s… %2$d%%</string>
+    <string name="download_complete">Download complete!</string>
+    <string name="download_failed">Download failed: %1$s</string>
+    
+    <!-- Notifications -->
+    <string name="notification_channel_description">Binti voice assistant notification</string>
+    <string name="notification_title">Binti Voice Assistant</string>
+    <string name="notification_listening">Listening for "Ya Binti"…</string>
+    
+    <!-- Service States -->
+    <string name="state_ready">Ready</string>
+    <string name="state_listening">Listening…</string>
+    <string name="state_processing">Processing…</string>
+    <string name="state_error">Error</string>
+    <string name="state_unknown">Unknown</string>
+    
+    <!-- Commands -->
+    <string name="command_confirmed">Done: %1$s</string>
+    <string name="command_success">Command executed: %1$s</string>
+    <string name="command_failed">Sorry, I couldn\'t do that.</string>
+    <string name="command_failed_generic">Command failed. Please try again.</string>
+    <string name="fallback_message">I didn\'t catch that. Could you repeat?</string>
+    <string name="error_message">Something went wrong. Please try again.</string>
+    <string name="offline_mode">Working offline. Some features may be limited.</string>
+    
+    <!-- Device Info -->
+    <string name="huawei_device_detected">Huawei device detected - HMS services enabled</string>
+    
+    <!-- Settings -->
+    <string name="settings">Settings</string>
+    <string name="settings_voice">Voice Settings</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_speech_rate">Speech Rate</string>
+    <string name="settings_wake_sensitivity">Wake Word Sensitivity</string>
+    <string name="settings_addresses">Saved Addresses</string>
+    <string name="settings_home">Home</string>
+    <string name="settings_work">Work</string>
+    
+    <!-- About -->
+    <string name="about">About</string>
+    <string name="version">Version %1$s</string>
+    <string name="developer">Developed by Dr. Waleed Mandour</string>
+    
+    <!-- Colors (for reference) -->
+    <color name="huawei_red">#CF0A2C</color>
+    <color name="permission_granted">#4CAF50</color>
+    <color name="permission_denied">#F44336</color>
+</resources>

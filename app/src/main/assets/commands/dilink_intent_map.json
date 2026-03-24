@@ -1,0 +1,263 @@
+{
+  "version": "1.0.0",
+  "intents": {
+    "AC_CONTROL": [
+      {
+        "pattern": "شغل التكييف",
+        "keywords": [
+          {"word": "شغل", "weight": 1.0, "aliases": ["تشغل", "افتح", "شغلي"]},
+          {"word": "تكييف", "weight": 1.0, "aliases": ["تيكيف", "مكيف", "تكييفات"]}
+        ],
+        "response": "تمام، شغلت التكييف",
+        "action": "AC_ON"
+      },
+      {
+        "pattern": "طفي التكييف",
+        "keywords": [
+          {"word": "طفي", "weight": 1.0, "aliases": ["اطفي", "قفل", "سكر", "اقفل"]},
+          {"word": "تكييف", "weight": 1.0, "aliases": ["تيكيف", "مكيف"]}
+        ],
+        "response": "تمام، طفيت التكييف",
+        "action": "AC_OFF"
+      },
+      {
+        "pattern": "زيود الحرارة",
+        "keywords": [
+          {"word": "زيود", "weight": 1.0, "aliases": ["زود", "ارفع", "زودي"]},
+          {"word": "حرارة", "weight": 0.8, "aliases": ["دفء", "حراره"]}
+        ],
+        "response": "تمام، زودت الحرارة",
+        "action": "AC_TEMP_UP"
+      },
+      {
+        "pattern": "قلل الحرارة",
+        "keywords": [
+          {"word": "قلل", "weight": 1.0, "aliases": ["نقص", "اخفض", "قللي"]},
+          {"word": "حرارة", "weight": 0.8, "aliases": ["حراره"]}
+        ],
+        "response": "تمام، قللت الحرارة",
+        "action": "AC_TEMP_DOWN"
+      },
+      {
+        "pattern": "التكييف على درجة",
+        "keywords": [
+          {"word": "تكييف", "weight": 0.7},
+          {"word": "درجة", "weight": 1.0, "aliases": ["درجتين", "درجات"]}
+        ],
+        "response": "تمام، ظبطت التكييف",
+        "action": "AC_SET_TEMP"
+      },
+      {
+        "pattern": "تكييف بارد",
+        "keywords": [
+          {"word": "تكييف", "weight": 0.7},
+          {"word": "بارد", "weight": 1.0, "aliases": ["تبريد", "بارده"]}
+        ],
+        "response": "تمام، شغلت التبريد",
+        "action": "AC_MODE_COOL"
+      },
+      {
+        "pattern": "تكييف ساخن",
+        "keywords": [
+          {"word": "تكييف", "weight": 0.7},
+          {"word": "ساخن", "weight": 1.0, "aliases": ["تدفئة", "ساخنه"]}
+        ],
+        "response": "تمام، شغلت التدفئة",
+        "action": "AC_MODE_HEAT"
+      }
+    ],
+    "NAVIGATION": [
+      {
+        "pattern": "خديني للبيت",
+        "keywords": [
+          {"word": "خديني", "weight": 1.0, "aliases": ["ودني", "روح", "خدني"]},
+          {"word": "بيت", "weight": 1.0, "aliases": ["البيت", "منزل", "المنزل"]}
+        ],
+        "response": "تمام، هوديك البيت",
+        "action": "NAV_HOME"
+      },
+      {
+        "pattern": "خديني للشغل",
+        "keywords": [
+          {"word": "خديني", "weight": 1.0, "aliases": ["ودني", "روح"]},
+          {"word": "شغل", "weight": 1.0, "aliases": ["الشغل", "الشقة", "مكتب"]}
+        ],
+        "response": "تمام، هوديك الشغل",
+        "action": "NAV_WORK"
+      },
+      {
+        "pattern": "أقرب بنزين",
+        "keywords": [
+          {"word": "أقرب", "weight": 1.0, "aliases": ["اقرب"]},
+          {"word": "بنزين", "weight": 1.0, "aliases": ["محطة", "وقود", "بترول"]}
+        ],
+        "response": "تمام، هوريك أقرب محطة بنزين",
+        "action": "NAV_GAS_STATION"
+      },
+      {
+        "pattern": "أقرب شحن",
+        "keywords": [
+          {"word": "أقرب", "weight": 1.0, "aliases": ["اقرب"]},
+          {"word": "شحن", "weight": 1.0, "aliases": ["شاحن", "كهرباء"]}
+        ],
+        "response": "تمام، هوريك أقرب نقطة شحن",
+        "action": "NAV_CHARGING_STATION"
+      },
+      {
+        "pattern": "أقرب مطعم",
+        "keywords": [
+          {"word": "أقرب", "weight": 0.8, "aliases": ["اقرب"]},
+          {"word": "مطعم", "weight": 1.0, "aliases": ["أكل", "فود"]}
+        ],
+        "response": "تمام، هوريك أقرب مطعم",
+        "action": "NAV_RESTAURANT"
+      },
+      {
+        "pattern": "أقرب مستشفى",
+        "keywords": [
+          {"word": "أقرب", "weight": 0.8, "aliases": ["اقرب"]},
+          {"word": "مستشفى", "weight": 1.0, "aliases": ["سبت", "دكتور"]}
+        ],
+        "response": "تمام، هوريك أقرب مستشفى",
+        "action": "NAV_HOSPITAL"
+      },
+      {
+        "pattern": "أقرب موقف",
+        "keywords": [
+          {"word": "أقرب", "weight": 0.8, "aliases": ["اقرب"]},
+          {"word": "موقف", "weight": 1.0, "aliases": ["باركينج", "جراج"]}
+        ],
+        "response": "تمام، هوريك أقرب موقف",
+        "action": "NAV_PARKING"
+      },
+      {
+        "pattern": "خديني لـ",
+        "keywords": [
+          {"word": "خديني", "weight": 1.0, "aliases": ["ودني", "روح", "نروح"]}
+        ],
+        "response": "تمام، هوديك",
+        "action": "NAV_DESTINATION"
+      }
+    ],
+    "MEDIA": [
+      {
+        "pattern": "شغل موسيقى",
+        "keywords": [
+          {"word": "شغل", "weight": 1.0, "aliases": ["اسمع", "شغلي"]},
+          {"word": "موسيقى", "weight": 1.0, "aliases": ["اغنية", "سماعي", "مزيكا"]}
+        ],
+        "response": "تمام، شغلت الموسيقى",
+        "action": "MEDIA_PLAY"
+      },
+      {
+        "pattern": "وقفة الأغنية",
+        "keywords": [
+          {"word": "وقفة", "weight": 1.0, "aliases": ["وقف", "توقف", "باص"]},
+          {"word": "أغنية", "weight": 0.5, "aliases": ["موسيقى", "اغنيه"]}
+        ],
+        "response": "تمام، وقفت الأغنية",
+        "action": "MEDIA_PAUSE"
+      },
+      {
+        "pattern": "اللي بعدها",
+        "keywords": [
+          {"word": "اللي", "weight": 0.5},
+          {"word": "بعدها", "weight": 1.0, "aliases": ["بعدين", "التالي"]}
+        ],
+        "response": "تمام، الأغنية اللي بعدها",
+        "action": "MEDIA_NEXT"
+      },
+      {
+        "pattern": "اللي قبلها",
+        "keywords": [
+          {"word": "اللي", "weight": 0.5},
+          {"word": "قبلها", "weight": 1.0, "aliases": ["قبلي", "السابقة"]}
+        ],
+        "response": "تمام، الأغنية اللي قبلها",
+        "action": "MEDIA_PREVIOUS"
+      },
+      {
+        "pattern": "صوت عالي",
+        "keywords": [
+          {"word": "صوت", "weight": 0.8},
+          {"word": "عالي", "weight": 1.0, "aliases": ["اعلى", "زيود"]}
+        ],
+        "response": "تمام، زودت الصوت",
+        "action": "MEDIA_VOLUME_UP"
+      },
+      {
+        "pattern": "صوت واطي",
+        "keywords": [
+          {"word": "صوت", "weight": 0.8},
+          {"word": "واطي", "weight": 1.0, "aliases": ["اخفض", "قلل"]}
+        ],
+        "response": "تمام، قللت الصوت",
+        "action": "MEDIA_VOLUME_DOWN"
+      }
+    ],
+    "PHONE": [
+      {
+        "pattern": "كلم أحمد",
+        "keywords": [
+          {"word": "كلم", "weight": 1.0, "aliases": ["اتصل", "كلمي"]},
+          {"word": "أحمد", "weight": 0.8}
+        ],
+        "response": "تمام، بكلم أحمد",
+        "action": "PHONE_CALL"
+      },
+      {
+        "pattern": "رد عالمكالمة",
+        "keywords": [
+          {"word": "رد", "weight": 1.0, "aliases": ["أجب", "ردى"]},
+          {"word": "مكالمة", "weight": 0.8, "aliases": ["تليفون", "كول"]}
+        ],
+        "response": "تمام، رديت عالمكالمة",
+        "action": "PHONE_ANSWER"
+      },
+      {
+        "pattern": "أقفل المكالمة",
+        "keywords": [
+          {"word": "أقفل", "weight": 1.0, "aliases": ["انهي", "سكر"]},
+          {"word": "مكالمة", "weight": 0.8}
+        ],
+        "response": "تمام، قفلت المكالمة",
+        "action": "PHONE_END"
+      }
+    ],
+    "INFO": [
+      {
+        "pattern": "الساعة كام",
+        "keywords": [
+          {"word": "الساعة", "weight": 1.0, "aliases": ["ساعة"]},
+          {"word": "كام", "weight": 0.8, "aliases": ["اد ايه"]}
+        ],
+        "response": "",
+        "action": "INFO_TIME"
+      },
+      {
+        "pattern": "حرارة بره إيه",
+        "keywords": [
+          {"word": "حرارة", "weight": 0.8, "aliases": ["طقس"]},
+          {"word": "بره", "weight": 0.8, "aliases": ["خارج"]}
+        ],
+        "response": "",
+        "action": "INFO_WEATHER"
+      },
+      {
+        "pattern": "البطارية كام",
+        "keywords": [
+          {"word": "البطارية", "weight": 1.0, "aliases": ["بطارية", "شحن"]},
+          {"word": "كام", "weight": 0.5}
+        ],
+        "response": "",
+        "action": "INFO_BATTERY"
+      }
+    ]
+  },
+  "responses": {
+    "success": "تمام يا باشا ✅",
+    "error": "مقدرتش أعمل كده، جرب تاني 🙁",
+    "not_understood": "مسمعتش كويس، ممكن تعيد؟ 🤔",
+    "offline": "أنا أوفلاين دلوقتي، بعض الحاجات مش هتشتغل 📶"
+  }
+}

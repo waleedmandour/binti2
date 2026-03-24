@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Internal files directory -->
+    <files-path
+        name="internal_files"
+        path="." />
+    
+    <!-- Models directory -->
+    <files-path
+        name="models"
+        path="models/" />
+    
+    <!-- Cache directory -->
+    <cache-path
+        name="cache"
+        path="." />
+    
+    <!-- External files directory -->
+    <external-files-path
+        name="external_files"
+        path="." />
+</paths>

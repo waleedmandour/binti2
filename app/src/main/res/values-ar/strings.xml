@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Info - Egyptian Arabic -->
+    <string name="app_name">بنتي</string>
+    <string name="app_description">مساعد صوتي باللهجة المصرية لسيارات BYD DiLink</string>
+    
+    <!-- Wake Word -->
+    <string name="wake_word">يا بنتي</string>
+    <string name="wake_word_arabic">يا بنتي</string>
+    <string name="wake_response">أهلاً وسهلاً! أنا سامعة يا حبيبي 😊</string>
+    
+    <!-- Main Activity -->
+    <string name="welcome_message">أهلاً وسهلاً! أقدر أساعدك تتحكم في سيارتك BYD بصوتك باللهجة المصرية.</string>
+    <string name="listening_hint">قولي اللي في بالك… أنا سامعة! 🎧</string>
+    <string name="start_service">شغلي بنتي</string>
+    <string name="stop_service">وقفي بنتي</string>
+    <string name="service_started">بنتي شغالة وسامعة</string>
+    <string name="service_stopped">بنتي وقفت</string>
+    
+    <!-- Permissions -->
+    <string name="permissions_required_title">الصلاحيات المطلوبة</string>
+    <string name="permissions_required_message">بنتي محتاجة صلاحيات الميكروفون والظهور فوق التطيقات والوصول عشان تشتغل كويس.</string>
+    
+    <string name="mic_permission_title">الميكروفون</string>
+    <string name="mic_permission_desc">مطلوب للتعرف على صوتك</string>
+    <string name="overlay_permission_title">الظهور فوق التطبيقات</string>
+    <string name="overlay_permission_desc">مطلوب لإظهار ردود بنتي</string>
+    <string name="accessibility_permission_title">الوصول</string>
+    <string name="accessibility_permission_desc">مطلوب للتحكم في واجهة DiLink</string>
+    <string name="notification_permission_title">الإشعارات</string>
+    <string name="notification_permission_desc">مطلوب لإشعار الخدمة</string>
+    
+    <string name="permission_granted">تم السماح</string>
+    <string name="grant_permission">اسمح</string>
+    <string name="ok">تمام</string>
+    <string name="got_it">فهمت</string>
+    
+    <!-- Accessibility Guide -->
+    <string name="accessibility_guide_title">تفعيل خدمة الوصول</string>
+    <string name="accessibility_guide_message">
+        ١. دور على "بنتي" في القائمة\n
+        ٢. اضغط عليها\n
+        ٣. فعل خدمة الوصول\n
+        ٤. اضغط "سماح" في الرسالة
+    </string>
+    
+    <!-- Battery Optimization -->
+    <string name="battery_optimization_title">تحسين البطارية</string>
+    <string name="battery_optimization_message">عشان بنتي تشتغل أحسن، اسمحلها تشتغل في الخلفية.</string>
+    <string name="allow">اسمح</string>
+    <string name="skip">تخطي</string>
+    
+    <!-- Model Download -->
+    <string name="download_models_title">تحميلي ملفات الذكاء الاصطناعي؟</string>
+    <string name="download_models_message">عشان أشتغل من غير نت، محتاجة أحمل ملفات صوت وذكاء اصطناعي (~160 ميجا). تحب أكمل؟</string>
+    <string name="download_now">حمّل دلوقتي</string>
+    <string name="use_cloud_only">أشتغل بالنت بس</string>
+    <string name="downloading_file">جاري تحميل %1$s… %2$d%%</string>
+    <string name="download_complete">التحميل خلص! ✅</string>
+    <string name="download_failed">التحميل فشل: %1$s</string>
+    
+    <!-- Notifications -->
+    <string name="notification_channel_description">إشعار مساعد بنتي الصوتي</string>
+    <string name="notification_title">مساعد بنتي الصوتي</string>
+    <string name="notification_listening">سامعة "يا بنتي"… 🎤</string>
+    
+    <!-- Service States -->
+    <string name="state_ready">جاهزة ✅</string>
+    <string name="state_listening">بسمع… 🎧</string>
+    <string name="state_processing">بفكر… 🤔</string>
+    <string name="state_error">فيه مشكلة ❌</string>
+    <string name="state_unknown">مش عارفة</string>
+    
+    <!-- Commands -->
+    <string name="command_confirmed">تمام يا باشا، تنفيذ: %1$s ✅</string>
+    <string name="command_success">تم: %1$s</string>
+    <string name="command_failed">مقدرتش أعمل كده، جرب تاني 🙁</string>
+    <string name="command_failed_generic">الحاجه دي مش نفع، جرب تاني</string>
+    <string name="fallback_message">مقدرتش أفهم كويس، ممكن تعيد اللي قولته؟ 🤔</string>
+    <string name="error_message">حصلت مشكلة، جرب تاني</string>
+    <string name="offline_mode">أنا شغالة أوفلاين! بعض الميزات هتكون محدودة 📶</string>
+    
+    <!-- Device Info -->
+    <string name="huawei_device_detected">جهاز هواوي - خدمات HMS مفعلة</string>
+    
+    <!-- Settings -->
+    <string name="settings">الإعدادات</string>
+    <string name="settings_voice">إعدادات الصوت</string>
+    <string name="settings_language">اللغة</string>
+    <string name="settings_speech_rate">سرعة الكلام</string>
+    <string name="settings_wake_sensitivity">حساسية كلمة التنبيه</string>
+    <string name="settings_addresses">العناوين المحفوظة</string>
+    <string name="settings_home">البيت</string>
+    <string name="settings_work">الشغل</string>
+    
+    <!-- About -->
+    <string name="about">عن بنتي</string>
+    <string name="version">الإصدار %1$s</string>
+    <string name="developer">تطوير الدكتور وليد مندور</string>
+    
+    <!-- Sample Commands for Help -->
+    <string-array name="sample_commands">
+        <item>يا بنتي، شغلي التكييف</item>
+        <item>يا بنتي، خديني للبيت</item>
+        <item>يا بنتي، أقرب بنزين</item>
+        <item>يا بنتي، شغلي موسيقى</item>
+        <item>يا بنتي، وقفة الأغنية</item>
+        <item>يا بنتي، الحرارة كام؟</item>
+        <item>يا بنتي، زيود المكيف</item>
+        <item>يا بنتي، الساعة كام؟</item>
+    </string-array>
+</resources>
