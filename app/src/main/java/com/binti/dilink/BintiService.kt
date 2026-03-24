@@ -190,6 +190,12 @@ class BintiService : Service() {
             Log.i(TAG, "🎤 Starting wake word detection...")
             _serviceState.value = ServiceState.ListeningForWakeWord
             
+            // Start the wake word detector listening
+            launch {
+                wakeWordDetector.startListening()
+            }
+            
+            // Collect wake word detection events
             wakeWordDetector.wakeWordFlow
                 .catch { e -> Log.e(TAG, "Wake word detection error", e) }
                 .collect { detected ->

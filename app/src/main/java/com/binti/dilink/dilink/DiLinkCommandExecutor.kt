@@ -1,11 +1,7 @@
 package com.binti.dilink.dilink
 
-import android.accessibilityservice.AccessibilityService
 import android.content.Context
-import android.graphics.Rect
-import android.os.Bundle
 import android.util.Log
-import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import com.binti.dilink.nlp.IntentResult
 import kotlinx.coroutines.Dispatchers

@@ -98,8 +98,6 @@
     <string name="version">Version %1$s</string>
     <string name="developer">Developed by Dr. Waleed Mandour</string>
     
-    <!-- Colors (for reference) -->
-    <color name="huawei_red">#CF0A2C</color>
-    <color name="permission_granted">#4CAF50</color>
-    <color name="permission_denied">#F44336</color>
+    <!-- Accessibility Service -->
+    <string name="accessibility_service_description">Binti voice assistant service to control your DiLink vehicle with Egyptian Arabic voice commands</string>
 </resources>

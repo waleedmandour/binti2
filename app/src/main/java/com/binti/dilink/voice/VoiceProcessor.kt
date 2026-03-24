@@ -16,8 +16,6 @@ import kotlinx.coroutines.withTimeout
 import org.json.JSONObject
 import org.vosk.Model
 import org.vosk.Recognizer
-import org.vosk.android.RecognitionListener
-import org.vosk.android.SpeechService
 import java.io.File
 import java.io.IOException
 import kotlin.coroutines.resume

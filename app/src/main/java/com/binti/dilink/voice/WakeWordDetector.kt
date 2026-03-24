@@ -18,7 +18,6 @@ import java.io.FileInputStream
 import java.io.IOException
 import java.nio.MappedByteBuffer
 import java.nio.channels.FileChannel
-import kotlin.math.abs
 
 /**
  * Wake Word Detector - "يا بنتي" (Ya Binti)
