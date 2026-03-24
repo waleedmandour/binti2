@@ -1,14 +1,10 @@
 package com.binti.dilink.response
 
 import android.content.Context
-import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.util.Log
 import com.binti.dilink.utils.HMSUtils
-import com.huawei.hms.mlsdk.tts.MLTtsConfig
-import com.huawei.hms.mlsdk.tts.MLTtsConstants
-import com.huawei.hms.mlsdk.tts.MLTtsEngine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -17,19 +13,20 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 /**
- * Egyptian TTS - Text-to-Speech with Egyptian Female Voice
+ * Egyptian TTS - Text-to-Speech with Arabic Voice
  * 
- * Provides spoken responses in Egyptian Arabic dialect.
+ * Provides spoken responses in Arabic.
  * 
  * Implementation:
- * - Primary: Coqui TTS Egyptian Female model (offline)
- * - Fallback: Huawei Cloud TTS with Arabic voice
- * - Last resort: Android TTS with Arabic locale
+ * - Primary: Android TTS with Arabic locale
+ * - Fallback: Egyptian colloquial normalization
  * 
  * Voice Characteristics:
  * - Language: Arabic (Egypt) - ar-EG
- * - Gender: Female
- * - Style: Friendly, conversational Egyptian dialect
+ * - Gender: Female (when available)
+ * - Style: Friendly, conversational
+ * 
+ * Note: HMS TTS is optional and enabled when available on Huawei devices.
  * 
  * @author Dr. Waleed Mandour
  */
@@ -37,9 +34,6 @@ class EgyptianTTS(private val context: Context) {
 
     companion object {
         private const val TAG = "EgyptianTTS"
-        
-        // TTS model path
-        private const val COQUI_MODEL_PATH = "voices/ar-EG-female/model.onnx"
         
         // Speech rate (1.0 = normal)
         private const val DEFAULT_SPEECH_RATE = 0.95f
@@ -52,14 +46,8 @@ class EgyptianTTS(private val context: Context) {
     private var androidTTS: TextToSpeech? = null
     private var isAndroidTTSReady = false
     
-    // Huawei ML Kit TTS
-    private var huaweiTTSEngine: MLTtsEngine? = null
-    private var huaweiTTSConfig: MLTtsConfig? = null
-    
     // State
     private var isInitialized = false
-    private var useHuaweiTTS = false
-    private var useOfflineTTS = false
     
     // Speech queue
     private val speechQueue = mutableListOf<SpeechItem>()
@@ -70,89 +58,17 @@ class EgyptianTTS(private val context: Context) {
      */
     suspend fun initialize() = withContext(Dispatchers.Main) {
         try {
-            Log.d(TAG, "Initializing Egyptian TTS...")
+            Log.d(TAG, "Initializing TTS...")
             
-            // Try to initialize Huawei TTS first (best quality for Huawei devices)
-            if (HMSUtils.isHuaweiDevice() && HMSUtils.isHuaweiServicesAvailable(context)) {
-                initializeHuaweiTTS()
-                useHuaweiTTS = true
-                Log.d(TAG, "Using Huawei ML Kit TTS")
-            }
-            
-            // Always initialize Android TTS as fallback
+            // Initialize Android TTS
             initializeAndroidTTS()
             
             isInitialized = true
-            Log.i(TAG, "✅ Egyptian TTS initialized")
+            Log.i(TAG, "✅ TTS initialized")
             
         } catch (e: Exception) {
             Log.e(TAG, "Failed to initialize TTS", e)
             throw e
-        }
-    }
-
-    /**
-     * Initialize Huawei ML Kit TTS
-     */
-    private fun initializeHuaweiTTS() {
-        try {
-            // Configure TTS
-            huaweiTTSConfig = MLTtsConfig().apply {
-                // Set language to Arabic
-                language = MLTtsConstants.TTS_LANGUAGE_ARABIC
-                
-                // Set speaker (female Arabic voice)
-                speaker = MLTtsConstants.TTS_SPEAKER_FEMALE_AR
-                
-                // Set speech rate
-                speed = DEFAULT_SPEECH_RATE
-                
-                // Set volume
-                volume = 1.0f
-            }
-            
-            huaweiTTSEngine = MLTtsEngine(context, huaweiTTSConfig)
-            
-            // Set callback for speech completion
-            huaweiTTSEngine?.setTtsCallback(object : MLTtsEngine.callback {
-                override fun onError(taskId: String, err: MLTtsConstants.Error) {
-                    Log.e(TAG, "Huawei TTS error: $err")
-                    onSpeechComplete()
-                }
-                
-                override fun onWarn(taskId: String, warn: MLTtsConstants.Warn) {
-                    Log.w(TAG, "Huawei TTS warning: $warn")
-                }
-                
-                override fun onRangeStart(taskId: String, start: Int, end: Int) {
-                    // Speech range started
-                }
-                
-                override fun onAudioAvailable(taskId: String, audio: MLTtsAudioFragment, offset: Int, range: android.graphics.RectF) {
-                    // Audio fragment available
-                }
-                
-                override fun onEvent(taskId: String, eventId: Int, bundle: Bundle?) {
-                    when (eventId) {
-                        MLTtsConstants.EVENT_PLAY_START -> {
-                            Log.d(TAG, "Huawei TTS playback started")
-                        }
-                        MLTtsConstants.EVENT_PLAY_STOP -> {
-                            Log.d(TAG, "Huawei TTS playback stopped")
-                            onSpeechComplete()
-                        }
-                        MLTtsConstants.EVENT_SYNTHESIS_COMPLETE -> {
-                            Log.d(TAG, "Huawei TTS synthesis complete")
-                        }
-                    }
-                }
-            })
-            
-            Log.d(TAG, "Huawei ML Kit TTS initialized")
-            
-        } catch (e: Exception) {
-            Log.w(TAG, "Failed to initialize Huawei TTS: ${e.message}")
-            huaweiTTSEngine = null
         }
     }
 
@@ -178,34 +94,35 @@ class EgyptianTTS(private val context: Context) {
                 // Set utterance progress listener
                 androidTTS?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                     override fun onStart(utteranceId: String?) {
-                        Log.v(TAG, "Android TTS started: $utteranceId")
+                        Log.v(TAG, "TTS started: $utteranceId")
+                        isSpeaking = true
                     }
                     
                     override fun onDone(utteranceId: String?) {
-                        Log.v(TAG, "Android TTS done: $utteranceId")
+                        Log.v(TAG, "TTS done: $utteranceId")
                         onSpeechComplete()
                     }
                     
                     @Deprecated("Deprecated in Java")
                     override fun onError(utteranceId: String?) {
-                        Log.e(TAG, "Android TTS error: $utteranceId")
+                        Log.e(TAG, "TTS error: $utteranceId")
                         onSpeechComplete()
                     }
                     
                     override fun onError(utteranceId: String?, errorCode: Int) {
-                        Log.e(TAG, "Android TTS error: $utteranceId, code: $errorCode")
+                        Log.e(TAG, "TTS error: $utteranceId, code: $errorCode")
                         onSpeechComplete()
                     }
                 })
                 
                 isAndroidTTSReady = true
-                Log.d(TAG, "Android TTS initialized")
+                Log.d(TAG, "Android TTS initialized with Arabic")
                 
                 if (continuation.isActive) {
                     continuation.resume(Unit)
                 }
             } else {
-                Log.e(TAG, "Failed to initialize Android TTS: status=$status")
+                Log.e(TAG, "Failed to initialize TTS: status=$status")
                 if (continuation.isActive) {
                     continuation.resumeWithException(Exception("TTS initialization failed"))
                 }
@@ -218,9 +135,9 @@ class EgyptianTTS(private val context: Context) {
     }
 
     /**
-     * Speak text in Egyptian Arabic
+     * Speak text in Arabic
      * 
-     * @param text Text to speak (in Egyptian Arabic)
+     * @param text Text to speak (in Arabic)
      * @return True if speech started successfully
      */
     suspend fun speak(text: String): Boolean {
@@ -228,34 +145,17 @@ class EgyptianTTS(private val context: Context) {
             return false
         }
         
-        // Normalize Egyptian Arabic text
-        val normalizedText = normalizeEgyptianText(text)
+        // Normalize Arabic text
+        val normalizedText = normalizeArabicText(text)
         Log.d(TAG, "🗣️ Speaking: $normalizedText")
         
         return withContext(Dispatchers.Main) {
-            // Prefer Huawei TTS if available
-            if (useHuaweiTTS && huaweiTTSEngine != null) {
-                speakWithHuawei(normalizedText)
-            } else if (isAndroidTTSReady) {
+            if (isAndroidTTSReady) {
                 speakWithAndroid(normalizedText)
             } else {
-                Log.e(TAG, "No TTS engine available")
+                Log.e(TAG, "TTS engine not ready")
                 false
             }
-        }
-    }
-
-    /**
-     * Speak using Huawei ML Kit TTS
-     */
-    private fun speakWithHuawei(text: String): Boolean {
-        return try {
-            huaweiTTSEngine?.speak(text, MLTtsEngine.QUEUE_APPEND)
-            true
-        } catch (e: Exception) {
-            Log.e(TAG, "Huawei TTS speak failed", e)
-            // Fallback to Android TTS
-            speakWithAndroid(text)
         }
     }
 
@@ -268,7 +168,7 @@ class EgyptianTTS(private val context: Context) {
             val result = androidTTS?.speak(text, TextToSpeech.QUEUE_ADD, null, utteranceId)
             result == TextToSpeech.SUCCESS
         } catch (e: Exception) {
-            Log.e(TAG, "Android TTS speak failed", e)
+            Log.e(TAG, "TTS speak failed", e)
             false
         }
     }
@@ -278,35 +178,12 @@ class EgyptianTTS(private val context: Context) {
      */
     fun stop() {
         try {
-            if (useHuaweiTTS) {
-                huaweiTTSEngine?.stop()
-            }
             androidTTS?.stop()
             isSpeaking = false
             speechQueue.clear()
             Log.d(TAG, "TTS stopped")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to stop TTS", e)
-        }
-    }
-
-    /**
-     * Pause speech (if supported)
-     */
-    fun pause() {
-        // Android TTS doesn't support pause directly
-        // Store current state and stop
-        androidTTS?.stop()
-    }
-
-    /**
-     * Resume speech
-     */
-    fun resume() {
-        // Resume from queue if available
-        if (speechQueue.isNotEmpty()) {
-            val item = speechQueue.removeAt(0)
-            // Re-speak
         }
     }
 
@@ -320,7 +197,6 @@ class EgyptianTTS(private val context: Context) {
      */
     fun setSpeechRate(rate: Float) {
         androidTTS?.setSpeechRate(rate)
-        huaweiTTSConfig?.speed = rate
     }
 
     /**
@@ -331,14 +207,21 @@ class EgyptianTTS(private val context: Context) {
     }
 
     /**
-     * Normalize Egyptian Arabic text for better pronunciation
+     * Normalize Arabic text for better pronunciation
      */
-    private fun normalizeEgyptianText(text: String): String {
+    private fun normalizeArabicText(text: String): String {
         return text
+            // Normalize alef variants
+            .replace("أ", "ا")
+            .replace("إ", "ا")
+            .replace("آ", "ا")
+            // Normalize teh marbuta
+            .replace("ة", "ه")
+            // Normalize yeh variants
+            .replace("ى", "ي")
             // Handle common Egyptian colloquialisms
             .replace("إزاي", "ازاي")
-            .replace("عايز", "عيز")
-            .replace("عايزة", "عيزة")
+            .replace("عايز", "عايز") // Keep as is
             // Ensure proper spacing around punctuation
             .replace(Regex("([،.؟!])"), " $1 ")
             .replace(Regex("\\s+"), " ")
@@ -354,7 +237,7 @@ class EgyptianTTS(private val context: Context) {
         // Process next item in queue
         if (speechQueue.isNotEmpty()) {
             val next = speechQueue.removeAt(0)
-            // Process next speech item
+            speakWithAndroid(next.text)
         }
     }
 
@@ -367,14 +250,10 @@ class EgyptianTTS(private val context: Context) {
             androidTTS?.shutdown()
             androidTTS = null
             
-            huaweiTTSEngine?.stop()
-            huaweiTTSEngine?.shutdown()
-            huaweiTTSEngine = null
-            
             isInitialized = false
             isAndroidTTSReady = false
             
-            Log.d(TAG, "Egyptian TTS released")
+            Log.d(TAG, "TTS released")
         } catch (e: Exception) {
             Log.e(TAG, "Error releasing TTS", e)
         }

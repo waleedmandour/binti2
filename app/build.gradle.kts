@@ -99,17 +99,21 @@ dependencies {
     // ONNX Runtime for ASR
     implementation("com.microsoft.onnxruntime:onnxruntime-android:1.16.3")
     
-    // Huawei HMS Core - AGConnect for AppGallery
-    implementation("com.huawei.agconnect:agconnect-core:1.9.1.301")
+    // Huawei HMS Core - AGConnect for AppGallery (optional)
+    // Uncomment when deploying to Huawei AppGallery
+    // implementation("com.huawei.agconnect:agconnect-core:1.9.1.301")
     
-    // Huawei HMS Core - ML Kit for ASR/TTS fallback
-    implementation("com.huawei.hms:ml-speech-semantics-recognizer:3.8.0.301")
-    implementation("com.huawei.hms:ml-tts:3.8.0.301")
-    implementation("com.huawei.hms:ml-computer-voice-asr:3.8.0.301")
+    // Huawei HMS Core - ML Kit for ASR/TTS fallback (optional)
+    // These require Huawei Maven repo and valid credentials
+    // Uncomment when deploying to Huawei devices via AppGallery
+    // implementation("com.huawei.hms:ml-speech-semantics-recognizer:3.8.0.301")
+    // implementation("com.huawei.hms:ml-tts:3.8.0.301")
+    // implementation("com.huawei.hms:ml-computer-voice-asr:3.8.0.301")
     
-    // Huawei Account & In-App Updates
-    implementation("com.huawei.hms:hwid:6.12.0.300")
-    implementation("com.huawei.updatesdk:updatesdk:6.12.0.300")
+    // Huawei Account & In-App Updates (optional)
+    // Uncomment when deploying to Huawei AppGallery
+    // implementation("com.huawei.hms:hwid:6.12.0.300")
+    // implementation("com.huawei.updatesdk:updatesdk:6.12.0.300")
     
     // Vosk for offline ASR (Apache 2.0)
     implementation("com.alphacephei:vosk-android:0.3.47")

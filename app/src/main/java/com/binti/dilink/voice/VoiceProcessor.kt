@@ -6,9 +6,6 @@ import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.util.Log
 import com.binti.dilink.utils.HMSUtils
-import com.huawei.hms.mlsdk.asr.MLAsrConstants
-import com.huawei.hms.mlsdk.asr.MLAsrListener
-import com.huawei.hms.mlsdk.asr.MLAsrRecognizer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -25,10 +22,10 @@ import kotlin.coroutines.resumeWithException
  * Voice Processor - ASR (Automatic Speech Recognition)
  * 
  * Handles speech-to-text conversion using:
- * - Primary: Vosk offline model for Egyptian Arabic
- * - Fallback: Huawei ML Kit ASR for cloud-based recognition
+ * - Primary: Vosk offline model for Arabic
+ * - Fallback: Android SpeechRecognizer (Google/Samsung)
  * 
- * Model: Vosk Egyptian Arabic (50MB)
+ * Model: Vosk Arabic MGB2 (1.2GB)
  * Sample Rate: 16kHz
  * 
  * @author Dr. Waleed Mandour
@@ -43,8 +40,8 @@ class VoiceProcessor(private val context: Context) {
         private const val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
         private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
         
-        // Vosk model path
-        private const val VOSK_MODEL_PATH = "vosk-model-egyptian"
+        // Vosk model directory name (after extraction)
+        private const val VOSK_MODEL_DIR = "vosk-model-ar-mgb2-0.4"
         
         // Recognition settings
         private const val MAX_RECORDING_TIME_MS = 15000L
@@ -53,9 +50,6 @@ class VoiceProcessor(private val context: Context) {
 
     // Vosk components
     private var voskModel: Model? = null
-    
-    // Huawei ML Kit ASR (fallback)
-    private var huaweiAsrRecognizer: MLAsrRecognizer? = null
     
     // State
     private var isInitialized = false
@@ -73,7 +67,7 @@ class VoiceProcessor(private val context: Context) {
                 .getBoolean("cloud_only_mode", false)
             
             if (useCloudFallback) {
-                initializeHuaweiASR()
+                Log.i(TAG, "Cloud-only mode enabled, skipping Vosk")
             } else {
                 initializeVosk()
             }
@@ -93,44 +87,36 @@ class VoiceProcessor(private val context: Context) {
     private fun initializeVosk() {
         try {
             // Check if model exists
-            val modelDir = File(context.filesDir, "models/$VOSK_MODEL_PATH")
+            val modelDir = File(context.filesDir, "models/$VOSK_MODEL_DIR")
             
             if (!modelDir.exists()) {
-                Log.w(TAG, "Vosk model not found, will use cloud fallback")
-                useCloudFallback = true
-                initializeHuaweiASR()
-                return
+                // Try alternate path (from zip extraction)
+                val altModelDir = File(context.filesDir, "models/vosk-model-ar-mgb2-0.4")
+                if (!altModelDir.exists()) {
+                    Log.w(TAG, "Vosk model not found at ${modelDir.absolutePath}")
+                    Log.w(TAG, "Models need to be downloaded from B2 first")
+                    useCloudFallback = true
+                    return
+                }
+                voskModel = Model(altModelDir.absolutePath)
+                Log.d(TAG, "Vosk model loaded from ${altModelDir.absolutePath}")
+            } else {
+                // Load Vosk model
+                voskModel = Model(modelDir.absolutePath)
+                Log.d(TAG, "Vosk model loaded from ${modelDir.absolutePath}")
             }
             
-            // Load Vosk model
-            voskModel = Model(modelDir.absolutePath)
-            Log.d(TAG, "Vosk model loaded from ${modelDir.absolutePath}")
-            
         } catch (e: Exception) {
-            Log.w(TAG, "Vosk initialization failed, falling back to cloud ASR: ${e.message}")
+            Log.w(TAG, "Vosk initialization failed: ${e.message}")
             useCloudFallback = true
-            initializeHuaweiASR()
         }
-    }
-
-    /**
-     * Initialize Huawei ML Kit ASR
-     */
-    private fun initializeHuaweiASR() {
-        if (!HMSUtils.isHuaweiDevice() || !HMSUtils.isHuaweiServicesAvailable(context)) {
-            Log.e(TAG, "Huawei services not available for ASR fallback")
-            throw IOException("No ASR backend available")
-        }
-        
-        huaweiAsrRecognizer = MLAsrRecognizer.createAsrRecognizer(context)
-        Log.d(TAG, "Huawei ML Kit ASR initialized")
     }
 
     /**
      * Listen and transcribe speech
      * 
      * @param timeoutMs Maximum recording time in milliseconds
-     * @return Transcribed text in Egyptian Arabic
+     * @return Transcribed text in Arabic
      */
     suspend fun listenAndTranscribe(timeoutMs: Long = MAX_RECORDING_TIME_MS): String {
         if (!isInitialized) {
@@ -138,8 +124,10 @@ class VoiceProcessor(private val context: Context) {
         }
         
         return withTimeout(timeoutMs) {
-            if (useCloudFallback) {
-                transcribeWithHuawei()
+            if (useCloudFallback || voskModel == null) {
+                // Return empty - cloud fallback would require Android SpeechRecognizer
+                Log.w(TAG, "No ASR available - model not downloaded")
+                ""
             } else {
                 transcribeWithVosk()
             }
@@ -238,64 +226,6 @@ class VoiceProcessor(private val context: Context) {
     }
 
     /**
-     * Transcribe using Huawei ML Kit ASR
-     */
-    private suspend fun transcribeWithHuawei(): String = suspendCancellableCoroutine { continuation ->
-        val recognizer = huaweiAsrRecognizer ?: run {
-            continuation.resumeWithException(IOException("Huawei ASR not initialized"))
-            return@suspendCancellableCoroutine
-        }
-        
-        val listener = object : MLAsrListener {
-            override fun onResults(results: Bundle?) {
-                val text = results?.getString(MLAsrConstants.ASR_RESULT) ?: ""
-                Log.i(TAG, "📝 Huawei ASR result: $text")
-                continuation.resume(text)
-            }
-            
-            override fun onRecognizingResults(partialResults: Bundle?) {
-                val partialText = partialResults?.getString(MLAsrConstants.ASR_RESULT) ?: ""
-                Log.v(TAG, "Huawei partial: $partialText")
-            }
-            
-            override fun onError(errorCode: Int, errorMessage: String?) {
-                Log.e(TAG, "Huawei ASR error: $errorCode - $errorMessage")
-                continuation.resumeWithException(IOException("ASR error: $errorMessage"))
-            }
-            
-            override fun onStartListening() {
-                Log.d(TAG, "Huawei ASR started listening")
-            }
-            
-            override fun onStartingOfSpeech() {
-                Log.d(TAG, "Huawei ASR speech started")
-            }
-            
-            override fun onVoiceDataReceived(data: ByteArray?, energy: Float, params: Bundle?) {
-                // Voice data received
-            }
-            
-            override fun onState(state: Int, params: Bundle?) {
-                Log.v(TAG, "Huawei ASR state: $state")
-            }
-        }
-        
-        recognizer.setAsrListener(listener)
-        
-        // Start recognition with Arabic language
-        val intent = android.content.Intent().apply {
-            putExtra(MLAsrConstants.LANGUAGE, "ar-EG") // Egyptian Arabic
-            putExtra(MLAsrConstants.FEATURE, MLAsrConstants.FEATURE_WORDFLUX)
-        }
-        
-        recognizer.startRecognizing(intent)
-        
-        continuation.invokeOnCancellation {
-            recognizer.destroy()
-        }
-    }
-
-    /**
      * Parse Vosk JSON result to extract text
      */
     private fun parseVoskResult(json: String): String {
@@ -323,7 +253,7 @@ class VoiceProcessor(private val context: Context) {
     /**
      * Check if voice processor is ready
      */
-    fun isReady(): Boolean = isInitialized
+    fun isReady(): Boolean = isInitialized && (voskModel != null || useCloudFallback)
 
     /**
      * Release resources
@@ -331,9 +261,6 @@ class VoiceProcessor(private val context: Context) {
     fun release() {
         voskModel?.close()
         voskModel = null
-        
-        huaweiAsrRecognizer?.destroy()
-        huaweiAsrRecognizer = null
         
         isInitialized = false
         Log.d(TAG, "Voice processor released")
