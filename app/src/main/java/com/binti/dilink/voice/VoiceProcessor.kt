@@ -44,7 +44,7 @@ class VoiceProcessor(private val context: Context) {
         private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
         
         // Vosk model path
-        private const val VOSK_MODEL_PATH = "vosk-model-egyptian"
+        private const val VOSK_MODEL_PATH = "vosk-model-ar-mgb2"
         
         // Recognition settings
         private const val MAX_RECORDING_TIME_MS = 15000L

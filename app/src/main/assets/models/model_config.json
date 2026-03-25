@@ -1,65 +1,51 @@
 {
-  "version": "1.0.0",
+  "version": "2.0.0",
   "last_updated": "2025-01-01",
-  "min_app_version": "1.0.0",
+  "min_app_version": "2.0.0",
   "models": [
-    {
-      "id": "wake_word",
-      "name": "Wake Word Detector",
-      "description": "Detects 'يا بنتي' wake word",
-      "file": "ya_binti_detector.tflite",
-      "download_url": "${B2_BASE_URL}/wake/ya_binti_detector.tflite",
-      "size_mb": 5,
-      "sha256": "",
-      "required": true,
-      "extract": false,
-      "relative_path": "models/wake",
-      "training_info": {
-        "model_type": "TFLite CNN",
-        "sample_rate": 16000,
-        "frame_size_ms": 1000,
-        "hop_size_ms": 500,
-        "mfcc_features": 40,
-        "confidence_threshold": 0.85
-      }
-    },
     {
       "id": "asr_arabic",
       "name": "Arabic ASR (Vosk MGB2)",
-      "description": "Modern Standard Arabic speech recognition",
+      "description": "Modern Standard Arabic speech recognition - also used for wake word detection via grammar constraint",
       "file": "vosk-model-ar-mgb2.zip",
-      "download_url": "${B2_BASE_URL}/asr/vosk-model-ar-mgb2.zip",
+      "download_url": "https://drive.google.com/uc?export=download&id=1bK1-pUCH5xykvKdB7nB7mZ_1wBKH05qZ",
       "size_mb": 1247,
       "sha256": "",
       "required": true,
       "extract": true,
       "relative_path": "models",
-      "notes": "Large model - recommend WiFi for download",
-      "source": "https://alphacephei.com/vosk/models"
+      "notes": "Large model - recommend WiFi for download. Used for both ASR and wake word detection.",
+      "source": "https://alphacephei.com/vosk/models",
+      "wake_word_support": {
+        "method": "vosk_grammar",
+        "wake_phrase": "يا بنتي",
+        "grammar": "[\"يا بنتي\", \"[unk]\"]"
+      }
     },
     {
       "id": "nlu_classifier",
       "name": "Intent Classifier (EgyBERT)",
       "description": "Egyptian Arabic intent classification",
       "file": "egybert_tiny_int8.onnx",
-      "download_url": "${B2_BASE_URL}/nlu/egybert_tiny_int8.onnx",
+      "download_url": "https://drive.google.com/uc?export=download&id=YOUR_NLU_FILE_ID",
       "size_mb": 25,
       "sha256": "",
-      "required": true,
+      "required": false,
       "extract": false,
       "relative_path": "models/nlu",
       "training_info": {
         "base_model": "aubmindlab/bert-base-arabertv02",
         "quantization": "int8",
         "labels": ["AC_CONTROL", "NAVIGATION", "MEDIA", "PHONE", "INFO", "SYSTEM"]
-      }
+      },
+      "fallback": "Rule-based intent matching is used if this model is unavailable"
     },
     {
       "id": "tts_voice",
       "name": "Egyptian TTS Voice",
       "description": "Egyptian female voice for text-to-speech",
       "file": "ar-eg-female.zip",
-      "download_url": "${B2_BASE_URL}/tts/ar-eg-female.zip",
+      "download_url": "https://drive.google.com/uc?export=download&id=YOUR_TTS_FILE_ID",
       "size_mb": 80,
       "sha256": "",
       "required": false,
@@ -70,31 +56,33 @@
         "voice_type": "female",
         "dialect": "Egyptian Arabic",
         "sample_rate": 22050
-      }
+      },
+      "fallback": "Android TTS or Huawei ML Kit TTS is used if this model is unavailable"
     },
     {
       "id": "intent_map",
       "name": "Intent Pattern Map",
       "description": "JSON mapping of commands to intents",
       "file": "dilink_intent_map.json",
-      "download_url": "${B2_BASE_URL}/nlp/dilink_intent_map.json",
+      "download_url": "",
       "size_mb": 0,
       "sha256": "",
       "required": true,
       "extract": false,
-      "relative_path": "assets/commands"
+      "relative_path": "assets/commands",
+      "notes": "Included in app assets, no download needed"
     }
   ],
-  "total_size_mb": 1357,
+  "total_size_mb": 1352,
   "hosting": {
-    "provider": "Backblaze B2",
-    "bucket": "binti2-models",
-    "base_url": "https://f001.backblazeb2.com/file/binti2-models",
-    "region": "us-west-004"
+    "provider": "Google Drive",
+    "notes": "Models are hosted on Google Drive with public sharing. Users can also host their own models.",
+    "url_format": "https://drive.google.com/uc?export=download&id=FILE_ID"
   },
   "download_options": {
     "wifi_only_recommended": true,
     "show_size_warning_above_mb": 500,
-    "resume_supported": true
+    "resume_supported": false,
+    "virus_scan_warning": "Files >100MB may show virus scan warning - handled automatically by app"
   }
 }

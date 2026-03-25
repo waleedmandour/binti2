@@ -23,7 +23,7 @@ import com.binti.dilink.dilink.DiLinkCommandExecutor
 import com.binti.dilink.nlp.IntentClassifier
 import com.binti.dilink.response.EgyptianTTS
 import com.binti.dilink.voice.VoiceProcessor
-import com.binti.dilink.voice.WakeWordDetector
+import com.binti.dilink.voice.WakeWordDetectorVosk
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
@@ -65,7 +65,7 @@ class BintiService : Service() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     
     // Components
-    private lateinit var wakeWordDetector: WakeWordDetector
+    private lateinit var wakeWordDetector: WakeWordDetectorVosk
     private lateinit var voiceProcessor: VoiceProcessor
     private lateinit var intentClassifier: IntentClassifier
     private lateinit var commandExecutor: DiLinkCommandExecutor
@@ -140,7 +140,7 @@ class BintiService : Service() {
                 _serviceState.value = ServiceState.Initializing
                 
                 // Initialize wake word detector
-                wakeWordDetector = WakeWordDetector(this@BintiService)
+                wakeWordDetector = WakeWordDetectorVosk(this@BintiService)
                 wakeWordDetector.initialize()
                 Log.d(TAG, "✅ Wake word detector initialized")
                 

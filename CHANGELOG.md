@@ -24,7 +24,8 @@ This is a major version upgrade with significant improvements to model hosting, 
 - **Progress Tracking** - Enhanced progress reporting for large model downloads (1.2GB ASR model)
 
 #### Voice Processing
-- **Enhanced Wake Word Detection** - Improved TFLite CNN model with GPU delegate support
+- **Vosk Grammar-based Wake Word Detection** - Uses Vosk grammar constraint for "يا بنتي" detection instead of separate TFLite model
+- **Shared ASR Model** - Wake word detection reuses the same Vosk Arabic model, reducing storage requirements
 - **Silence Detection** - Automatic stop after 1.5 seconds of silence
 - **Consecutive Detection Filter** - Reduces false positives with consecutive detection requirement
 
@@ -104,11 +105,10 @@ This is a major version upgrade with significant improvements to model hosting, 
 
 | Component | Size | License |
 |-----------|------|---------|
-| Wake Word (TFLite) | 5 MB | MIT |
-| ASR (Vosk MGB2) | 1,247 MB | Apache 2.0 |
+| ASR + Wake Word (Vosk MGB2) | 1,247 MB | Apache 2.0 |
 | NLU (EgyBERT) | 25 MB | MIT |
 | TTS Voice | 80 MB | MPL 2.0 |
-| **Total** | **~1.4 GB** | |
+| **Total** | **~1.35 GB** | |
 
 ---
 
