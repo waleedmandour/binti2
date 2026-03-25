@@ -3,12 +3,12 @@
     <!-- App Info -->
     <string name="app_name">Binti</string>
     <string name="app_description">Egyptian Arabic Voice Assistant for BYD DiLink</string>
-    
+
     <!-- Wake Word -->
     <string name="wake_word">Ya Binti</string>
     <string name="wake_word_arabic">يا بنتي</string>
     <string name="wake_response">Yes, I\'m listening</string>
-    
+
     <!-- Main Activity -->
     <string name="welcome_message">Welcome! I can help you control your BYD vehicle with your voice in Egyptian Arabic.</string>
     <string name="listening_hint">I\'m listening… tell me what you need!</string>
@@ -16,11 +16,11 @@
     <string name="stop_service">Stop Binti</string>
     <string name="service_started">Binti is now listening</string>
     <string name="service_stopped">Binti stopped</string>
-    
+
     <!-- Permissions -->
     <string name="permissions_required_title">Permissions Required</string>
     <string name="permissions_required_message">Binti needs microphone, overlay, and accessibility permissions to work properly.</string>
-    
+
     <string name="mic_permission_title">Microphone</string>
     <string name="mic_permission_desc">Required for voice recognition</string>
     <string name="overlay_permission_title">Display Over Apps</string>
@@ -29,12 +29,12 @@
     <string name="accessibility_permission_desc">Required to control DiLink interface</string>
     <string name="notification_permission_title">Notifications</string>
     <string name="notification_permission_desc">Required for service notification</string>
-    
+
     <string name="permission_granted">Granted</string>
     <string name="grant_permission">Grant</string>
     <string name="ok">OK</string>
     <string name="got_it">Got it</string>
-    
+
     <!-- Accessibility Guide -->
     <string name="accessibility_guide_title">Enable Accessibility</string>
     <string name="accessibility_guide_message">
@@ -43,13 +43,13 @@
         3. Enable the accessibility service\n
         4. Confirm the permission dialog
     </string>
-    
+
     <!-- Battery Optimization -->
     <string name="battery_optimization_title">Battery Optimization</string>
     <string name="battery_optimization_message">For best results, allow Binti to run in the background by disabling battery optimization.</string>
     <string name="allow">Allow</string>
     <string name="skip">Skip</string>
-    
+
     <!-- Model Download -->
     <string name="download_models_title">Download AI Models?</string>
     <string name="download_models_message">To work offline, Binti needs to download AI models (~160MB). Continue?</string>
@@ -58,20 +58,30 @@
     <string name="downloading_file">Downloading %1$s… %2$d%%</string>
     <string name="download_complete">Download complete!</string>
     <string name="download_failed">Download failed: %1$s</string>
-    
+
+    <!-- Model Download Errors -->
+    <string name="error_download_network">Network error. Please check your connection and try again.</string>
+    <string name="error_download_storage">Insufficient storage. Please free up space and try again.</string>
+    <string name="error_download_timeout">Download timed out. Try again on WiFi.</string>
+    <string name="error_download_corrupted">Downloaded file is corrupted. Please try again.</string>
+    <string name="error_download_google_drive">Cannot connect to Google Drive. Please check settings.</string>
+    <string name="error_download_permission">Download permission required. Please allow file downloads.</string>
+    <string name="error_model_missing">Model file not found. Please download models first.</string>
+    <string name="error_model_init">Failed to initialize model. Please restart the app.</string>
+
     <!-- Notifications -->
     <string name="notification_channel_description">Binti voice assistant notification</string>
     <string name="notification_title">Binti Voice Assistant</string>
     <string name="notification_listening">Listening for "Ya Binti"…</string>
-    
+
     <!-- Service States -->
     <string name="state_ready">Ready</string>
     <string name="state_listening">Listening…</string>
     <string name="state_processing">Processing…</string>
     <string name="state_error">Error</string>
     <string name="state_unknown">Unknown</string>
-    
-    <!-- Commands -->
+
+    <!-- Commands - General -->
     <string name="command_confirmed">Done: %1$s</string>
     <string name="command_success">Command executed: %1$s</string>
     <string name="command_failed">Sorry, I couldn\'t do that.</string>
@@ -79,10 +89,112 @@
     <string name="fallback_message">I didn\'t catch that. Could you repeat?</string>
     <string name="error_message">Something went wrong. Please try again.</string>
     <string name="offline_mode">Working offline. Some features may be limited.</string>
-    
+
+    <!-- AC Commands -->
+    <string name="ac_turned_on">AC turned on</string>
+    <string name="ac_turned_off">AC turned off</string>
+    <string name="ac_temp_set">Temperature set to %1$d°</string>
+    <string name="ac_temp_up">Temperature increased</string>
+    <string name="ac_temp_down">Temperature decreased</string>
+    <string name="ac_mode_cool">Cooling</string>
+    <string name="ac_mode_heat">Heating</string>
+    <string name="ac_mode_auto">Auto</string>
+    <string name="ac_mode_fan">Fan</string>
+    <string name="ac_fan_speed">Fan speed %1$d</string>
+
+    <!-- Navigation Commands -->
+    <string name="nav_started">Navigating to %1$s</string>
+    <string name="nav_home">Navigating home</string>
+    <string name="nav_work">Navigating to work</string>
+    <string name="nav_cancelled">Navigation cancelled</string>
+    <string name="nav_nearby">Finding nearest %1$s…</string>
+    <string name="nav_gas_station">gas station</string>
+    <string name="nav_charging">charging station</string>
+    <string name="nav_parking">parking</string>
+    <string name="nav_restaurant">restaurant</string>
+    <string name="nav_hospital">hospital</string>
+    <string name="nav_address_not_set">Address not set. Please save it in settings.</string>
+
+    <!-- Media Commands -->
+    <string name="media_playing">Playing</string>
+    <string name="media_paused">Paused</string>
+    <string name="media_stopped">Stopped</string>
+    <string name="media_next">Next track</string>
+    <string name="media_previous">Previous track</string>
+    <string name="media_shuffle">Shuffle on</string>
+    <string name="media_repeat">Repeat on</string>
+
+    <!-- Phone Commands -->
+    <string name="phone_calling">Calling %1$s</string>
+    <string name="phone_answered">Call answered</string>
+    <string name="phone_rejected">Call rejected</string>
+    <string name="phone_ended">Call ended</string>
+    <string name="phone_redial">Redialing</string>
+    <string name="phone_dialing">Dialing %1$s</string>
+    <string name="phone_contact_not_found">Contact %1$s not found</string>
+    <string name="phone_no_recent">No recent calls</string>
+
+    <!-- Info Commands -->
+    <string name="info_time">Current time is %1$s</string>
+    <string name="info_date">Today is %1$s</string>
+    <string name="info_battery">Battery at %1$d%%</string>
+    <string name="info_range">Estimated range %1$d km</string>
+    <string name="info_temp_outside">Outside temperature %1$d°</string>
+    <string name="info_temp_inside">Inside temperature %1$d°</string>
+    <string name="info_temp_ac">AC at %1$d°</string>
+    <string name="info_vehicle_status">Vehicle status: %1$s</string>
+    <string name="info_weather_unavailable">Weather information unavailable</string>
+
+    <!-- System Commands -->
+    <string name="system_brightness">Brightness %1$d%%</string>
+    <string name="system_brightness_up">Brightness increased</string>
+    <string name="system_brightness_down">Brightness decreased</string>
+    <string name="system_volume">Volume %1$d%%</string>
+    <string name="system_volume_up">Volume increased</string>
+    <string name="system_volume_down">Volume decreased</string>
+    <string name="system_mute">Muted</string>
+    <string name="system_unmute">Unmuted</string>
+    <string name="system_settings_opened">Settings opened</string>
+    <string name="system_write_permission_needed">Please allow settings modification first</string>
+
+    <!-- Voice Profiles -->
+    <string name="profile_default">Default User</string>
+    <string name="profile_driver">Driver</string>
+    <string name="profile_driver_1">Driver 1</string>
+    <string name="profile_driver_2">Driver 2</string>
+    <string name="profile_family">Family</string>
+    <string name="profile_guest">Guest</string>
+    <string name="profile_created">Profile created: %1$s</string>
+    <string name="profile_deleted">Profile deleted</string>
+    <string name="profile_switched">Switched to %1$s</string>
+    <string name="profile_trained">Voice trained</string>
+    <string name="profile_training_need">Need 3 voice samples for training</string>
+    <string name="profile_identified">Hello %1$s!</string>
+    <string name="profile_not_identified">Speaker not recognized. Create new profile?</string>
+
+    <!-- Offline Mode -->
+    <string name="offline_enabled">Offline mode enabled</string>
+    <string name="offline_limited">Some commands won\'t work offline</string>
+    <string name="offline_asr_only">Local voice recognition only</string>
+    <string name="offline_commands_queued">%1$d commands waiting for connection</string>
+    <string name="offline_sync_complete">Sync complete</string>
+
+    <!-- Widget -->
+    <string name="widget_status_ready">Ready</string>
+    <string name="widget_status_listening">Listening…</string>
+    <string name="widget_status_ac">AC…</string>
+    <string name="widget_status_navigating">Navigating…</string>
+    <string name="widget_status_media">Media…</string>
+    <string name="widget_voice_desc">Start voice</string>
+    <string name="widget_ac_desc">Toggle AC</string>
+    <string name="widget_nav_desc">Navigate home</string>
+    <string name="widget_media_desc">Play media</string>
+    <string name="widget_next_desc">Next track</string>
+
     <!-- Device Info -->
     <string name="huawei_device_detected">Huawei device detected - HMS services enabled</string>
-    
+    <string name="byd_model_detected">BYD Model: %1$s</string>
+
     <!-- Settings -->
     <string name="settings">Settings</string>
     <string name="settings_voice">Voice Settings</string>
@@ -92,12 +204,35 @@
     <string name="settings_addresses">Saved Addresses</string>
     <string name="settings_home">Home</string>
     <string name="settings_work">Work</string>
-    
+    <string name="settings_profiles">Voice Profiles</string>
+    <string name="settings_offline">Offline Mode</string>
+    <string name="settings_models">AI Models</string>
+    <string name="settings_about">About</string>
+
     <!-- About -->
     <string name="about">About</string>
     <string name="version">Version %1$s</string>
     <string name="developer">Developed by Dr. Waleed Mandour</string>
-    
+
     <!-- Accessibility Service -->
     <string name="accessibility_service_description">Binti voice assistant service to control your DiLink vehicle with Egyptian Arabic voice commands</string>
+
+    <!-- Sample Commands for Help -->
+    <string-array name="sample_commands">
+        <item>Ya Binti, turn on AC</item>
+        <item>Ya Binti, take me home</item>
+        <item>Ya Binti, nearest gas station</item>
+        <item>Ya Binti, play music</item>
+        <item>Ya Binti, pause</item>
+        <item>Ya Binti, what\'s the temperature?</item>
+        <item>Ya Binti, increase temperature</item>
+        <item>Ya Binti, what time is it?</item>
+        <item>Ya Binti, battery level?</item>
+        <item>Ya Binti, navigate to work</item>
+        <item>Ya Binti, answer the phone</item>
+        <item>Ya Binti, call Ahmed</item>
+        <item>Ya Binti, volume up</item>
+        <item>Ya Binti, brightness down</item>
+        <item>Ya Binti, next track</item>
+    </string-array>
 </resources>

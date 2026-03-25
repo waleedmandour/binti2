@@ -3,12 +3,12 @@
     <!-- App Info - Egyptian Arabic -->
     <string name="app_name">بنتي</string>
     <string name="app_description">مساعد صوتي باللهجة المصرية لسيارات BYD DiLink</string>
-    
+
     <!-- Wake Word -->
     <string name="wake_word">يا بنتي</string>
     <string name="wake_word_arabic">يا بنتي</string>
     <string name="wake_response">أهلاً وسهلاً! أنا سامعة يا حبيبي 😊</string>
-    
+
     <!-- Main Activity -->
     <string name="welcome_message">أهلاً وسهلاً! أقدر أساعدك تتحكم في سيارتك BYD بصوتك باللهجة المصرية.</string>
     <string name="listening_hint">قولي اللي في بالك… أنا سامعة! 🎧</string>
@@ -16,11 +16,11 @@
     <string name="stop_service">وقفي بنتي</string>
     <string name="service_started">بنتي شغالة وسامعة</string>
     <string name="service_stopped">بنتي وقفت</string>
-    
+
     <!-- Permissions -->
     <string name="permissions_required_title">الصلاحيات المطلوبة</string>
     <string name="permissions_required_message">بنتي محتاجة صلاحيات الميكروفون والظهور فوق التطيقات والوصول عشان تشتغل كويس.</string>
-    
+
     <string name="mic_permission_title">الميكروفون</string>
     <string name="mic_permission_desc">مطلوب للتعرف على صوتك</string>
     <string name="overlay_permission_title">الظهور فوق التطبيقات</string>
@@ -29,12 +29,12 @@
     <string name="accessibility_permission_desc">مطلوب للتحكم في واجهة DiLink</string>
     <string name="notification_permission_title">الإشعارات</string>
     <string name="notification_permission_desc">مطلوب لإشعار الخدمة</string>
-    
+
     <string name="permission_granted">تم السماح</string>
     <string name="grant_permission">اسمح</string>
     <string name="ok">تمام</string>
     <string name="got_it">فهمت</string>
-    
+
     <!-- Accessibility Guide -->
     <string name="accessibility_guide_title">تفعيل خدمة الوصول</string>
     <string name="accessibility_guide_message">
@@ -43,13 +43,13 @@
         ٣. فعل خدمة الوصول\n
         ٤. اضغط "سماح" في الرسالة
     </string>
-    
+
     <!-- Battery Optimization -->
     <string name="battery_optimization_title">تحسين البطارية</string>
     <string name="battery_optimization_message">عشان بنتي تشتغل أحسن، اسمحلها تشتغل في الخلفية.</string>
     <string name="allow">اسمح</string>
     <string name="skip">تخطي</string>
-    
+
     <!-- Model Download -->
     <string name="download_models_title">تحميلي ملفات الذكاء الاصطناعي؟</string>
     <string name="download_models_message">عشان أشتغل من غير نت، محتاجة أحمل ملفات صوت وذكاء اصطناعي (~160 ميجا). تحب أكمل؟</string>
@@ -58,20 +58,30 @@
     <string name="downloading_file">جاري تحميل %1$s… %2$d%%</string>
     <string name="download_complete">التحميل خلص! ✅</string>
     <string name="download_failed">التحميل فشل: %1$s</string>
-    
+
+    <!-- Model Download Errors -->
+    <string name="error_download_network">فيه مشكلة في النت. اتصل بالإنترنت وحاول تاني.</string>
+    <string name="error_download_storage">المساحة مش كافية. امسح حاجات وحاول تاني.</string>
+    <string name="error_download_timeout">التحميل بطيء جداً. حاول على وي فاي.</string>
+    <string name="error_download_corrupted">الملف تالف. حاول تحميله تاني.</string>
+    <string name="error_download_google_drive">مش قادرة أوصل لجوجل درايف. جرب مراجعة الإعدادات.</string>
+    <string name="error_download_permission">محتاجة صلاحية التحميل. اسمح التطبيق يحمّل ملفات.</string>
+    <string name="error_model_missing">ملف النموذج مش موجود. حمّل النماذج الأول.</string>
+    <string name="error_model_init">مش قادرة أشغل النموذج. حاول إعادة تشغيل التطبيق.</string>
+
     <!-- Notifications -->
     <string name="notification_channel_description">إشعار مساعد بنتي الصوتي</string>
     <string name="notification_title">مساعد بنتي الصوتي</string>
     <string name="notification_listening">سامعة "يا بنتي"… 🎤</string>
-    
+
     <!-- Service States -->
     <string name="state_ready">جاهزة ✅</string>
     <string name="state_listening">بسمع… 🎧</string>
     <string name="state_processing">بفكر… 🤔</string>
     <string name="state_error">فيه مشكلة ❌</string>
     <string name="state_unknown">مش عارفة</string>
-    
-    <!-- Commands -->
+
+    <!-- Commands - General -->
     <string name="command_confirmed">تمام يا باشا، تنفيذ: %1$s ✅</string>
     <string name="command_success">تم: %1$s</string>
     <string name="command_failed">مقدرتش أعمل كده، جرب تاني 🙁</string>
@@ -79,10 +89,112 @@
     <string name="fallback_message">مقدرتش أفهم كويس، ممكن تعيد اللي قولته؟ 🤔</string>
     <string name="error_message">حصلت مشكلة، جرب تاني</string>
     <string name="offline_mode">أنا شغالة أوفلاين! بعض الميزات هتكون محدودة 📶</string>
-    
+
+    <!-- AC Commands -->
+    <string name="ac_turned_on">المكيف اشتغل ❄️</string>
+    <string name="ac_turned_off">المكيف طفي</string>
+    <string name="ac_temp_set">درجة الحرارة %1$d°</string>
+    <string name="ac_temp_up">الحرارة زادت</string>
+    <string name="ac_temp_down">الحرارة قلت</string>
+    <string name="ac_mode_cool">تبريد</string>
+    <string name="ac_mode_heat">تدفئة</string>
+    <string name="ac_mode_auto">تلقائي</string>
+    <string name="ac_mode_fan">تهوية</string>
+    <string name="ac_fan_speed">سرعة المروحة %1$d</string>
+
+    <!-- Navigation Commands -->
+    <string name="nav_started">التوجيه لـ %1$s ابتدى 🗺️</string>
+    <string name="nav_home">جاري التوجيه للبيت 🏠</string>
+    <string name="nav_work">جاري التوجيه للشغل 💼</string>
+    <string name="nav_cancelled">التنقل أتلغى</string>
+    <string name="nav_nearby">ببحث عن أقرب %1$s…</string>
+    <string name="nav_gas_station">محطة بنزين</string>
+    <string name="nav_charging">محطة شحن</string>
+    <string name="nav_parking">موقف سيارات</string>
+    <string name="nav_restaurant">مطعم</string>
+    <string name="nav_hospital">مستشفى</string>
+    <string name="nav_address_not_set">العنوان مش محفوظ. حفظه في الإعدادات.</string>
+
+    <!-- Media Commands -->
+    <string name="media_playing">التشغيل ▶️</string>
+    <string name="media_paused">إيقاف مؤقت ⏸️</string>
+    <string name="media_stopped">توقف ⏹️</string>
+    <string name="media_next">التالي ⏭️</string>
+    <string name="media_previous">السابق ⏮️</string>
+    <string name="media_shuffle">الخلط العشوائي 🔀</string>
+    <string name="media_repeat">التكرار 🔁</string>
+
+    <!-- Phone Commands -->
+    <string name="phone_calling">جاري الاتصال بـ %1$s 📞</string>
+    <string name="phone_answered">تم الرد على المكالمة</string>
+    <string name="phone_rejected">تم رفض المكالمة</string>
+    <string name="phone_ended">تم إنهاء المكالمة</string>
+    <string name="phone_redial">إعادة الاتصال</string>
+    <string name="phone_dialing">جاري فتح الرقم %1$s</string>
+    <string name="phone_contact_not_found">مش لاقية جهة اتصال بـ %1$s</string>
+    <string name="phone_no_recent">مفيش مكالمات حديثة</string>
+
+    <!-- Info Commands -->
+    <string name="info_time">الساعة دلوقتي %1$s</string>
+    <string name="info_date">النهاردة %1$s</string>
+    <string name="info_battery">البطارية %1$d%%</string>
+    <string name="info_range">المدى المتوقع %1$d كيلومتر</string>
+    <string name="info_temp_outside">الحرارة الخارجية %1$d°</string>
+    <string name="info_temp_inside">الحرارة الداخلية %1$d°</string>
+    <string name="info_temp_ac">المكيف على %1$d°</string>
+    <string name="info_vehicle_status">حالة السيارة: %1$s</string>
+    <string name="info_weather_unavailable">معلومات الطقس مش متاحة دلوقتي</string>
+
+    <!-- System Commands -->
+    <string name="system_brightness">الإضاءة %1$d%%</string>
+    <string name="system_brightness_up">الإضاءة زادت</string>
+    <string name="system_brightness_down">الإضاءة قلت</string>
+    <string name="system_volume">الصوت %1$d%%</string>
+    <string name="system_volume_up">الصوت زاد</string>
+    <string name="system_volume_down">الصوت قل</string>
+    <string name="system_mute">الصوت كتم</string>
+    <string name="system_unmute">الصوت رجع</string>
+    <string name="system_settings_opened">الإعدادات فتحت</string>
+    <string name="system_write_permission_needed">اسمح بتعديل الإعدادات الأول</string>
+
+    <!-- Voice Profiles -->
+    <string name="profile_default">المستخدم الافتراضي</string>
+    <string name="profile_driver">السائق</string>
+    <string name="profile_driver_1">سائق 1</string>
+    <string name="profile_driver_2">سائق 2</string>
+    <string name="profile_family">العيلة</string>
+    <string name="profile_guest">ضيف</string>
+    <string name="profile_created">الملف الشخصي اتعمل: %1$s</string>
+    <string name="profile_deleted">الملف الشخصي اتمسح</string>
+    <string name="profile_switched">تم التبديل لـ %1$s</string>
+    <string name="profile_trained">الصوت اتعلم ✅</string>
+    <string name="profile_training_need">محتاج ٣ عينات صوت عشان التعلم</string>
+    <string name="profile_identified">أهلاً %1$s! 👋</string>
+    <string name="profile_not_identified">مش عارفة مين. سجل ملف شخصي جديد؟</string>
+
+    <!-- Offline Mode -->
+    <string name="offline_enabled">الوضع الأوفلاين مفعل</string>
+    <string name="offline_limited">بعض الأوامر مش هتشتغل أوفلاين</string>
+    <string name="offline_asr_only">التعرف على الصوت محلي بس</string>
+    <string name="offline_commands_queued">فيه %1$d أمر مستني النت</string>
+    <string name="offline_sync_complete">التزامن خلص</string>
+
+    <!-- Widget -->
+    <string name="widget_status_ready">جاهزة</string>
+    <string name="widget_status_listening">بسمع…</string>
+    <string name="widget_status_ac">المكيف…</string>
+    <string name="widget_status_navigating">التوجيه…</string>
+    <string name="widget_status_media">الوسائط…</string>
+    <string name="widget_voice_desc">تشغيل الصوت</string>
+    <string name="widget_ac_desc">المكيف</string>
+    <string name="widget_nav_desc">التوجيه للبيت</string>
+    <string name="widget_media_desc">تشغيل الوسائط</string>
+    <string name="widget_next_desc">المقطع التالي</string>
+
     <!-- Device Info -->
     <string name="huawei_device_detected">جهاز هواوي - خدمات HMS مفعلة</string>
-    
+    <string name="byd_model_detected">موديل BYD: %1$s</string>
+
     <!-- Settings -->
     <string name="settings">الإعدادات</string>
     <string name="settings_voice">إعدادات الصوت</string>
@@ -92,12 +204,16 @@
     <string name="settings_addresses">العناوين المحفوظة</string>
     <string name="settings_home">البيت</string>
     <string name="settings_work">الشغل</string>
-    
+    <string name="settings_profiles">الملفات الشخصية</string>
+    <string name="settings_offline">الوضع الأوفلاين</string>
+    <string name="settings_models">النماذج</string>
+    <string name="settings_about">عن التطبيق</string>
+
     <!-- About -->
     <string name="about">عن بنتي</string>
     <string name="version">الإصدار %1$s</string>
     <string name="developer">تطوير الدكتور وليد مندور</string>
-    
+
     <!-- Sample Commands for Help -->
     <string-array name="sample_commands">
         <item>يا بنتي، شغلي التكييف</item>
@@ -108,5 +224,12 @@
         <item>يا بنتي، الحرارة كام؟</item>
         <item>يا بنتي، زيود المكيف</item>
         <item>يا بنتي، الساعة كام؟</item>
+        <item>يا بنتي، البطارية كام؟</item>
+        <item>يا بنتي، اديني للشغل</item>
+        <item>يا بنتي، ردي على التليفون</item>
+        <item>يا بنتي، اتصل بـ أحمد</item>
+        <item>يا بنتي، الصوت أعلى</item>
+        <item>يا بنتي، الإضاءة أقل</item>
+        <item>يا بنتي، المقطع التالي</item>
     </string-array>
 </resources>

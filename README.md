@@ -5,7 +5,7 @@
   **بنتي - مساعد صوتي باللهجة المصرية لسيارات BYD DiLink**
   
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-  [![Android](https://img.shields.io/badge/Platform-Android_14+-green.svg)](https://www.android.com)
+  [![Android](https://img.shields.io/badge/Platform-Android_8.0+-green.svg)](https://www.android.com)
   [![Kotlin](https://img.shields.io/badge/Language-Kotlin_1.9-blue.svg)](https://kotlinlang.org)
   [![API](https://img.shields.io/badge/Android_API-26%2B-brightgreen.svg)](https://developer.android.com/about/versions)
 </div>
@@ -20,12 +20,11 @@
 
 | Feature | Description | Technology |
 |---------|-------------|------------|
-| 🎤 **Wake Word Detection** | Custom TFLite CNN for "يا بنتي" | TensorFlow Lite (~5 MB) |
-| 🗣️ **Egyptian Arabic ASR** | Offline speech recognition | Vosk Egyptian Model (~50 MB) |
-| 🧠 **Intent Classification** | Egyptian Arabic NLU | EgyBERT-tiny (~30 MB) |
-| 🔊 **Egyptian TTS** | Female voice responses | Coqui TTS (~80 MB) |
+| 🎤 **Wake Word Detection** | Vosk grammar-based detection for "يا بنتي" | Vosk Arabic Model (reuses ASR model) |
+| 🗣️ **Egyptian Arabic ASR** | Offline speech recognition | Vosk Arabic MGB2 (~1.2 GB) |
+| 🧠 **Intent Classification** | Egyptian Arabic NLU | EgyBERT-tiny + Rule-based (~25 MB) |
+| 🔊 **Egyptian TTS** | Female voice responses | Android TTS / Huawei ML Kit |
 | 🚙 **DiLink Integration** | Control vehicle functions | AccessibilityService |
-| ☁️ **Huawei HMS Fallback** | Cloud ASR/TTS when offline unavailable | Huawei ML Kit |
 | 📴 **Offline-First** | Works without internet after model download | All models local |
 
 ---
@@ -39,14 +38,15 @@
 └────────────────────────┬────────────────────────────────────┘
                          ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  Wake Word Detector (TFLite CNN)                            │
-│  Continuous audio monitoring → "يا بنتي" detection           │
+│  Wake Word Detector (Vosk Grammar)                          │
+│  Continuous audio monitoring with grammar constraint         │
+│  Grammar: ["يا بنتي", "[unk]"] → Detects only wake word      │
 └────────────────────────┬────────────────────────────────────┘
                          ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  Voice Processor (Vosk / Huawei ML Kit)                     │
-│  Speech → Egyptian Arabic Text                              │
-│  Primary: Vosk offline → Fallback: Huawei Cloud ASR         │
+│  Voice Processor (Vosk Arabic MGB2)                         │
+│  Speech → Arabic Text                                       │
+│  Offline recognition using the same Vosk model              │
 └────────────────────────┬────────────────────────────────────┘
                          ▼
 ┌─────────────────────────────────────────────────────────────┐
@@ -62,7 +62,7 @@
 └────────────────────────┬────────────────────────────────────┘
                          ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  Egyptian TTS (Coqui / Huawei ML Kit / Android TTS)         │
+│  Egyptian TTS (Android TTS / Huawei ML Kit)                 │
 │  Response → Egyptian Female Voice                           │
 │  Example: "تمام، شغلت التكييف"                              │
 └─────────────────────────────────────────────────────────────┘
@@ -102,16 +102,60 @@ cd binti2
 ./gradlew test
 ```
 
-### First Run Setup
+---
 
-1. **Open Binti app** on your BYD vehicle or Android device
-2. **Grant required permissions**:
+## 🚙 BYD DiLink Installation
+
+### Supported Vehicles
+
+| Model | Year | DiLink Version | Status |
+|-------|------|----------------|--------|
+| Yuan Plus (Atto 3) | 2022-2024 | 4.0 | ✅ Fully Supported |
+| Yuan Plus (Atto 3) | 2023 | 4.0 | ✅ Fully Supported |
+| Dolphin | 2022-2024 | 4.0 | ✅ Supported |
+| Seal | 2023-2024 | 5.0 | 🔄 Testing |
+| Han EV | 2023-2024 | 5.0 | 🔄 Testing |
+| Tang EV | 2023-2024 | 5.0 | 🔄 Testing |
+
+### Installation Steps for BYD DiLink
+
+1. **Enable Unknown Sources**
+   - Go to Settings → Security → Unknown sources
+   - Enable "Allow installation from unknown sources"
+
+2. **Transfer APK to Vehicle**
+   - Option A: Download from GitHub Releases via browser
+   - Option B: Transfer via USB drive
+   - Option C: Use ADB over USB debugging
+
+3. **Install the APK**
+   - Open the APK file from file manager
+   - Grant required permissions when prompted
+
+4. **Configure Accessibility Service**
+   - Go to Settings → Accessibility → Binti
+   - Enable the accessibility service
+   - This is required for DiLink UI automation
+
+5. **Download AI Models**
+   - First launch will prompt to download models
+   - Connect to WiFi (models are ~1.3GB total)
+   - Alternatively, copy models from USB (see [Model Setup Guide](docs/MODEL_SETUP_GUIDE.md))
+
+6. **Grant Permissions**
    - 🎤 **Microphone** - For voice recognition
    - 🔲 **Display over apps** - For voice feedback overlay
    - ♿ **Accessibility service** - For DiLink integration
    - 🔔 **Notifications** - For foreground service (Android 13+)
-3. **Download AI models** (~165MB) when prompted, or choose cloud-only mode
-4. **Say "يا بنتي"** to activate!
+   - 📱 **Run in background** - For continuous listening
+
+### First Run Setup
+
+1. **Open Binti app** on your BYD vehicle
+2. **Grant required permissions** as prompted
+3. **Download AI models** (~1.3GB) - use WiFi or copy from USB
+4. **Set your home and work addresses** in settings
+5. **Say "يا بنتي"** to activate!
 
 ---
 
@@ -172,78 +216,209 @@ cd binti2
 
 ## 📦 Model Stack
 
-| Component | Primary (Offline) | License | Size | Cloud Fallback |
-|-----------|-------------------|---------|------|----------------|
-| Wake Word | Custom TFLite CNN | MIT | ~5 MB | N/A |
-| ASR | Vosk Arabic MGB2 | Apache 2.0 | ~1.2 GB | Huawei ML Kit ASR |
-| NLU | EgyBERT-tiny + Rules | MIT | ~25 MB | Rule-based |
-| TTS | Coqui Egyptian Female | MPL 2.0 | ~80 MB | Huawei ML Kit TTS |
+| Component | Primary (Offline) | License | Size | Notes |
+|-----------|-------------------|---------|------|-------|
+| Wake Word | Vosk Grammar Detection | Apache 2.0 | Uses ASR model | No separate model needed |
+| ASR | Vosk Arabic MGB2 | Apache 2.0 | ~1.2 GB | Modern Standard Arabic |
+| NLU | EgyBERT-tiny + Rules | MIT | ~25 MB | Fine-tuned for commands |
+| TTS | Android TTS | - | Built-in | Arabic locale |
 
-**Total offline models: ~1.4GB compressed**
+**Total offline models: ~1.3GB**
+
+### Model Requirements
+
+| Model | File | Size | Required | Description |
+|-------|------|------|----------|-------------|
+| Vosk Arabic ASR | `vosk-model-ar-mgb2` | ~1.2 GB | ✅ Yes | Speech recognition + wake word |
+| Intent Classifier | `egybert_tiny_int8.onnx` | ~25 MB | ✅ Yes | Command understanding |
+| Intent Patterns | `dilink_intent_map.json` | ~10 KB | ✅ Yes | Command patterns |
 
 ---
 
-## 📥 Model Download (Backblaze B2)
+## 📥 Model Hosting (Google Drive)
 
-Binti uses **Backblaze B2** for hosting AI models. Models are downloaded on first run for offline privacy.
+Binti uses **Google Drive** for hosting AI models. This approach provides:
+- ✅ Free hosting (Google Drive free tier)
+- ✅ Reliable downloads
+- ✅ Easy updates
+- ✅ User self-hosting option
 
 ### Quick Setup
 
-1. **Create Backblaze B2 Account** (Free: 10GB storage)
-   - Sign up at [backblaze.com/b2](https://www.backblaze.com/b2/sign-up.html)
+1. **Download Models**
+   - Download the required models (see [Model Setup Guide](docs/MODEL_SETUP_GUIDE.md))
+   - Vosk Arabic: [alphacephei.com/vosk/models](https://alphacephei.com/vosk/models)
 
-2. **Create a Public Bucket**
-   ```bash
-   # Install B2 CLI
-   pip install b2
-   
-   # Authenticate with your keys
-   b2 authorize-account <keyID> <applicationKey>
-   
-   # Create bucket
-   b2 create-bucket binti2-models allPublic
-   ```
+2. **Upload to Your Google Drive**
+   - Create a folder for models
+   - Upload model files
+   - Get shareable links
 
-3. **Upload Models**
-   ```bash
-   # Run upload script
-   export B2_BUCKET=binti2-models
-   ./scripts/upload_models_to_b2.sh
-   ```
+3. **Configure App**
+   - Open Binti Settings → Model Sources
+   - Add your Google Drive folder ID
+   - Or copy models directly to device via USB
 
-### Model Files Required
+### Google Drive Direct Links
 
-| File | B2 Path | Size | Source |
-|------|---------|------|--------|
-| `ya_binti_detector.tflite` | `wake/` | 5MB | Train custom |
-| `vosk-model-ar-mgb2.zip` | `asr/` | 1.2GB | [Download](https://alphacephei.com/vosk/models) |
-| `egybert_tiny_int8.onnx` | `nlu/` | 25MB | Train custom |
-| `ar-eg-female.zip` | `tts/` | 80MB | Train custom |
-| `dilink_intent_map.json` | `nlp/` | 10KB | Included in project |
+The app automatically handles Google Drive's virus scan warnings for large files. Just provide the file ID:
 
-### Download Pre-trained Vosk Arabic
+```
+https://drive.google.com/file/d/YOUR_FILE_ID/view
+```
+
+The app converts this to a direct download link automatically.
+
+### Local Model Setup (USB/SD Card)
+
+For offline installation:
 
 ```bash
-# Download Arabic ASR model
-wget https://alphacephei.com/vosk/models/vosk-model-ar-mgb2-0.4.zip
-mv vosk-model-ar-mgb2-0.4.zip models_to_upload/vosk-model-ar-mgb2.zip
+# Create models directory on USB drive
+mkdir -p /usb/binti_models/{asr,nlu}
 
-# Upload to B2
-b2 upload-file binti2-models models_to_upload/vosk-model-ar-mgb2.zip asr/vosk-model-ar-mgb2.zip
+# Copy Vosk model (extract from ZIP first)
+cp -r vosk-model-ar-mgb2 /usb/binti_models/asr/
+
+# Copy other models
+cp egybert_tiny_int8.onnx /usb/binti_models/nlu/
 ```
 
-### Update App Configuration
+Then in the app:
+1. Settings → Model Sources → Use Local Path
+2. Enter the path (e.g., `/storage/USB/binti_models`)
 
-Edit `ModelManager.kt`:
+For detailed instructions, see [MODEL_SETUP_GUIDE.md](docs/MODEL_SETUP_GUIDE.md).
 
+---
+
+## 🎤 Wake Word Detection Approach
+
+### Vosk Grammar-Based Detection
+
+Binti uses a clever approach that reuses the existing Vosk Arabic model for wake word detection:
+
+**How it works:**
+1. Vosk recognizer is configured with a limited grammar
+2. Grammar only includes "يا بنتي" and an unknown token
+3. This makes detection very efficient and accurate
+4. No separate wake word model needed!
+
+**Advantages:**
+- ✅ No additional model to download
+- ✅ Reuses existing ASR infrastructure
+- ✅ Works offline
+- ✅ Easy to modify wake word
+- ✅ Supports any Arabic phrase
+
+**Implementation:**
 ```kotlin
-private const val B2_BASE_URL = 
-    "https://f001.backblazeb2.com/file/binti2-models"
+// Grammar-based wake word detection
+val grammar = """["يا بنتي", "[unk]"]"""
+val recognizer = Recognizer(model, 16000f, grammar)
+
+// When recognizer outputs "يا بنتي", wake word detected!
 ```
 
-### Detailed Guide
+For more details, see [WAKE_WORD_RESEARCH.md](docs/WAKE_WORD_RESEARCH.md).
 
-See [docs/B2_MODEL_SETUP.md](docs/B2_MODEL_SETUP.md) for training instructions.
+---
+
+## 🔧 Troubleshooting
+
+### BYD Yuan Plus 2023 Specific Issues
+
+#### Wake Word Not Detected
+
+**Problem:** "يا بنتي" not being recognized
+
+**Solutions:**
+1. **Check microphone permissions**
+   - Settings → Apps → Binti → Permissions → Microphone
+
+2. **Adjust wake word sensitivity**
+   - Settings → Voice → Wake Word Sensitivity
+   - Try "High" for noisy environments
+
+3. **Speak clearly**
+   - The Vosk model expects Modern Standard Arabic pronunciation
+   - Try pronouncing "يا بنتي" more formally
+
+4. **Check model status**
+   - Settings → Models → Check if ASR model is downloaded
+
+#### Commands Not Executing
+
+**Problem:** Wake word detected but commands don't work
+
+**Solutions:**
+1. **Check Accessibility Service**
+   - Settings → Accessibility → Binti → Enable
+   - This is required for UI automation
+
+2. **Grant Display Overlay Permission**
+   - Settings → Apps → Special access → Display over other apps
+   - Enable for Binti
+
+3. **Restart the service**
+   - Notification panel → Stop Binti → Start again
+
+#### App Crashes or Freezes
+
+**Problem:** App becomes unresponsive
+
+**Solutions:**
+1. **Clear app cache**
+   - Settings → Apps → Binti → Storage → Clear Cache
+
+2. **Check available storage**
+   - Models require ~1.5GB free space
+   - Delete unused apps/media
+
+3. **Reinstall models**
+   - Settings → Models → Delete Models → Re-download
+
+#### Poor Voice Recognition
+
+**Problem:** ASR not understanding commands
+
+**Solutions:**
+1. **Use WiFi for model download**
+   - Corrupted downloads can cause issues
+
+2. **Speak in Modern Standard Arabic**
+   - The Vosk model is trained on MSA
+   - Egyptian dialect works but may have lower accuracy
+
+3. **Reduce background noise**
+   - Close windows at high speeds
+   - Lower music volume when speaking
+
+#### Connectivity Issues
+
+**Problem:** Can't download models
+
+**Solutions:**
+1. **Use USB transfer**
+   - Download models on computer
+   - Copy to USB drive
+   - Use local path in settings
+
+2. **Check WiFi connection**
+   - BYD DiLink WiFi can be unstable
+   - Try mobile hotspot
+
+3. **Use mirror links**
+   - Settings → Model Sources → Add custom mirror
+
+### General Issues
+
+| Issue | Solution |
+|-------|----------|
+| Service not starting | Check battery optimization settings |
+| No voice output | Check TTS settings, install Arabic voice |
+| GPS not working | Grant location permission |
+| Contacts not found | Grant contacts permission |
 
 ---
 
@@ -254,12 +429,13 @@ binti2/
 ├── app/
 │   ├── src/main/
 │   │   ├── java/com/binti/dilink/
-│   │   │   ├── BintiApplication.kt          # App initialization, HMS setup
+│   │   │   ├── BintiApplication.kt          # App initialization
 │   │   │   ├── BintiService.kt              # Foreground voice service
 │   │   │   ├── MainActivity.kt              # Permission setup wizard
 │   │   │   ├── voice/
-│   │   │   │   ├── WakeWordDetector.kt      # TFLite wake word detection
-│   │   │   │   └── VoiceProcessor.kt        # Vosk/Huawei ASR
+│   │   │   │   ├── WakeWordDetector.kt      # TFLite wake word (legacy)
+│   │   │   │   ├── WakeWordDetectorVosk.kt  # Vosk grammar detection
+│   │   │   │   └── VoiceProcessor.kt        # Vosk ASR
 │   │   │   ├── nlp/
 │   │   │   │   └── IntentClassifier.kt      # NLU + entity extraction
 │   │   │   ├── dilink/
@@ -267,36 +443,29 @@ binti2/
 │   │   │   │   └── DiLinkAccessibilityService.kt # UI automation
 │   │   │   ├── response/
 │   │   │   │   └── EgyptianTTS.kt           # TTS engine
-│   │   │   ├── utils/
-│   │   │   │   ├── ModelManager.kt          # Model download/verification
-│   │   │   │   └── HMSUtils.kt              # Huawei services helper
-│   │   │   └── receivers/
-│   │   │       └── BootReceiver.kt          # Auto-start on boot
+│   │   │   └── utils/
+│   │   │       ├── ModelManager.kt          # Model download/verification
+│   │   │       └── HMSUtils.kt              # Huawei services helper
 │   │   ├── res/
 │   │   │   ├── values/strings.xml           # English strings
 │   │   │   ├── values-ar/strings.xml        # Egyptian Arabic strings
-│   │   │   ├── layout/                      # UI layouts
-│   │   │   ├── drawable/                    # Icons and graphics
-│   │   │   └── xml/                         # Config files
+│   │   │   └── layout/                      # UI layouts
 │   │   ├── assets/
 │   │   │   ├── commands/
 │   │   │   │   └── dilink_intent_map.json   # Intent patterns
-│   │   │   └── models/README.md             # Model download info
+│   │   │   └── models/
+│   │   │       ├── model_config.json        # Model configuration
+│   │   │       └── README.md                # Model download info
 │   │   └── AndroidManifest.xml              # Permissions, services
-│   ├── build.gradle.kts                     # App dependencies
-│   └── proguard-rules.pro                   # ProGuard configuration
-├── gradle/
-│   └── wrapper/
-│       ├── gradle-wrapper.jar               # Gradle wrapper binary
-│       └── gradle-wrapper.properties        # Gradle version config
-├── .github/workflows/
-│   └── ci.yml                               # CI/CD pipeline
+│   └── build.gradle.kts                     # App dependencies
+├── docs/
+│   ├── MODEL_SETUP_GUIDE.md                 # Google Drive setup guide
+│   ├── WAKE_WORD_RESEARCH.md                # Wake word options research
+│   └── B2_MODEL_SETUP.md                    # Legacy B2 hosting guide
 ├── build.gradle.kts                         # Project-level config
 ├── settings.gradle.kts                      # Repository config
-├── gradle.properties                        # JVM settings
 ├── README.md                                # This file
 ├── CHANGELOG.md                             # Version history
-├── CONTRIBUTING.md                          # Contribution guidelines
 └── LICENSE                                  # MIT License
 ```
 
@@ -313,7 +482,6 @@ The project uses GitHub Actions for continuous integration:
 | `validate` | Push/PR | Validate Gradle wrapper, check model sizes, verify Arabic strings |
 | `build` | After validate | Build debug APK, run unit tests, run lint |
 | `release` | Release created | Build signed release APK, upload to GitHub Releases |
-| `model-pack` | Release created | Create and upload model manifest |
 
 ### Required GitHub Secrets
 
@@ -328,28 +496,6 @@ For release builds, configure these secrets:
 
 ---
 
-## 📱 Huawei AppGallery Distribution
-
-Binti is designed for Huawei HMS devices commonly found in BYD vehicles.
-
-### Setup Steps
-
-1. Register at [Huawei Developer](https://developer.huawei.com)
-2. Create an app in [AppGallery Connect](https://developer.huawei.com/consumer/en/service/hms/catalog/agc.html)
-3. Download `agconnect-services.json` and place in `app/` directory
-4. Configure signing certificate in AppGallery Connect
-5. Build release APK and upload to AppGallery
-
-### Huawei HMS Services Used
-
-| Service | Purpose |
-|---------|---------|
-| ML Kit ASR | Cloud speech recognition fallback |
-| ML Kit TTS | Cloud text-to-speech fallback |
-| HMS Core | Device identification |
-
----
-
 ## 🔐 Security Features
 
 - ✅ **HTTPS-only** network connections (no cleartext traffic)
@@ -357,6 +503,7 @@ Binti is designed for Huawei HMS devices commonly found in BYD vehicles.
 - ✅ **ProGuard/R8** code obfuscation for release builds
 - ✅ **Foreground service** with proper notification for Android 14+
 - ✅ **Privacy-first** - all voice processing happens on-device after model download
+- ✅ **No cloud services required** after initial model download
 
 ---
 
@@ -366,7 +513,7 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for gu
 
 ### Priority Areas
 
-- 🎙️ Additional wake word training data
+- 🎙️ Testing on more BYD models (Han, Tang, Seal)
 - 📝 More Egyptian Arabic commands and responses
 - 🌍 Support for other Arabic dialects (Levantine, Gulf, Maghrebi)
 - 🔧 DiLink integration improvements for specific BYD models
@@ -386,9 +533,8 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) for deta
 | Vosk | Apache 2.0 |
 | TensorFlow Lite | Apache 2.0 |
 | ONNX Runtime | MIT |
-| CAMeL Tools | MIT |
-| Coqui TTS | MPL 2.0 |
-| Huawei HMS | [Huawei SDK Agreement](https://developer.huawei.com/consumer/en/doc/development/HMS-Core-Guides/android-license-0000001058069715) |
+| OkHttp | Apache 2.0 |
+| Kotlin Coroutines | Apache 2.0 |
 
 ---
 
@@ -406,9 +552,8 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) for deta
 
 - [Vosk](https://alphacephei.com/vosk/) - Offline speech recognition
 - [CAMeL Lab](https://camel.abudhabi.nyu.edu/) - Egyptian Arabic NLP tools
-- [Coqui](https://coqui.ai/) - TTS framework
-- [Huawei Developer](https://developer.huawei.com) - HMS Core ML Kit
 - [BYD Auto](https://www.byd.com) - DiLink platform
+- All contributors and testers
 
 ---
 

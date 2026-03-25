@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Quick Actions Widget Layout
+    
+    Compact 4x1 widget for BYD DiLink home screen
+    Provides quick access to common voice commands
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_background"
+    android:padding="12dp">
+
+    <!-- Header with status -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="8dp">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_mic"
+            android:tint="@color/primary"/>
+
+        <TextView
+            android:id="@+id/tv_status"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="@string/widget_status_ready"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:ellipsize="end"
+            android:maxLines="1"/>
+
+    </LinearLayout>
+
+    <!-- Quick Action Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <!-- Voice Button -->
+        <ImageButton
+            android:id="@+id/btn_voice"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_margin="4dp"
+            android:background="@drawable/widget_button_background"
+            android:src="@drawable/ic_mic"
+            android:tint="@color/white"
+            android:contentDescription="@string/widget_voice_desc"
+            android:scaleType="centerInside"/>
+
+        <!-- AC Button -->
+        <ImageButton
+            android:id="@+id/btn_ac"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_margin="4dp"
+            android:background="@drawable/widget_button_secondary"
+            android:src="@drawable/ic_ac"
+            android:tint="@color/primary"
+            android:contentDescription="@string/widget_ac_desc"
+            android:scaleType="centerInside"/>
+
+        <!-- Navigation Button -->
+        <ImageButton
+            android:id="@+id/btn_nav"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_margin="4dp"
+            android:background="@drawable/widget_button_secondary"
+            android:src="@drawable/ic_home"
+            android:tint="@color/primary"
+            android:contentDescription="@string/widget_nav_desc"
+            android:scaleType="centerInside"/>
+
+        <!-- Media Play Button -->
+        <ImageButton
+            android:id="@+id/btn_media"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_margin="4dp"
+            android:background="@drawable/widget_button_secondary"
+            android:src="@drawable/ic_play"
+            android:tint="@color/primary"
+            android:contentDescription="@string/widget_media_desc"
+            android:scaleType="centerInside"/>
+
+        <!-- Next Track Button -->
+        <ImageButton
+            android:id="@+id/btn_next"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_margin="4dp"
+            android:background="@drawable/widget_button_secondary"
+            android:src="@drawable/ic_next"
+            android:tint="@color/primary"
+            android:contentDescription="@string/widget_next_desc"
+            android:scaleType="centerInside"/>
+
+    </LinearLayout>
+
+</LinearLayout>

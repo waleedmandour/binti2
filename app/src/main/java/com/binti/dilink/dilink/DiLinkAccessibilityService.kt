@@ -3,45 +3,154 @@ package com.binti.dilink.dilink
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.Intent
+import android.graphics.Rect
+import android.os.Bundle
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 
 /**
- * DiLink Accessibility Service
- * 
+ * DiLink Accessibility Service - Enhanced Version
+ *
  * Provides accessibility access to the BYD DiLink infotainment system.
  * This service enables voice-controlled interaction with vehicle functions
  * through UI automation.
- * 
+ *
+ * Supported Models:
+ * - BYD Yuan Plus 2023
+ * - BYD Atto 3
+ * - BYD Dolphin
+ * - BYD Seal
+ * - BYD Han EV
+ * - BYD Tang EV
+ *
  * Capabilities:
  * - Read and interact with DiLink UI elements
  * - Perform clicks, scrolls, and text input
  * - Monitor app changes and events
  * - Execute gesture-based commands
- * 
+ * - BYD-specific UI element detection
+ * - Debug logging for element discovery
+ *
  * Security Note: This service requires explicit user permission and
  * only operates when enabled in Android Accessibility Settings.
- * 
+ *
  * @author Dr. Waleed Mandour
  */
 class DiLinkAccessibilityService : AccessibilityService() {
 
     companion object {
         private const val TAG = "DiLinkA11yService"
-        
+
         @Volatile
         private var instance: DiLinkAccessibilityService? = null
-        
+
         /**
          * Get the running instance of the accessibility service
          */
         fun getInstance(): DiLinkAccessibilityService? = instance
-        
+
         /**
          * Check if the service is enabled
          */
         fun isServiceEnabled(): Boolean = instance != null
+
+        // BYD Model-specific resource ID prefixes
+        object YuanPlus2023 {
+            const val PACKAGE_AC = "com.byd.auto.ac"
+            const val PACKAGE_NAV = "com.byd.auto.navigation"
+            const val PACKAGE_MEDIA = "com.byd.auto.media"
+            const val PACKAGE_SETTINGS = "com.byd.auto.settings"
+            const val PACKAGE_PHONE = "com.byd.auto.phone"
+            const val PACKAGE_LAUNCHER = "com.byd.auto.launcher"
+            const val PACKAGE_CLIMATE = "com.byd.auto.climate"
+            const val PACKAGE_VEHICLE = "com.byd.auto.vehicleinfo"
+
+            // AC Controls
+            const val ID_AC_POWER = "com.byd.auto.ac:id/btn_power"
+            const val ID_AC_TEMP_UP = "com.byd.auto.ac:id/btn_temp_up"
+            const val ID_AC_TEMP_DOWN = "com.byd.auto.ac:id/btn_temp_down"
+            const val ID_AC_TEMP_DISPLAY = "com.byd.auto.ac:id/tv_temperature"
+            const val ID_AC_FAN_SPEED = "com.byd.auto.ac:id/sb_fan_speed"
+            const val ID_AC_MODE_AUTO = "com.byd.auto.ac:id/btn_mode_auto"
+            const val ID_AC_MODE_COOL = "com.byd.auto.ac:id/btn_mode_cool"
+            const val ID_AC_MODE_HEAT = "com.byd.auto.ac:id/btn_mode_heat"
+            const val ID_AC_MODE_FAN = "com.byd.auto.ac:id/btn_mode_fan"
+            const val ID_AC_SYNC = "com.byd.auto.ac:id/btn_sync"
+            const val ID_AC_AIR_CYCLE = "com.byd.auto.ac:id/btn_air_cycle"
+
+            // Phone Controls
+            const val ID_PHONE_DIALER = "com.byd.auto.phone:id/btn_dialer"
+            const val ID_PHONE_CALL = "com.byd.auto.phone:id/btn_call"
+            const val ID_PHONE_END = "com.byd.auto.phone:id/btn_end_call"
+            const val ID_PHONE_ANSWER = "com.byd.auto.phone:id/btn_answer"
+            const val ID_PHONE_REJECT = "com.byd.auto.phone:id/btn_reject"
+            const val ID_PHONE_INPUT = "com.byd.auto.phone:id/et_phone_number"
+            const val ID_PHONE_CONTACTS = "com.byd.auto.phone:id/btn_contacts"
+            const val ID_PHONE_RECENT = "com.byd.auto.phone:id/btn_recent"
+
+            // Media Controls
+            const val ID_MEDIA_PLAY = "com.byd.auto.media:id/btn_play"
+            const val ID_MEDIA_PAUSE = "com.byd.auto.media:id/btn_pause"
+            const val ID_MEDIA_NEXT = "com.byd.auto.media:id/btn_next"
+            const val ID_MEDIA_PREV = "com.byd.auto.media:id/btn_previous"
+            const val ID_MEDIA_SEEK_BAR = "com.byd.auto.media:id/sb_progress"
+            const val ID_MEDIA_TITLE = "com.byd.auto.media:id/tv_title"
+            const val ID_MEDIA_ARTIST = "com.byd.auto.media:id/tv_artist"
+
+            // Navigation Controls
+            const val ID_NAV_SEARCH = "com.byd.auto.navigation:id/et_search"
+            const val ID_NAV_START = "com.byd.auto.navigation:id/btn_start_nav"
+            const val ID_NAV_CANCEL = "com.byd.auto.navigation:id/btn_cancel_nav"
+            const val ID_NAV_HOME = "com.byd.auto.navigation:id/btn_home"
+            const val ID_NAV_WORK = "com.byd.auto.navigation:id/btn_work"
+
+            // Vehicle Info
+            const val ID_VEHICLE_BATTERY = "com.byd.auto.vehicleinfo:id/tv_battery_percent"
+            const val ID_VEHICLE_RANGE = "com.byd.auto.vehicleinfo:id/tv_range"
+            const val ID_VEHICLE_SPEED = "com.byd.auto.vehicleinfo:id/tv_speed"
+            const val ID_VEHICLE_TEMP_OUT = "com.byd.auto.vehicleinfo:id/tv_outside_temp"
+            const val ID_VEHICLE_TEMP_IN = "com.byd.auto.vehicleinfo:id/tv_inside_temp"
+
+            // System Controls
+            const val ID_SYS_BRIGHTNESS = "com.byd.auto.settings:id/sb_brightness"
+            const val ID_SYS_VOLUME = "com.byd.auto.settings:id/sb_volume"
+        }
+
+        // Fallback resource IDs for other BYD models
+        object FallbackIDs {
+            val AC_POWER = listOf(
+                "com.byd.auto.ac:id/btn_power",
+                "com.byd.auto.ac:id/iv_power",
+                "com.byd.auto.ac:id/power_btn",
+                "com.byd.auto.climate:id/btn_power",
+                "com.byd.auto.climate:id/iv_power"
+            )
+            val AC_TEMP_UP = listOf(
+                "com.byd.auto.ac:id/btn_temp_up",
+                "com.byd.auto.ac:id/iv_temp_up",
+                "com.byd.auto.ac:id/temp_up",
+                "com.byd.auto.climate:id/btn_temp_up"
+            )
+            val AC_TEMP_DOWN = listOf(
+                "com.byd.auto.ac:id/btn_temp_down",
+                "com.byd.auto.ac:id/iv_temp_down",
+                "com.byd.auto.ac:id/temp_down",
+                "com.byd.auto.climate:id/btn_temp_down"
+            )
+            val PHONE_ANSWER = listOf(
+                "com.byd.auto.phone:id/btn_answer",
+                "com.byd.auto.phone:id/iv_answer",
+                "com.byd.auto.phone:id/answer_btn",
+                "com.byd.auto.phone:id/btn_accept"
+            )
+            val PHONE_REJECT = listOf(
+                "com.byd.auto.phone:id/btn_reject",
+                "com.byd.auto.phone:id/iv_reject",
+                "com.byd.auto.phone:id/reject_btn",
+                "com.byd.auto.phone:id/btn_decline"
+            )
+        }
     }
 
     // DiLink packages we want to monitor
@@ -51,48 +160,59 @@ class DiLinkAccessibilityService : AccessibilityService() {
         "com.byd.auto.media",        // Media player
         "com.byd.auto.settings",     // Settings
         "com.byd.auto.phone",        // Phone
-        "com.byd.auto.launcher"      // Home screen
+        "com.byd.auto.launcher",     // Home screen
+        "com.byd.auto.climate",      // Climate control (some models)
+        "com.byd.auto.vehicleinfo",  // Vehicle info
+        "com.byd.auto.energy",       // Energy management
+        "com.byd.auto.camera"        // Camera/360 view
     )
-    
+
     // Current active package
     private var currentPackage: String? = null
-    
+
     // Command executor reference
     private var commandExecutor: DiLinkCommandExecutor? = null
+
+    // Debug mode for logging UI elements
+    private var debugMode = true
+
+    // Detected BYD model
+    private var detectedModel: String = "Unknown"
 
     override fun onCreate() {
         super.onCreate()
         instance = this
         Log.i(TAG, "🚗 DiLink Accessibility Service created")
+        detectBYDModel()
     }
 
     override fun onServiceConnected() {
         super.onServiceConnected()
-        
+
         Log.i(TAG, "✅ DiLink Accessibility Service connected")
-        
+
         // Configure service info
         serviceInfo = AccessibilityServiceInfo().apply {
             // Event types to listen for
             eventTypes = AccessibilityEvent.TYPES_ALL_MASK
-            
+
             // Feedback type
             feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
-            
+
             // Flags
             flags = AccessibilityServiceInfo.FLAG_DEFAULT or
                     AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS or
                     AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or
                     AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
-            
+
             // Package names to monitor (null = all packages)
             // We monitor all to catch DiLink apps
             packageNames = null
-            
+
             // Notification timeout
             notificationTimeout = 100
         }
-        
+
         // Notify service is ready
         broadcastServiceState(true)
     }
@@ -100,31 +220,40 @@ class DiLinkAccessibilityService : AccessibilityService() {
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
         // Filter events from DiLink packages
         val packageName = event.packageName?.toString() ?: return
-        
+
         if (packageName !in monitoredPackages && !packageName.startsWith("com.byd")) {
             return
         }
-        
+
         when (event.eventType) {
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
                 // Window changed - update current package
                 if (packageName != currentPackage) {
                     currentPackage = packageName
                     Log.d(TAG, "📱 Active app: $packageName")
+
+                    // Debug: Log available UI elements in new window
+                    if (debugMode) {
+                        logAvailableUIElements()
+                    }
                 }
             }
-            
+
             AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
                 // Content changed in current window
                 // Could be useful for detecting UI state changes
             }
-            
+
             AccessibilityEvent.TYPE_VIEW_CLICKED -> {
                 Log.v(TAG, "👆 Click: ${event.contentDescription}")
             }
-            
+
             AccessibilityEvent.TYPE_VIEW_FOCUSED -> {
                 Log.v(TAG, "🎯 Focus: ${event.contentDescription}")
+            }
+
+            AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED -> {
+                Log.v(TAG, "📝 Text changed: ${event.text}")
             }
         }
     }
@@ -138,6 +267,106 @@ class DiLinkAccessibilityService : AccessibilityService() {
         instance = null
         broadcastServiceState(false)
         Log.i(TAG, "DiLink Accessibility Service destroyed")
+    }
+
+    /**
+     * Detect BYD model from system properties
+     */
+    private fun detectBYDModel() {
+        try {
+            val props = listOf(
+                "ro.product.model" to "Model",
+                "ro.product.device" to "Device",
+                "ro.build.fingerprint" to "Fingerprint",
+                "ro.byd.model" to "BYD Model",
+                "ro.byd.platform" to "BYD Platform"
+            )
+
+            val sb = StringBuilder("Detected BYD Info:\n")
+            for ((prop, label) in props) {
+                val value = getSystemProperty(prop)
+                if (!value.isNullOrEmpty()) {
+                    sb.append("$label: $value\n")
+                    Log.d(TAG, "🔧 $label: $value")
+
+                    // Detect specific model
+                    when {
+                        value.contains("Yuan", ignoreCase = true) ||
+                        value.contains("Atto", ignoreCase = true) -> detectedModel = "Yuan Plus/Atto 3"
+                        value.contains("Dolphin", ignoreCase = true) -> detectedModel = "Dolphin"
+                        value.contains("Seal", ignoreCase = true) -> detectedModel = "Seal"
+                        value.contains("Han", ignoreCase = true) -> detectedModel = "Han"
+                        value.contains("Tang", ignoreCase = true) -> detectedModel = "Tang"
+                    }
+                }
+            }
+            Log.i(TAG, "🚙 Detected BYD Model: $detectedModel")
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to detect BYD model", e)
+        }
+    }
+
+    /**
+     * Get system property using reflection
+     */
+    private fun getSystemProperty(key: String): String? {
+        return try {
+            val clazz = Class.forName("android.os.SystemProperties")
+            val method = clazz.getMethod("get", String::class.java)
+            method.invoke(null, key) as? String
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /**
+     * Enable/disable debug mode
+     */
+    fun setDebugMode(enabled: Boolean) {
+        debugMode = enabled
+        Log.i(TAG, "Debug mode: $enabled")
+    }
+
+    /**
+     * Get detected BYD model
+     */
+    fun getDetectedModel(): String = detectedModel
+
+    /**
+     * Log all available UI elements in current window (for debugging)
+     */
+    fun logAvailableUIElements() {
+        val root = rootInActiveWindow ?: return
+
+        Log.d(TAG, "=== UI Elements Discovery ===")
+        Log.d(TAG, "Package: ${root.packageName}")
+        Log.d(TAG, "Window ID: ${root.windowId}")
+
+        logNodeTree(root, 0)
+        Log.d(TAG, "=== End UI Elements ===")
+    }
+
+    /**
+     * Recursively log node tree
+     */
+    private fun logNodeTree(node: AccessibilityNodeInfo, depth: Int) {
+        val indent = "  ".repeat(depth)
+        val bounds = Rect()
+        node.getBoundsInScreen(bounds)
+
+        Log.d(TAG, "${indent}Node: ${node.className}")
+        Log.d(TAG, "${indent}  ID: ${node.viewIdResourceName}")
+        Log.d(TAG, "${indent}  Text: ${node.text}")
+        Log.d(TAG, "${indent}  Desc: ${node.contentDescription}")
+        Log.d(TAG, "${indent}  Bounds: $bounds")
+        Log.d(TAG, "${indent}  Clickable: ${node.isClickable}")
+        Log.d(TAG, "${indent}  Scrollable: ${node.isScrollable}")
+        Log.d(TAG, "${indent}  Editable: ${node.isEditable}")
+
+        for (i in 0 until node.childCount) {
+            node.getChild(i)?.let { logNodeTree(it, depth + 1) }
+        }
     }
 
     /**
@@ -156,12 +385,36 @@ class DiLinkAccessibilityService : AccessibilityService() {
     }
 
     /**
-     * Find a node by resource ID
+     * Find a node by resource ID with fallback support
      */
     fun findNodeById(id: String): AccessibilityNodeInfo? {
         val root = rootInActiveWindow ?: return null
+
+        // Try exact ID first
         val nodes = root.findAccessibilityNodeInfosByViewId(id)
-        return nodes.firstOrNull()
+        if (nodes.isNotEmpty()) {
+            return nodes.firstOrNull()
+        }
+
+        // Try fallback IDs
+        val fallbackList = when {
+            id.contains("power", ignoreCase = true) && id.contains("ac", ignoreCase = true) -> FallbackIDs.AC_POWER
+            id.contains("temp_up", ignoreCase = true) -> FallbackIDs.AC_TEMP_UP
+            id.contains("temp_down", ignoreCase = true) -> FallbackIDs.AC_TEMP_DOWN
+            id.contains("answer", ignoreCase = true) -> FallbackIDs.PHONE_ANSWER
+            id.contains("reject", ignoreCase = true) -> FallbackIDs.PHONE_REJECT
+            else -> emptyList()
+        }
+
+        for (fallbackId in fallbackList) {
+            val fallbackNodes = root.findAccessibilityNodeInfosByViewId(fallbackId)
+            if (fallbackNodes.isNotEmpty()) {
+                Log.d(TAG, "✅ Found node using fallback ID: $fallbackId")
+                return fallbackNodes.firstOrNull()
+            }
+        }
+
+        return null
     }
 
     /**
@@ -178,9 +431,40 @@ class DiLinkAccessibilityService : AccessibilityService() {
      */
     fun findNodeByContentDescription(desc: String): AccessibilityNodeInfo? {
         val root = rootInActiveWindow ?: return null
-        
+
         return findNodeRecursive(root) { node ->
             node.contentDescription?.toString()?.contains(desc, ignoreCase = true) == true
+        }
+    }
+
+    /**
+     * Find node by multiple criteria (flexible search)
+     */
+    fun findNodeFlexibly(
+        id: String? = null,
+        text: String? = null,
+        contentDesc: String? = null,
+        className: String? = null
+    ): AccessibilityNodeInfo? {
+        val root = rootInActiveWindow ?: return null
+
+        return findNodeRecursive(root) { node ->
+            var matches = true
+
+            if (id != null) {
+                matches = matches && node.viewIdResourceName?.contains(id, ignoreCase = true) == true
+            }
+            if (text != null) {
+                matches = matches && node.text?.toString()?.contains(text, ignoreCase = true) == true
+            }
+            if (contentDesc != null) {
+                matches = matches && node.contentDescription?.toString()?.contains(contentDesc, ignoreCase = true) == true
+            }
+            if (className != null) {
+                matches = matches && node.className?.toString()?.contains(className, ignoreCase = true) == true
+            }
+
+            matches
         }
     }
 
@@ -192,13 +476,13 @@ class DiLinkAccessibilityService : AccessibilityService() {
         condition: (AccessibilityNodeInfo) -> Boolean
     ): AccessibilityNodeInfo? {
         if (condition(node)) return node
-        
+
         for (i in 0 until node.childCount) {
             val child = node.getChild(i) ?: continue
             val result = findNodeRecursive(child, condition)
             if (result != null) return result
         }
-        
+
         return null
     }
 
@@ -207,7 +491,9 @@ class DiLinkAccessibilityService : AccessibilityService() {
      */
     fun performClick(node: AccessibilityNodeInfo?): Boolean {
         if (node == null) return false
-        
+
+        Log.d(TAG, "👆 Clicking: ${node.viewIdResourceName} - ${node.contentDescription}")
+
         return if (node.isClickable) {
             node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
         } else {
@@ -235,7 +521,7 @@ class DiLinkAccessibilityService : AccessibilityService() {
      */
     fun performLongClick(node: AccessibilityNodeInfo?): Boolean {
         if (node == null) return false
-        
+
         return if (node.isLongClickable) {
             node.performAction(AccessibilityNodeInfo.ACTION_LONG_CLICK)
         } else {
@@ -248,7 +534,7 @@ class DiLinkAccessibilityService : AccessibilityService() {
      */
     fun scrollForward(node: AccessibilityNodeInfo?): Boolean {
         if (node == null) return false
-        
+
         return if (node.isScrollable) {
             node.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)
         } else {
@@ -261,7 +547,7 @@ class DiLinkAccessibilityService : AccessibilityService() {
      */
     fun scrollBackward(node: AccessibilityNodeInfo?): Boolean {
         if (node == null) return false
-        
+
         return if (node.isScrollable) {
             node.performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)
         } else {
@@ -274,12 +560,12 @@ class DiLinkAccessibilityService : AccessibilityService() {
      */
     fun setText(node: AccessibilityNodeInfo?, text: String): Boolean {
         if (node == null) return false
-        
+
         if (!node.isEditable) {
             return setText(node.parent, text)
         }
-        
-        val arguments = android.os.Bundle()
+
+        val arguments = Bundle()
         arguments.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text)
         return node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
     }
@@ -315,16 +601,16 @@ class DiLinkAccessibilityService : AccessibilityService() {
             val clickPath = android.graphics.Path().apply {
                 moveTo(x, y)
             }
-            
+
             gestureBuilder.addStroke(
                 android.accessibilityservice.GestureDescription.StrokeDescription(
                     clickPath, 0, 100
                 )
             )
-            
+
             return dispatchGesture(gestureBuilder.build(), null, null)
         }
-        
+
         return false
     }
 
@@ -338,16 +624,16 @@ class DiLinkAccessibilityService : AccessibilityService() {
                 moveTo(startX, startY)
                 lineTo(endX, endY)
             }
-            
+
             gestureBuilder.addStroke(
                 android.accessibilityservice.GestureDescription.StrokeDescription(
                     swipePath, 0, duration
                 )
             )
-            
+
             return dispatchGesture(gestureBuilder.build(), null, null)
         }
-        
+
         return false
     }
 
@@ -357,7 +643,7 @@ class DiLinkAccessibilityService : AccessibilityService() {
     fun getClickableNodes(): List<AccessibilityNodeInfo> {
         val root = rootInActiveWindow ?: return emptyList()
         val clickables = mutableListOf<AccessibilityNodeInfo>()
-        
+
         collectClickableNodes(root, clickables)
         return clickables
     }
@@ -366,7 +652,7 @@ class DiLinkAccessibilityService : AccessibilityService() {
         if (node.isClickable && node.isVisibleToUser) {
             list.add(node)
         }
-        
+
         for (i in 0 until node.childCount) {
             node.getChild(i)?.let { collectClickableNodes(it, list) }
         }
@@ -385,6 +671,57 @@ class DiLinkAccessibilityService : AccessibilityService() {
     }
 
     /**
+     * Open a DiLink app by package name
+     */
+    fun openDiLinkApp(packageName: String): Boolean {
+        return try {
+            val intent = packageManager.getLaunchIntentForPackage(packageName)
+            intent?.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(intent)
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to open app: $packageName", e)
+            false
+        }
+    }
+
+    /**
+     * Get text content from a node
+     */
+    fun getNodeText(node: AccessibilityNodeInfo?): String? {
+        return node?.text?.toString() ?: node?.contentDescription?.toString()
+    }
+
+    /**
+     * Get text from node by ID
+     */
+    fun getTextById(id: String): String? {
+        return getNodeText(findNodeById(id))
+    }
+
+    /**
+     * Check if a node exists
+     */
+    fun nodeExists(id: String): Boolean {
+        return findNodeById(id) != null
+    }
+
+    /**
+     * Wait for a node to appear
+     */
+    suspend fun waitForNode(id: String, timeoutMs: Long = 5000): AccessibilityNodeInfo? {
+        val startTime = System.currentTimeMillis()
+
+        while (System.currentTimeMillis() - startTime < timeoutMs) {
+            val node = findNodeById(id)
+            if (node != null) return node
+            Thread.sleep(100)
+        }
+
+        return null
+    }
+
+    /**
      * Broadcast service state change
      */
     private fun broadcastServiceState(enabled: Boolean) {
@@ -392,5 +729,88 @@ class DiLinkAccessibilityService : AccessibilityService() {
             putExtra("enabled", enabled)
         }
         sendBroadcast(intent)
+    }
+
+    // ========== BYD-Specific Helper Methods ==========
+
+    /**
+     * Check if AC app is active
+     */
+    fun isACAppActive(): Boolean {
+        return currentPackage in listOf(
+            YuanPlus2023.PACKAGE_AC,
+            YuanPlus2023.PACKAGE_CLIMATE
+        )
+    }
+
+    /**
+     * Check if Phone app is active
+     */
+    fun isPhoneAppActive(): Boolean {
+        return currentPackage == YuanPlus2023.PACKAGE_PHONE
+    }
+
+    /**
+     * Check if Media app is active
+     */
+    fun isMediaAppActive(): Boolean {
+        return currentPackage == YuanPlus2023.PACKAGE_MEDIA
+    }
+
+    /**
+     * Check if Navigation app is active
+     */
+    fun isNavigationAppActive(): Boolean {
+        return currentPackage == YuanPlus2023.PACKAGE_NAV
+    }
+
+    /**
+     * Get current battery percentage
+     */
+    fun getBatteryPercentage(): Int? {
+        val node = findNodeById(YuanPlus2023.ID_VEHICLE_BATTERY)
+        return node?.text?.toString()?.replace("%", "")?.toIntOrNull()
+    }
+
+    /**
+     * Get current range
+     */
+    fun getRange(): Int? {
+        val node = findNodeById(YuanPlus2023.ID_VEHICLE_RANGE)
+        return node?.text?.toString()?.replace("km", "")?.trim()?.toIntOrNull()
+    }
+
+    /**
+     * Get outside temperature
+     */
+    fun getOutsideTemperature(): Int? {
+        val node = findNodeById(YuanPlus2023.ID_VEHICLE_TEMP_OUT)
+        return node?.text?.toString()?.replace("°", "")?.trim()?.toIntOrNull()
+    }
+
+    /**
+     * Get inside temperature
+     */
+    fun getInsideTemperature(): Int? {
+        val node = findNodeById(YuanPlus2023.ID_VEHICLE_TEMP_IN)
+        return node?.text?.toString()?.replace("°", "")?.trim()?.toIntOrNull()
+    }
+
+    /**
+     * Get current AC temperature
+     */
+    fun getACTemperature(): Int? {
+        val node = findNodeById(YuanPlus2023.ID_AC_TEMP_DISPLAY)
+        return node?.text?.toString()?.toIntOrNull()
+    }
+
+    /**
+     * Check if AC is on
+     */
+    fun isACOn(): Boolean? {
+        // This would need to check the state of the power button
+        // Implementation depends on BYD's UI state representation
+        val powerNode = findNodeById(YuanPlus2023.ID_AC_POWER)
+        return powerNode?.isSelected
     }
 }
