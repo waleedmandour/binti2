@@ -4,14 +4,11 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
-import com.huawei.hms.api.ConnectionResult
-import com.huawei.hms.api.HuaweiApiAvailability
 
 /**
- * HMS Utilities - Huawei Mobile Services Helper
+ * HMS Utilities - Device Detection Helper
  * 
- * Provides utilities for detecting and working with Huawei devices
- * and HMS Core services.
+ * Provides utilities for detecting device types and capabilities.
  * 
  * @author Dr. Waleed Mandour
  */
@@ -32,16 +29,10 @@ object HMSUtils {
     
     /**
      * Check if Huawei Mobile Services are available
+     * Note: Always returns false as HMS is not available in this build
      */
     fun isHuaweiServicesAvailable(context: Context): Boolean {
-        return try {
-            val result = HuaweiApiAvailability.getInstance()
-                .isHuaweiMobileServicesAvailable(context)
-            result == ConnectionResult.SUCCESS
-        } catch (e: Exception) {
-            Log.w(TAG, "HMS availability check failed: ${e.message}")
-            false
-        }
+        return false
     }
     
     /**
@@ -86,20 +77,14 @@ object HMSUtils {
      * Get the preferred ASR provider based on device capabilities
      */
     fun getPreferredASRProvider(): ASRProvider {
-        return when {
-            isHuaweiDevice() -> ASRProvider.HUAWEI_ML_KIT
-            else -> ASRProvider.VOSK_OFFLINE
-        }
+        return ASRProvider.VOSK_OFFLINE
     }
     
     /**
      * Get the preferred TTS provider based on device capabilities
      */
     fun getPreferredTTSProvider(): TTSProvider {
-        return when {
-            isHuaweiDevice() -> TTSProvider.HUAWEI_ML_KIT
-            else -> TTSProvider.ANDROID_TTS
-        }
+        return TTSProvider.ANDROID_TTS
     }
     
     /**
@@ -107,7 +92,7 @@ object HMSUtils {
      */
     enum class ASRProvider {
         VOSK_OFFLINE,       // Vosk Egyptian Arabic model
-        HUAWEI_ML_KIT,      // Huawei ML Kit Speech-to-Text
+        HUAWEI_ML_KIT,      // Huawei ML Kit Speech-to-Text (not available)
         GOOGLE_CLOUD        // Google Cloud Speech (future)
     }
     
@@ -116,7 +101,7 @@ object HMSUtils {
      */
     enum class TTSProvider {
         COQUI_OFFLINE,      // Coqui TTS Egyptian Female
-        HUAWEI_ML_KIT,      // Huawei ML Kit Text-to-Speech
+        HUAWEI_ML_KIT,      // Huawei ML Kit Text-to-Speech (not available)
         ANDROID_TTS         // Android TTS with Arabic locale
     }
 }

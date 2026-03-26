@@ -1,328 +1,296 @@
-# .github/workflows/ci.yml
-# Binti2 CI/CD Pipeline
-# 
-# This workflow handles:
-# - Project validation (manifest, strings, source files)
-# - Build and test automation
-# - Release APK generation and distribution
-# - Model asset packaging for Google Drive distribution
-#
-# Models are hosted on Google Drive with local USB/SD card fallback.
-# The app uses Vosk grammar-based wake word detection (no separate model needed).
-
-name: Binti2 CI/CD Pipeline
+name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, master, develop]
   pull_request:
-    branches: [main]
+    branches: [main, master]
   release:
-    types: [created]
+    types: [published]
+
+env:
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.caching=true"
+  JAVA_VERSION: "17"
+  JAVA_DISTRIBUTION: "temurin"
 
 jobs:
-  validate:
-    name: Validate Project
+  # ============================================================================
+  # BUILD DEBUG APK
+  # ============================================================================
+  build-debug:
+    name: Build Debug APK
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: gradle
-
-      - name: Validate Gradle wrapper
+      - name: Validate Gradle Wrapper
         uses: gradle/actions/wrapper-validation@v3
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-
-      - name: Check for missing source files
-        run: |
-          echo "Checking critical source files..."
-          
-          missing_files=()
-          
-          # Check essential project files
-          essential_files=(
-            "app/build.gradle.kts"
-            "build.gradle.kts"
-            "settings.gradle.kts"
-            "app/src/main/AndroidManifest.xml"
-          )
-          
-          for file in "${essential_files[@]}"; do
-            if [ ! -f "$file" ]; then
-              missing_files+=("$file")
-            fi
-          done
-          
-          # Check for Kotlin source directory
-          if [ ! -d "app/src/main/java" ] && [ ! -d "app/src/main/kotlin" ]; then
-            missing_files+=("app/src/main/{java|kotlin} (source directory)")
-          fi
-          
-          # Check for resources directory
-          if [ ! -d "app/src/main/res" ]; then
-            missing_files+=("app/src/main/res (resources directory)")
-          fi
-          
-          if [ ${#missing_files[@]} -gt 0 ]; then
-            echo "Missing critical files:"
-            for f in "${missing_files[@]}"; do
-              echo "   - $f"
-            done
-            exit 1
-          fi
-          
-          echo "All critical source files present"
-
-      - name: Verify AndroidManifest Security
-        run: |
-          if [ -f "app/src/main/AndroidManifest.xml" ]; then
-            if grep -q 'usesCleartextTraffic="false"' app/src/main/AndroidManifest.xml; then
-              echo "HTTPS-only traffic enforced"
-            else
-              echo "Warning: Cleartext traffic not explicitly disabled"
-            fi
-            
-            if grep -q 'networkSecurityConfig' app/src/main/AndroidManifest.xml; then
-              echo "Network security config present"
-            else
-              echo "Warning: No network security config found"
-            fi
-          else
-            echo "AndroidManifest.xml not found"
-            exit 1
-          fi
-
-      - name: Check Egyptian Arabic Strings
-        run: |
-          if [ -f "app/src/main/res/values-ar/strings.xml" ]; then
-            echo "Egyptian Arabic strings file exists"
-            
-            # Check for critical strings
-            critical_strings=("app_name" "wake_word" "accessibility_service_description")
-            missing_strings=()
-            
-            for str in "${critical_strings[@]}"; do
-              if ! grep -q "name=\"$str\"" app/src/main/res/values-ar/strings.xml; then
-                missing_strings+=("$str")
-              fi
-            done
-            
-            if [ ${#missing_strings[@]} -gt 0 ]; then
-              echo "Missing critical strings: ${missing_strings[*]}"
-              exit 1
-            else
-              echo "All critical strings found"
-            fi
-            
-            # Count total strings
-            ar_count=$(grep -c '<string' app/src/main/res/values-ar/strings.xml || echo "0")
-            echo "Total Egyptian Arabic strings: $ar_count"
-          else
-            echo "Missing values-ar/strings.xml"
-            exit 1
-          fi
-
-  build:
-    name: Build Debug APK
-    needs: validate
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 17
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: gradle
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
-          cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/develop' }}
+          cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master' }}
           gradle-home-cache-cleanup: true
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --no-daemon --build-cache
-
-      - name: Run unit tests
-        run: ./gradlew test --no-daemon --build-cache
-        continue-on-error: true
-
-      - name: Run lint
-        run: ./gradlew lint --no-daemon --build-cache
-        continue-on-error: true
-
-      - name: List APK output
         run: |
-          echo "APK output location:"
-          ls -la app/build/outputs/apk/debug/ || echo "APK directory not found"
+          echo "::group::Building Debug APK"
+          ./gradlew assembleDebug --stacktrace --info
+          echo "::endgroup::"
 
-      - name: Upload Debug APK
+      - name: Verify Debug APK exists
+        run: |
+          APK_PATH="app/build/outputs/apk/debug/app-debug.apk"
+          if [ -f "$APK_PATH" ]; then
+            echo "✅ Debug APK built successfully"
+            echo "APK_SIZE=$(du -h "$APK_PATH" | cut -f1)" >> $GITHUB_OUTPUT
+            ls -la "$APK_PATH"
+          else
+            echo "❌ Debug APK not found at $APK_PATH"
+            exit 1
+          fi
+
+      - name: Upload Debug APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug
-          path: app/build/outputs/apk/debug/*.apk
-          retention-days: 7
+          name: debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
           if-no-files-found: error
 
-  release:
+  # ============================================================================
+  # BUILD RELEASE APK (only on release)
+  # ============================================================================
+  build-release:
     name: Build Release APK
-    needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     if: github.event_name == 'release'
+
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Validate Gradle Wrapper
+        uses: gradle/actions/wrapper-validation@v3
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: gradle
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
+          cache-read-only: false
           gradle-home-cache-cleanup: true
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Decode Keystore
-        env:
-          ENCODED_KEYSTORE: ${{ secrets.KEYSTORE_BASE64 }}
-        run: |
-          if [ -n "$ENCODED_KEYSTORE" ]; then
-            echo "Decoding release keystore..."
-            echo "$ENCODED_KEYSTORE" | base64 -d > app/release-keystore.jks
-            echo "Keystore decoded successfully"
-          else
-            echo "No keystore secret found - will use debug signing"
-          fi
-
       - name: Build Release APK
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          if [ -f "app/release-keystore.jks" ]; then
-            echo "Building release APK with signing..."
-            ./gradlew assembleRelease --no-daemon --build-cache
-          else
-            echo "Building release APK with debug signing..."
-            ./gradlew assembleRelease --no-daemon --build-cache
-          fi
+          echo "::group::Building Release APK"
+          ./gradlew assembleRelease --stacktrace --info
+          echo "::endgroup::"
 
-      - name: Verify Release APK
+      - name: Verify Release APK exists
         run: |
-          if ls app/build/outputs/apk/release/*.apk 1> /dev/null 2>&1; then
-            echo "Release APK built successfully"
-            ls -la app/build/outputs/apk/release/*.apk
+          APK_PATH="app/build/outputs/apk/release/app-release.apk"
+          if [ -f "$APK_PATH" ]; then
+            echo "✅ Release APK built successfully"
+            ls -la "$APK_PATH"
           else
-            echo "Release APK not found"
+            echo "❌ Release APK not found at $APK_PATH"
             exit 1
           fi
 
-      - name: Upload Release APK
+      - name: Upload Release APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-release
-          path: app/build/outputs/apk/release/*.apk
+          name: release-apk
+          path: app/build/outputs/apk/release/app-release.apk
           retention-days: 30
           if-no-files-found: error
 
-      - name: Upload to GitHub Release
+      - name: Upload Release APK to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: app/build/outputs/apk/release/*.apk
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          files: app/build/outputs/apk/release/app-release.apk
+          generate_release_notes: true
 
-  model-pack:
-    name: Package Model Manifest
-    needs: release
+  # ============================================================================
+  # MODEL MANIFEST (only on release)
+  # ============================================================================
+  model-manifest:
+    name: Create Model Manifest
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.event_name == 'release'
+    needs: [build-release]
+
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Create model manifest
-        run: |
-          mkdir -p models_release
-          
-          # Extract version from tag
-          VERSION="${{ github.event.release.tag_name }}"
-          echo "Creating manifest for version: $VERSION"
-          
-          # Model manifest for Vosk MGB2 Arabic ASR
-          # Note: Wake word detection uses Vosk grammar-based approach (no separate model)
-          # The MGB2 model handles both ASR and wake word via grammar rules
-          cat > models_release/manifest.json << EOF
-{
-  "version": "$VERSION",
-  "models": [
-    {
-      "id": "asr_arabic",
-      "name": "Arabic ASR + Wake Word (Vosk MGB2 v0.4)",
-      "file": "vosk-model-ar-mgb2-0.4.zip",
-      "size_mb": 1247,
-      "google_drive_id": "1bK1-pUCH5xykvKdB7nB7mZ_1wBKH05qZ",
-      "required": true,
-      "wake_word_support": {
-        "method": "vosk_grammar",
-        "wake_phrase": "يا بنتي",
-        "grammar": "[\"يا بنتي\", \"[unk]\"]"
-      }
-    },
-    {
-      "id": "nlu_classifier",
-      "name": "Intent Classifier (EgyBERT)",
-      "file": "egybert_tiny_int8.onnx",
-      "size_mb": 25,
-      "google_drive_id": "",
-      "required": false
-    },
-    {
-      "id": "tts_voice",
-      "name": "Egyptian TTS Voice",
-      "file": "ar-eg-female.zip",
-      "size_mb": 80,
-      "google_drive_id": "",
-      "required": false
-    }
-  ],
-  "total_size_mb": 1352,
-  "min_android_sdk": 26,
-  "target_android_sdk": 34,
-  "hosting": {
-    "provider": "Google Drive",
-    "fallback": "Local USB/SD Card"
-  }
-}
-EOF
-          
-          echo "Manifest created:"
-          cat models_release/manifest.json
+      - name: Download Release APK
+        uses: actions/download-artifact@v4
+        with:
+          name: release-apk
+          path: ./artifacts
 
-      - name: Upload model manifest
+      - name: Generate Model Manifest
+        run: |
+          echo "::group::Generating Model Manifest"
+          
+          # Get release version
+          RELEASE_VERSION="${{ github.event.release.tag_name }}"
+          RELEASE_NAME="${{ github.event.release.name }}"
+          
+          cat > model_manifest.json << EOF
+          {
+            "manifest_version": "1.0.0",
+            "generated_at": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+            "release": {
+              "version": "${RELEASE_VERSION}",
+              "name": "${RELEASE_NAME}",
+              "tag": "${RELEASE_VERSION}",
+              "github_url": "${{ github.event.release.html_url }}"
+            },
+            "app_info": {
+              "package_name": "com.binti.dilink",
+              "min_sdk": 26,
+              "target_sdk": 34,
+              "version_code": 2,
+              "version_name": "2.0.0"
+            },
+            "models": [
+              {
+                "id": "asr_arabic",
+                "name": "ASR (Vosk MGB2 v0.4)",
+                "description": "Modern Standard Arabic speech recognition model",
+                "file": "vosk-model-ar-mgb2-0.4.zip",
+                "size_mb": 1247,
+                "required": true,
+                "download": {
+                  "provider": "Google Drive",
+                  "google_drive_id": "1bK1-pUCH5xykvKdB7nB7mZ_1wBKH05qZ",
+                  "url": "https://drive.google.com/uc?export=download&id=1bK1-pUCH5xykvKdB7nB7mZ_1wBKH05qZ"
+                },
+                "installation": {
+                  "extract": true,
+                  "relative_path": "models"
+                },
+                "notes": "Large model - WiFi recommended for download"
+              },
+              {
+                "id": "wake_word",
+                "name": "Wake Word Detection",
+                "description": "Detects 'يا بنتي' (Ya Binti) wake phrase",
+                "size_mb": 0,
+                "required": false,
+                "method": "vosk_grammar",
+                "wake_phrase": "يا بنتي",
+                "grammar": "[\"يا بنتي\", \"[unk]\"]",
+                "notes": "Uses Vosk grammar-based detection from ASR model - no separate download needed"
+              },
+              {
+                "id": "nlu_classifier",
+                "name": "NLU Intent Classifier",
+                "description": "Egyptian Arabic intent classification model",
+                "file": "egybert_tiny_int8.onnx",
+                "size_mb": 25,
+                "required": false,
+                "fallback": "Rule-based intent matching",
+                "notes": "Optional - fallback to rule-based matching if unavailable"
+              },
+              {
+                "id": "tts_voice",
+                "name": "TTS Voice",
+                "description": "Egyptian Arabic text-to-speech voice",
+                "file": "ar-eg-female.zip",
+                "size_mb": 80,
+                "required": false,
+                "fallback": "Android TTS / Huawei ML Kit TTS",
+                "notes": "Optional - fallback to system TTS if unavailable"
+              }
+            ],
+            "model_summary": {
+              "total_required_size_mb": 1247,
+              "total_optional_size_mb": 105,
+              "hosting": "Google Drive",
+              "download_recommendations": {
+                "wifi_recommended": true,
+                "size_warning_threshold_mb": 500
+              }
+            },
+            "required_models": {
+              "asr_arabic": {
+                "purpose": "Speech recognition - core functionality",
+                "size": "1247 MB",
+                "must_download": true
+              }
+            },
+            "optional_models": {
+              "wake_word": {
+                "purpose": "Wake word detection",
+                "method": "Uses Vosk grammar (no download)"
+              },
+              "nlu_classifier": {
+                "purpose": "Enhanced intent classification",
+                "fallback": "Rule-based matching"
+              },
+              "tts_voice": {
+                "purpose": "Egyptian Arabic voice synthesis",
+                "fallback": "System TTS engines"
+              }
+            }
+          }
+          EOF
+          
+          echo "::endgroup::"
+          echo ""
+          echo "📄 Model manifest generated successfully"
+
+      - name: Upload Model Manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-manifest
+          path: model_manifest.json
+          retention-days: 90
+
+      - name: Add Model Manifest to Release
         uses: softprops/action-gh-release@v2
         with:
-          files: models_release/manifest.json
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          files: model_manifest.json
+
+      - name: Display Summary
+        run: |
+          echo "## 📦 Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Models Required" >> $GITHUB_STEP_SUMMARY
+          echo "| Model | Size | Required | Hosted On |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|------|----------|-----------|" >> $GITHUB_STEP_SUMMARY
+          echo "| ASR (Vosk MGB2 v0.4) | 1247 MB | ✅ Yes | Google Drive |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Models Optional" >> $GITHUB_STEP_SUMMARY
+          echo "| Model | Size | Fallback |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|------|----------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Wake Word | N/A | Vosk Grammar |" >> $GITHUB_STEP_SUMMARY
+          echo "| NLU Classifier | 25 MB | Rule-based |" >> $GITHUB_STEP_SUMMARY
+          echo "| TTS Voice | 80 MB | System TTS |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Total Required Download:** 1247 MB" >> $GITHUB_STEP_SUMMARY

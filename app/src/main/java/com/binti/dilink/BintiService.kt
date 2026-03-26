@@ -47,6 +47,8 @@ class BintiService : Service() {
         const val ACTION_START = "com.binti.dilink.action.START"
         const val ACTION_STOP = "com.binti.dilink.action.STOP"
         const val ACTION_WAKE_WORD_DETECTED = "com.binti.dilink.action.WAKE_WORD_DETECTED"
+        const val ACTION_START_LISTENING = "com.binti.dilink.action.START_LISTENING"
+        const val ACTION_EXECUTE_COMMAND = "com.binti.dilink.action.EXECUTE_COMMAND"
         const val EXTRA_COMMAND = "extra_command"
         
         // Intent actions for UI communication

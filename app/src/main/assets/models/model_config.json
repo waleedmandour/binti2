@@ -6,9 +6,10 @@
     {
       "id": "asr_arabic",
       "name": "Arabic ASR (Vosk MGB2)",
-      "description": "Modern Standard Arabic speech recognition - also used for wake word detection via grammar constraint",
-      "file": "vosk-model-ar-mgb2.zip",
+      "description": "Modern Standard Arabic speech recognition - REQUIRED model for the app to function. Also used for wake word detection via grammar constraint.",
+      "file": "vosk-model-ar-mgb2-0.4.zip",
       "download_url": "https://drive.google.com/uc?export=download&id=1bK1-pUCH5xykvKdB7nB7mZ_1wBKH05qZ",
+      "google_drive_id": "1bK1-pUCH5xykvKdB7nB7mZ_1wBKH05qZ",
       "size_mb": 1247,
       "sha256": "",
       "required": true,
@@ -23,11 +24,26 @@
       }
     },
     {
+      "id": "wake_word",
+      "name": "Wake Word Detector",
+      "description": "Detects 'يا بنتي' wake word using TensorFlow Lite model (optional - Vosk grammar-based detection is used by default)",
+      "file": "ya_binti_detector.tflite",
+      "download_url": "",
+      "google_drive_id": "",
+      "size_mb": 5,
+      "sha256": "",
+      "required": false,
+      "extract": false,
+      "relative_path": "models/wake",
+      "fallback": "Vosk grammar-based wake word detection is used if this model is unavailable"
+    },
+    {
       "id": "nlu_classifier",
       "name": "Intent Classifier (EgyBERT)",
-      "description": "Egyptian Arabic intent classification",
+      "description": "Egyptian Arabic intent classification (optional - fallback to rule-based matching)",
       "file": "egybert_tiny_int8.onnx",
-      "download_url": "https://drive.google.com/uc?export=download&id=YOUR_NLU_FILE_ID",
+      "download_url": "",
+      "google_drive_id": "",
       "size_mb": 25,
       "sha256": "",
       "required": false,
@@ -43,9 +59,10 @@
     {
       "id": "tts_voice",
       "name": "Egyptian TTS Voice",
-      "description": "Egyptian female voice for text-to-speech",
+      "description": "Egyptian female voice for text-to-speech (optional - fallback to Android TTS)",
       "file": "ar-eg-female.zip",
-      "download_url": "https://drive.google.com/uc?export=download&id=YOUR_TTS_FILE_ID",
+      "download_url": "",
+      "google_drive_id": "",
       "size_mb": 80,
       "sha256": "",
       "required": false,
@@ -62,9 +79,10 @@
     {
       "id": "intent_map",
       "name": "Intent Pattern Map",
-      "description": "JSON mapping of commands to intents",
+      "description": "JSON mapping of commands to intents (bundled in app assets)",
       "file": "dilink_intent_map.json",
       "download_url": "",
+      "google_drive_id": "",
       "size_mb": 0,
       "sha256": "",
       "required": true,
@@ -73,7 +91,16 @@
       "notes": "Included in app assets, no download needed"
     }
   ],
-  "total_size_mb": 1352,
+  "total_size_mb": 1357,
+  "required_models": {
+    "asr_arabic": "Speech recognition - the core functionality",
+    "intent_map": "Command patterns - bundled with app"
+  },
+  "optional_models": {
+    "wake_word": "Uses Vosk grammar-based detection as fallback",
+    "nlu_classifier": "Uses rule-based intent matching as fallback",
+    "tts_voice": "Uses Android TTS or Huawei ML Kit TTS as fallback"
+  },
   "hosting": {
     "provider": "Google Drive",
     "notes": "Models are hosted on Google Drive with public sharing. Users can also host their own models.",

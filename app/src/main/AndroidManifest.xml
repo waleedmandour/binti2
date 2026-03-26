@@ -32,10 +32,11 @@
         android:networkSecurityConfig="@xml/network_security_config"
         tools:targetApi="34">
         
-        <!-- Huawei AGConnect metadata -->
-        <meta-data
+        <!-- Huawei AGConnect metadata - Placeholder, HMS not currently used -->
+        <!-- To enable HMS, uncomment dependencies in build.gradle.kts and replace placeholder with actual appid -->
+        <!-- <meta-data
             android:name="com.huawei.hms.client.appid"
-            android:value="appid=placeholder_replace_with_actual" />
+            android:value="appid=placeholder_replace_with_actual" /> -->
 
         <!-- Main Activity -->
         <activity

@@ -39,12 +39,15 @@ class ModelManager(private val context: Context) {
         // Replace with your actual Google Drive file IDs
         private const val GOOGLE_DRIVE_BASE_URL = "https://drive.google.com/uc?export=download"
 
-        // Google Drive File IDs (replace with actual file IDs after uploading)
-        private const val WAKE_WORD_FILE_ID = "YOUR_WAKE_WORD_FILE_ID"
+        // Google Drive File IDs
+        // ASR Model - Required (the only model that must be downloaded)
         private const val ASR_MODEL_FILE_ID = "1bK1-pUCH5xykvKdB7nB7mZ_1wBKH05qZ"
-        private const val NLU_MODEL_FILE_ID = "YOUR_NLU_MODEL_FILE_ID"
-        private const val TTS_VOICE_FILE_ID = "YOUR_TTS_VOICE_FILE_ID"
-        private const val INTENT_MAP_FILE_ID = "YOUR_INTENT_MAP_FILE_ID"
+
+        // Optional models - file IDs to be set when models are ready
+        // private const val WAKE_WORD_FILE_ID = "" // Optional - uses Vosk grammar-based detection
+        // private const val NLU_MODEL_FILE_ID = "" // Optional - can use rule-based matching
+        // private const val TTS_VOICE_FILE_ID = "" // Optional - can use Android TTS
+        // Intent map is bundled in assets, no download needed
 
         // Mirror URLs for fallback (can be user-configured)
         private const val MIRROR_PRIMARY = "https://mirror1.binti.app/models"
@@ -61,8 +64,8 @@ class ModelManager(private val context: Context) {
             ModelDefinition(
                 name = "Wake Word Detector",
                 fileName = "ya_binti_detector.tflite",
-                googleDriveId = WAKE_WORD_FILE_ID,
-                downloadUrl = "$GOOGLE_DRIVE_BASE_URL&id=$WAKE_WORD_FILE_ID",
+                googleDriveId = "",
+                downloadUrl = "",
                 mirrorUrls = listOf(
                     "$MIRROR_PRIMARY/wake/ya_binti_detector.tflite",
                     "$MIRROR_SECONDARY/wake/ya_binti_detector.tflite"
@@ -70,7 +73,7 @@ class ModelManager(private val context: Context) {
                 relativePath = "models/wake",
                 sizeMB = 5,
                 sha256 = "compute_after_upload",
-                required = false, // Optional since we use Vosk grammar-based detection
+                required = false, // Optional - uses Vosk grammar-based wake word detection
                 description = "Detects 'يا بنتي' wake word (optional - using Vosk grammar-based detection)"
             ),
             ModelDefinition(
@@ -92,8 +95,8 @@ class ModelManager(private val context: Context) {
             ModelDefinition(
                 name = "Intent Classifier (EgyBERT)",
                 fileName = "egybert_tiny_int8.onnx",
-                googleDriveId = NLU_MODEL_FILE_ID,
-                downloadUrl = "$GOOGLE_DRIVE_BASE_URL&id=$NLU_MODEL_FILE_ID",
+                googleDriveId = "",
+                downloadUrl = "",
                 mirrorUrls = listOf(
                     "$MIRROR_PRIMARY/nlu/egybert_tiny_int8.onnx",
                     "$MIRROR_SECONDARY/nlu/egybert_tiny_int8.onnx"
@@ -101,14 +104,14 @@ class ModelManager(private val context: Context) {
                 relativePath = "models/nlu",
                 sizeMB = 25,
                 sha256 = "compute_after_upload",
-                required = true,
-                description = "Egyptian Arabic intent classification"
+                required = false, // Optional - can use rule-based intent matching
+                description = "Egyptian Arabic intent classification (optional - fallback to rule-based matching)"
             ),
             ModelDefinition(
                 name = "Egyptian TTS Voice",
                 fileName = "ar-eg-female.zip",
-                googleDriveId = TTS_VOICE_FILE_ID,
-                downloadUrl = "$GOOGLE_DRIVE_BASE_URL&id=$TTS_VOICE_FILE_ID",
+                googleDriveId = "",
+                downloadUrl = "",
                 mirrorUrls = listOf(
                     "$MIRROR_PRIMARY/tts/ar-eg-female.zip",
                     "$MIRROR_SECONDARY/tts/ar-eg-female.zip"
@@ -116,15 +119,15 @@ class ModelManager(private val context: Context) {
                 relativePath = "voices",
                 sizeMB = 80,
                 sha256 = "compute_after_upload",
-                required = false,
+                required = false, // Optional - can use Android TTS or Huawei ML Kit TTS
                 extract = true,
-                description = "Egyptian female voice for TTS"
+                description = "Egyptian female voice for TTS (optional - fallback to Android TTS)"
             ),
             ModelDefinition(
                 name = "Intent Patterns",
                 fileName = "dilink_intent_map.json",
-                googleDriveId = INTENT_MAP_FILE_ID,
-                downloadUrl = "$GOOGLE_DRIVE_BASE_URL&id=$INTENT_MAP_FILE_ID",
+                googleDriveId = "",
+                downloadUrl = "",
                 mirrorUrls = listOf(
                     "$MIRROR_PRIMARY/nlp/dilink_intent_map.json",
                     "$MIRROR_SECONDARY/nlp/dilink_intent_map.json"
@@ -132,8 +135,8 @@ class ModelManager(private val context: Context) {
                 relativePath = "assets/commands",
                 sizeMB = 0,
                 sha256 = "compute_after_upload",
-                required = true,
-                description = "Intent patterns for command matching"
+                required = true, // Required - bundled in app assets
+                description = "Intent patterns for command matching (bundled in app assets)"
             )
         )
     }
