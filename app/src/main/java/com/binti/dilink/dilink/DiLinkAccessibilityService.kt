@@ -103,8 +103,7 @@ class DiLinkAccessibilityService : AccessibilityService() {
             feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
 
             // Flags
-            flags = AccessibilityServiceInfo.FLAG_DEFAULT or
-                    AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS or
+            flags = AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS or
                     AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or
                     AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
 
@@ -301,11 +300,11 @@ class DiLinkAccessibilityService : AccessibilityService() {
 
         // Try fallback IDs
         val fallbackList = when {
-            id.contains("power", ignoreCase = true) && id.contains("ac", ignoreCase = true) -> FallbackIDs.AC_POWER
-            id.contains("temp_up", ignoreCase = true) -> FallbackIDs.AC_TEMP_UP
-            id.contains("temp_down", ignoreCase = true) -> FallbackIDs.AC_TEMP_DOWN
-            id.contains("answer", ignoreCase = true) -> FallbackIDs.PHONE_ANSWER
-            id.contains("reject", ignoreCase = true) -> FallbackIDs.PHONE_REJECT
+            id.contains("power", ignoreCase = true) && id.contains("ac", ignoreCase = true) -> BYDModels.FallbackIDs.AC_POWER
+            id.contains("temp_up", ignoreCase = true) -> BYDModels.FallbackIDs.AC_TEMP_UP
+            id.contains("temp_down", ignoreCase = true) -> BYDModels.FallbackIDs.AC_TEMP_DOWN
+            id.contains("answer", ignoreCase = true) -> BYDModels.FallbackIDs.PHONE_ANSWER
+            id.contains("reject", ignoreCase = true) -> BYDModels.FallbackIDs.PHONE_REJECT
             else -> emptyList()
         }
 

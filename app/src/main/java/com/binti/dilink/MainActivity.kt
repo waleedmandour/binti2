@@ -18,6 +18,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.binti.dilink.databinding.ActivityMainBinding
+import com.binti.dilink.dilink.DiLinkAccessibilityService
 import com.binti.dilink.utils.HMSUtils
 import com.binti.dilink.utils.ModelManager
 import com.binti.dilink.utils.ModelStatus
@@ -237,7 +238,7 @@ class MainActivity : AppCompatActivity() {
      */
     private fun checkAccessibilityPermission() {
         val accessibilityEnabled = try {
-            val service = packageName + "/" + dilink.DiLinkAccessibilityService::class.java.canonicalName
+            val service = packageName + "/" + DiLinkAccessibilityService::class.java.canonicalName
             val enabledServices = Settings.Secure.getString(
                 contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
             )
