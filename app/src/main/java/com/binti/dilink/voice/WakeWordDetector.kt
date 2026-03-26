@@ -12,8 +12,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import org.tensorflow.lite.Interpreter
-import org.tensorflow.lite.gpu.CompatibilityList
-import org.tensorflow.lite.gpu.GpuDelegate
 import java.io.FileInputStream
 import java.io.IOException
 import java.nio.MappedByteBuffer
@@ -59,7 +57,6 @@ class WakeWordDetector(private val context: Context) {
 
     // TFLite interpreter
     private var interpreter: Interpreter? = null
-    private var gpuDelegate: GpuDelegate? = null
     
     // Audio recording
     private var audioRecord: AudioRecord? = null
@@ -85,24 +82,10 @@ class WakeWordDetector(private val context: Context) {
             
             // Configure interpreter options
             val options = Interpreter.Options().apply {
-                // Try to use GPU delegate for better performance
-                try {
-                    val compatList = CompatibilityList()
-                    if (compatList.isDelegateSupportedOnThisDevice) {
-                        val gpuOptions = GpuDelegate.Options()
-                        gpuDelegate = GpuDelegate(gpuOptions)
-                        addDelegate(gpuDelegate!!)
-                        Log.d(TAG, "Using GPU delegate for wake word detection")
-                    } else {
-                        // Fallback to CPU with multiple threads
-                        setNumThreads(4)
-                        Log.d(TAG, "Using CPU with 4 threads for wake word detection")
-                    }
-                } catch (e: Exception) {
-                    // GPU delegate not available, use CPU
-                    setNumThreads(4)
-                    Log.w(TAG, "GPU delegate failed, using CPU: ${e.message}")
-                }
+                // Use CPU with multiple threads for wake word detection
+                // Note: GPU delegate API varies between TFLite versions, so we use CPU for reliability
+                setNumThreads(4)
+                Log.d(TAG, "Using CPU with 4 threads for wake word detection")
             }
             
             interpreter = Interpreter(modelBuffer, options)
@@ -337,8 +320,6 @@ class WakeWordDetector(private val context: Context) {
         stopListening()
         interpreter?.close()
         interpreter = null
-        gpuDelegate?.close()
-        gpuDelegate = null
         
         Log.d(TAG, "Wake word detector released")
     }
