@@ -86,15 +86,22 @@ class WakeWordDetector(private val context: Context) {
             // Configure interpreter options
             val options = Interpreter.Options().apply {
                 // Try to use GPU delegate for better performance
-                val compatList = CompatibilityList()
-                if (compatList.isDelegateSupportedOnThisDevice) {
-                    gpuDelegate = GpuDelegate(compatList.bestOptionsForThisDevice)
-                    addDelegate(gpuDelegate!!)
-                    Log.d(TAG, "Using GPU delegate for wake word detection")
-                } else {
-                    // Fallback to CPU with multiple threads
+                try {
+                    val compatList = CompatibilityList()
+                    if (compatList.isDelegateSupportedOnThisDevice) {
+                        val gpuOptions = GpuDelegate.Options()
+                        gpuDelegate = GpuDelegate(gpuOptions)
+                        addDelegate(gpuDelegate!!)
+                        Log.d(TAG, "Using GPU delegate for wake word detection")
+                    } else {
+                        // Fallback to CPU with multiple threads
+                        setNumThreads(4)
+                        Log.d(TAG, "Using CPU with 4 threads for wake word detection")
+                    }
+                } catch (e: Exception) {
+                    // GPU delegate not available, use CPU
                     setNumThreads(4)
-                    Log.d(TAG, "Using CPU with 4 threads for wake word detection")
+                    Log.w(TAG, "GPU delegate failed, using CPU: ${e.message}")
                 }
             }
             
@@ -235,8 +242,8 @@ class WakeWordDetector(private val context: Context) {
             val frame = FloatArray(frameLength) { j ->
                 if (start + j < preEmphasis.size) {
                     val hamming = 0.54f - 0.46f * kotlin.math.cos(
-                        2 * kotlin.math.PI * j / (frameLength - 1)
-                    )
+                        2.0 * kotlin.math.PI * j / (frameLength - 1)
+                    ).toFloat()
                     preEmphasis[start + j] * hamming
                 } else 0f
             }
@@ -279,7 +286,7 @@ class WakeWordDetector(private val context: Context) {
             var dctSum = 0f
             mfcc.forEachIndexed { j, mj ->
                 dctSum += mj * kotlin.math.cos(
-                    kotlin.math.PI * i * (j + 0.5f) / NUM_MFCC
+                    kotlin.math.PI * i * (j + 0.5) / NUM_MFCC
                 ).toFloat()
             }
             dctSum

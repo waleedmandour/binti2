@@ -48,7 +48,7 @@ class WakeWordDetectorVosk(private val context: Context) {
         
         // Wake word configuration
         private const val WAKE_WORD_ARABIC = "يا بنتي"
-        private const val WAKE_WORD_VARIANTS = arrayOf(
+        private val WAKE_WORD_VARIANTS = listOf(
             "يا بنتي",
             "يابنتي",      // Without space
             "يا بنتى",     // Alternative ي spelling
