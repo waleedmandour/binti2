@@ -37,7 +37,7 @@ class ModelManager(private val context: Context) {
                 googleDriveId = VOSK_MODEL_FILE_ID,
                 downloadUrl = "$GOOGLE_DRIVE_BASE_URL&id=$VOSK_MODEL_FILE_ID",
                 relativePath = "models",
-                sizeMB = 1247,
+                sizeMB = 318,
                 sha256 = "",
                 required = true,
                 extract = true,

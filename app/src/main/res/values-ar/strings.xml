@@ -23,6 +23,9 @@
     <string name="wake_response">أهلاً بك! أنا أستمع إليك 😊</string>
     <string name="wake_response_formal">نعم يا فندم، أنا تحت أمرك</string>
 
+    <!-- Demo Voice Message (Egyptian Arabic - auto-play on first launch) -->
+    <string name="demo_voice_message">أَهْلًا بِيِك! أَنَا \"يَا بِنْتِي\"، المُسَاعِد الصَّوْتِي بِتَاعَك لِسَيَّارَة BYD DiLink. نَادِيْ عَلَيَّا بِكُلْمَة \"يَا بِنْتِي\" وَأَنَا هَسَاعِدَك فِي التَّكْيِيف وَالمَلَاة وَالمُوسِيقَى وَكُلّ حَاجَة. هَنَا عَشَان أَخِدِّمَك!</string>
+
     <!-- Main Activity -->
     <string name="welcome_message">أهلاً بك! أستطيع مساعدتك في التحكم بسيارتك BYD عبر الأوامر الصوتية.</string>
     <string name="listening_hint">أنا أستمع إليك الآن... 🎧</string>
@@ -74,7 +77,7 @@
 
     <!-- Model Download -->
     <string name="download_models_title">تحميل ملفات الذكاء الاصطناعي</string>
-    <string name="download_models_message">لتمكين العمل دون اتصال بالإنترنت، يحتاج التطبيق لتحميل ملفات النماذج (~160 ميجابايت). هل ترغب في المتابعة؟</string>
+    <string name="download_models_message">لتمكين العمل دون اتصال بالإنترنت، يحتاج التطبيق لتحميل ملفات النماذج (~318 ميجابايت). هل ترغب في المتابعة؟</string>
     <string name="download_now">بدء التحميل</string>
     <string name="use_cloud_only">استخدام الإنترنت فقط</string>
     <string name="downloading_file">جاري تحميل %1$s… %2$d%%</string>
@@ -137,8 +140,8 @@
     <!-- About -->
     <string name="about">حول التطبيق</string>
     <string name="version">الإصدار %1$s</string>
-    <string name="developer">قام بتطوير البرنامج: د. وليد مندور</string>
-    <string name="developer_credentials">waleedmandour@gmail.com\nw.abumandour@squ.edu.om</string>
+    <string name="developer">تَطْوِير: د. وَلِيد مَنْدُور</string>
+    <string name="developer_credentials">w.abumandour@squ.edu.om</string>
 
     <!-- User Menu Content (MSA) -->
     <string name="user_menu_content">

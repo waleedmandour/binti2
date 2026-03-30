@@ -141,9 +141,9 @@ class EgyptianTTS(private val context: Context) {
             processed = processed.replace(Regex("\\b$msa\\b"), egyptian)
         }
 
-        // 2. Remove Tashkeel (vocalization marks) from the end of all words for "Sukoon" ending
-        // This makes the voice sound less "robotic" and more like spoken Egyptian
-        processed = processed.replace(Regex("[\u064B-\u0652]+(?=\\s|$)"), "")
+        // 2. Remove Fatha/Damma/Kasra/Shadda from word endings but KEEP Sukoon (ْ)
+        // Sukoon at word endings gives natural Egyptian cadence to the TTS output
+        processed = processed.replace(Regex("[\u064B-\u0651]+(?=\\s|$)"), "")
 
         // 3. Human cadence - adding breathing space and emphasis
         processed = processed.replace("،", " ، ")

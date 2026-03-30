@@ -10,7 +10,7 @@
       "file": "vosk-model-ar-mgb2-0.4.zip",
       "download_url": "https://drive.google.com/uc?export=download&id=1bK1-pUCH5xykvKdB7nB7mZ_1wBKH05qZ",
       "google_drive_id": "1bK1-pUCH5xykvKdB7nB7mZ_1wBKH05qZ",
-      "size_mb": 1247,
+      "size_mb": 318,
       "sha256": "",
       "required": true,
       "extract": true,
@@ -91,7 +91,7 @@
       "notes": "Included in app assets, no download needed"
     }
   ],
-  "total_size_mb": 1357,
+  "total_size_mb": 318,
   "required_models": {
     "asr_arabic": "Speech recognition - the core functionality",
     "intent_map": "Command patterns - bundled with app"

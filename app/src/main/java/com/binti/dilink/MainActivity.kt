@@ -53,6 +53,7 @@ class MainActivity : AppCompatActivity() {
         private const val KEY_USER_NAME = "user_name"
         private const val KEY_TONE_FORMAL = "tone_formal"
         private const val KEY_PROACTIVE_ENABLED = "proactive_enabled"
+        private const val KEY_DEMO_PLAYED = "demo_voice_played"
     }
 
     private lateinit var binding: ActivityMainBinding
@@ -94,6 +95,8 @@ class MainActivity : AppCompatActivity() {
         egyptianTTS = EgyptianTTS(this)
         lifecycleScope.launch {
             try { egyptianTTS.initialize() } catch (e: Exception) { Log.e(TAG, "TTS Init failed", e) }
+            // Auto-play demo voice message on first app launch
+            playDemoIfFirstLaunch()
         }
         
         setupUI()
@@ -402,6 +405,23 @@ class MainActivity : AppCompatActivity() {
         } else {
             @Suppress("UnspecifiedRegisterReceiverFlag")
             registerReceiver(stateReceiver, filter)
+        }
+    }
+
+    /**
+     * Plays a demo voice message on first app launch only.
+     * Uses the existing TTS engine to speak a natural Egyptian Arabic welcome.
+     */
+    private fun playDemoIfFirstLaunch() {
+        val hasPlayed = sharedPreferences.getBoolean(KEY_DEMO_PLAYED, false)
+        if (!hasPlayed) {
+            sharedPreferences.edit { putBoolean(KEY_DEMO_PLAYED, true) }
+            // Small delay so the UI is fully rendered before speaking
+            binding.root.postDelayed({
+                lifecycleScope.launch {
+                    egyptianTTS.speak(getString(R.string.demo_voice_message))
+                }
+            }, 1500)
         }
     }
 }

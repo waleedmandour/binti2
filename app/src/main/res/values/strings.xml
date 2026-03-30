@@ -32,6 +32,9 @@
     <string name="wake_response">أَيُوه يَا غَالِي، سَامْعَاك ومَعَاك! 😊</string>
     <string name="wake_response_formal">نَعَم يَا فَنْدَم، تَحْت أَمْرَك.. تُؤْمُرْنِي بِإِيه؟</string>
 
+    <!-- Demo Voice Message (Egyptian Arabic - auto-play on first launch) -->
+    <string name="demo_voice_message">أَهْلًا بِيِك! أَنَا \"يَا بِنْتِي\"، المُسَاعِد الصَّوْتِي بِتَاعَك لِسَيَّارَة BYD DiLink. نَادِيْ عَلَيَّا بِكُلْمَة \"يَا بِنْتِي\" وَأَنَا هَسَاعِدَك فِي التَّكْيِيف وَالمَلَاة وَالمُوسِيقَى وَكُلّ حَاجَة. هَنَا عَشَان أَخِدِّمَك!</string>
+
     <!-- Main Activity -->
     <string name="welcome_message">أَهْلًا بِيِك! أَنَا المُسَاعِد الصَّوْتِي بِتَاعَك. هَكُون عِينِك التَّانِيَة عَلَى الطَّرِيق عَشَان تِسُوق بِمَزَاج.</string>
     <string name="listening_hint">أَنَا سَامْعَاك دِلْوَقْتِي.. اِتْفَضَّل قُول 🎧</string>
@@ -77,7 +80,7 @@
 
     <!-- Model Download -->
     <string name="download_models_title">تَحْمِيل عَقْل الذَّكَاء الِاصْطِنَاعِي</string>
-    <string name="download_models_message">عَشَان أَفْهَمَك حَتَّى لَوْ مَفِيش نِت, مِحْتَاجِين نِحَمِّل شِوَيَّة مَلَفَّات (١٦٠ مِيجَا). نِبْدَأ يَا رَيِّس؟</string>
+    <string name="download_models_message">عَشَان أَفْهَمَك حَتَّى لَوْ مَفِيش نِت, مِحْتَاجِين نِحَمِّل شِوَيَّة مَلَفَّات (٣١٨ مِيجَا). نِبْدَأ يَا رَيِّس؟</string>
     <string name="download_now">يَلَّا اِتْوَكِّل عَلَى الله</string>
     <string name="update_models">تَحْدِيث المَلَفَّات</string>
     <string name="download_complete">الخِير كِتِير! المَلَفَّات جَاهْزَة ✅</string>
@@ -142,7 +145,7 @@
     <string name="about">عن المساعد</string>
     <string name="version">الإصدار 1.2.0</string>
     <string name="developer">تَطْوِير: د. وَلِيد مَنْدُور</string>
-    <string name="developer_credentials">waleedmandour@gmail.com\nw.abumandour@squ.edu.om\nخبير نظم DiLink والذكاء الاصطناعي</string>
+    <string name="developer_credentials">w.abumandour@squ.edu.om</string>
 
     <!-- Sample Commands -->
     <string-array name="sample_commands">
