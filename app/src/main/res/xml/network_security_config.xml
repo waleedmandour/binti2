@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Default configuration: No cleartext traffic -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+    
+    <!-- GitHub Releases domain for model downloads -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">github.com</domain>
+        <domain includeSubdomains="true">githubusercontent.com</domain>
+        <domain includeSubdomains="true">raw.githubusercontent.com</domain>
+        <domain includeSubdomains="true">objects.githubusercontent.com</domain>
+    </domain-config>
+    
+    <!-- Huawei HMS services -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">huawei.com</domain>
+        <domain includeSubdomains="true">hicloud.com</domain>
+    </domain-config>
+</network-security-config>

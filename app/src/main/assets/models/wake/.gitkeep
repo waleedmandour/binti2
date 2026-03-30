@@ -1,0 +1,46 @@
+# Binti AI Models
+
+This directory contains the AI models used by Binti voice assistant.
+
+## Model Structure
+
+```
+assets/
+├── models/
+│   ├── wake/
+│   │   └── ya_binti_detector.tflite    (5 MB) - Wake word detection
+│   ├── asr/
+│   │   └── vosk-model-egyptian/        (50 MB) - Egyptian Arabic ASR
+│   └── nlu/
+│       └── egybert_tiny_int8.tflite    (30 MB) - Intent classification
+├── voices/
+│   └── ar-EG-female/                   (80 MB) - Egyptian TTS voice
+└── commands/
+    └── dilink_intent_map.json          - Intent patterns
+```
+
+## Downloading Models
+
+Models are downloaded from GitHub Releases on first run:
+- User is prompted to download offline models (~160MB total)
+- Or can choose cloud-only mode (requires internet)
+
+## Model Sources
+
+| Model | Source | License |
+|-------|--------|---------|
+| Wake Word | Custom TFLite | MIT |
+| ASR | Vosk Egyptian | Apache 2.0 |
+| NLU | EgyBERT-tiny | MIT |
+| TTS | Coqui TTS | MPL 2.0 |
+
+## Adding Models
+
+1. Build/train your models
+2. Quantize to INT8 for mobile
+3. Add SHA256 checksum to ModelManager.kt
+4. Upload to GitHub Release
+
+---
+
+**Note:** Model files are not included in the repository. Download from Releases.

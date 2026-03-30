@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Info - MSA - يا بنتي -->
+    <string name="app_name">يا بنتي</string>
+    <string name="app_description">مساعد صوتي ذكي باللغة العربية لسيارات BYD DiLink</string>
+    <string name="ui_header_title">مساعد القيادة الذكية - يا بنتي</string>
+
+    <!-- User Profile -->
+    <string name="user_name_hint">ما هو اسمك؟</string>
+    <string name="user_name_label">الاسم</string>
+    <string name="user_name_et_hint">أدخل اسمك هنا</string>
+    <string name="assistant_tone_label">نبرة صوت المساعد</string>
+    <string name="user_profile_desc">أدخل اسمك لكي يناديك المساعد به</string>
+    <string name="tone_formal">رسمي</string>
+    <string name="tone_informal">ودي</string>
+    <string name="proactive_suggestions">اقتراحات ذكية (مبادرة المساعد)</string>
+    <string name="user_menu_title">طريقة الإستخدام</string>
+    <string name="save">حفظ</string>
+
+    <!-- Wake Word -->
+    <string name="wake_word">يا بنتي</string>
+    <string name="wake_word_arabic">يا بنتي</string>
+    <string name="wake_response">أهلاً بك! أنا أستمع إليك 😊</string>
+    <string name="wake_response_formal">نعم يا فندم، أنا تحت أمرك</string>
+
+    <!-- Demo Voice Message (Egyptian Arabic - auto-play on first launch) -->
+    <string name="demo_voice_message">أَهْلًا بِيِك! أَنَا \"يَا بِنْتِي\"، المُسَاعِد الصَّوْتِي بِتَاعَك لِسَيَّارَة BYD DiLink. نَادِيْ عَلَيَّا بِكُلْمَة \"يَا بِنْتِي\" وَأَنَا هَسَاعِدَك فِي التَّكْيِيف وَالمَلَاة وَالمُوسِيقَى وَكُلّ حَاجَة. هَنَا عَشَان أَخِدِّمَك!</string>
+
+    <!-- Main Activity -->
+    <string name="welcome_message">أهلاً بك! أستطيع مساعدتك في التحكم بسيارتك BYD عبر الأوامر الصوتية.</string>
+    <string name="listening_hint">أنا أستمع إليك الآن... 🎧</string>
+    <string name="start_service">تشغيل المساعد</string>
+    <string name="stop_service">إيقاف المساعد</string>
+    <string name="service_started">المساعد قيد العمل والاستماع</string>
+    <string name="service_stopped">تم إيقاف المساعد</string>
+
+    <!-- Permissions -->
+    <string name="permissions_required_title">الصلاحيات المطلوبة</string>
+    <string name="permissions_required_message">يحتاج التطبيق إلى صلاحيات الميكروفون، التخزين، والظهور فوق التطبيقات ليعمل بشكل صحيح.</string>
+
+    <string name="mic_permission_title">الميكروفون</string>
+    <string name="mic_permission_desc">مطلوب للتعرف على صوتك</string>
+    <string name="storage_permission_title">مساحة التخزين</string>
+    <string name="storage_permission_desc">مطلوب لتحميل واستخدام ملفات الذكاء الاصطناعي</string>
+    <string name="location_permission_title">الموقع الجغرافي</string>
+    <string name="location_permission_desc">للملاحة وتحديد المواقع القريبة</string>
+    <string name="phone_permission_title">إدارة المكالمات</string>
+    <string name="phone_permission_desc">لإجراء الرد على المكالمات الهاتفية</string>
+    <string name="overlay_permission_title">الظهور فوق التطبيقات</string>
+    <string name="overlay_permission_desc">مطلوب لإظهار واجهة التفاعل</string>
+    <string name="accessibility_permission_title">الوصول (Accessibility)</string>
+    <string name="accessibility_permission_desc">مطلوب للتحكم في واجهة DiLink</string>
+    <string name="notification_permission_title">الإشعارات</string>
+    <string name="notification_permission_desc">مطلوب لإظهار حالة الخدمة</string>
+
+    <string name="permission_granted">تم التفعيل</string>
+    <string name="grant_permission">تفعيل</string>
+    <string name="ok">موافق</string>
+    <string name="got_it">فهمت</string>
+
+    <!-- Accessibility Guide -->
+    <string name="accessibility_guide_title">تفعيل خدمة الوصول</string>
+    <string name="accessibility_guide_message">
+        ١. افتح إعدادات السيارة (Settings)\n
+        ٢. اذهب إلى DiLink\n
+        ٣. اختر الإدارة (Management)\n
+        ٤. اختر وظائف المساعدة (Assist Functions)\n
+        ٥. ابحث عن \"يا بنتي\" وقم بتفعيل الخدمة
+    </string>
+    <string name="accessibility_service_description">تستخدم هذه الخدمة للتحكم في وظائف سيارة BYD DiLink عبر الأوامر الصوتية.</string>
+
+    <!-- Battery Optimization -->
+    <string name="battery_optimization_title">تحسين البطارية</string>
+    <string name="battery_optimization_message">لضمان عمل المساعد في الخلفية، يرجى استثناؤه من تحسين البطارية.</string>
+    <string name="allow">سماح</string>
+    <string name="skip">تخطي</string>
+
+    <!-- Model Download -->
+    <string name="download_models_title">تحميل ملفات الذكاء الاصطناعي</string>
+    <string name="download_models_message">لتمكين العمل دون اتصال بالإنترنت، يحتاج التطبيق لتحميل ملفات النماذج (~318 ميجابايت). هل ترغب في المتابعة؟</string>
+    <string name="download_now">بدء التحميل</string>
+    <string name="use_cloud_only">استخدام الإنترنت فقط</string>
+    <string name="downloading_file">جاري تحميل %1$s… %2$d%%</string>
+    <string name="download_complete">اكتمل التحميل بنجاح! ✅</string>
+    <string name="download_failed">فشل التحميل: %1$s</string>
+    <string name="wifi_required_title">مطلوب اتصال Wi-Fi</string>
+    <string name="wifi_required_message">يفضل استخدام Wi-Fi لتحميل الملفات الكبيرة. هل تريد المتابعة عبر بيانات الهاتف؟</string>
+    <string name="download_notification_title">جاري تحميل ملفات المساعد</string>
+
+    <!-- Model Download Errors -->
+    <string name="error_download_network">مشكلة في الاتصال بالإنترنت.</string>
+    <string name="error_download_storage">المساحة غير كافية على الجهاز.</string>
+    <string name="error_download_timeout">انتهت مهلة التحميل، يرجى المحاولة لاحقاً.</string>
+    <string name="error_download_corrupted">الملف تالف، يرجى إعادة المحاولة.</string>
+    <string name="error_download_google_drive">لا يمكن الوصول إلى خوادم التحميل.</string>
+    <string name="error_download_permission">مطلوب صلاحية التخزين للتحميل.</string>
+    <string name="error_model_missing">ملفات النماذج مفقودة، يرجى التحميل أولاً.</string>
+    <string name="error_model_init">فشل في تشغيل المحرك الصوتي.</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_description">إشعارات مساعد يا بنتي</string>
+    <string name="notification_title">مساعد يا بنتي</string>
+    <string name="notification_listening">أنا أستمع إليك... 🎤</string>
+
+    <!-- Service States -->
+    <string name="state_ready">جاهز يا غالي ✅</string>
+    <string name="state_listening">أستمع... 🎧</string>
+    <string name="state_processing">أفكر... 🤔</string>
+    <string name="state_error">حدث خطأ ❌</string>
+    <string name="state_unknown">غير معروف</string>
+
+    <!-- Commands - General -->
+    <string name="command_confirmed">تم تأكيد الأمر: %1$s ✅</string>
+    <string name="command_success">تم التنفيذ بنجاح</string>
+    <string name="command_failed">تعذر تنفيذ الأمر، يرجى المحاولة مرة أخرى</string>
+    <string name="fallback_message">عذراً، لم أفهم ذلك جيداً. هل يمكنك التكرار؟ 🤔</string>
+
+    <!-- AC Commands -->
+    <string name="ac_turned_on">تم تشغيل المكيف ❄️</string>
+    <string name="ac_turned_off">تم إيقاف المكيف</string>
+    <string name="ac_temp_set">درجة الحرارة %1$d°</string>
+
+    <!-- Navigation Commands -->
+    <string name="nav_started">بدأ التوجيه إلى %1$s 🗺️</string>
+    <string name="nav_home">جاري التوجيه إلى المنزل 🏠</string>
+    <string name="nav_work">جاري التوجيه إلى العمل 💼</string>
+
+    <!-- Media Commands -->
+    <string name="media_playing">تشغيل ▶️</string>
+    <string name="media_paused">إيقاف مؤقت ⏸️</string>
+
+    <!-- Phone Commands -->
+    <string name="phone_calling">جاري الاتصال بـ %1$s 📞</string>
+    <string name="phone_answered">تم الرد على المكالمة</string>
+
+    <!-- Info Commands -->
+    <string name="info_time">الساعة الآن هي %1$s</string>
+    <string name="info_battery">حالة البطارية %1$d%%</string>
+
+    <!-- About -->
+    <string name="about">حول التطبيق</string>
+    <string name="version">الإصدار %1$s</string>
+    <string name="developer">تَطْوِير: د. وَلِيد مَنْدُور</string>
+    <string name="developer_credentials">w.abumandour@squ.edu.om</string>
+
+    <!-- User Menu Content (MSA) -->
+    <string name="user_menu_content">
+        يمكنكم مناداة المساعد بكلمة \"يا بنتي\" ثم طلب أحد الأوامر التالية:\n\n
+        • التحكم في التكييف: \"شغل التكييف\" أو \"ارفع درجة الحرارة\"\n
+        • الملاحة: \"اذهب إلى المنزل\" أو \"أقرب محطة وقود\"\n
+        • المكالمات: \"اتصل بأحمد\" أو \"رد على المكالمة\"\n
+        • الوسائط: \"شغل الموسيقى\" أو \"الأغنية التالية\"\n
+        • معلومات: \"كم الساعة الآن\" أو \"ما هي حالة البطارية\"
+    </string>
+
+    <!-- Sample Commands for Help -->
+    <string-array name="sample_commands">
+        <item>يا بنتي، شغلي التكييف</item>
+        <item>يا بنتي، اذهبي إلى المنزل</item>
+        <item>يا بنتي، أريد أقرب محطة وقود</item>
+        <item>يا بنتي، شغلي الموسيقى</item>
+        <item>يا بنتي، كم الساعة الآن؟</item>
+    </string-array>
+
+    <!-- Widget Strings -->
+    <string name="widget_status_ready">جاهز يا غالي</string>
+    <string name="widget_status_listening">أنا أستمع إليك...</string>
+    <string name="widget_status_ac">جاري ضبط المكيف...</string>
+    <string name="widget_status_navigating">جاري بدء الملاحة...</string>
+    <string name="widget_status_media">جاري التحكم في الوسائط...</string>
+    <string name="widget_voice_desc">تحدث الآن</string>
+    <string name="widget_ac_desc">التحكم في التكييف</string>
+    <string name="widget_nav_desc">الملاحة للمنزل</string>
+    <string name="widget_media_desc">تشغيل/إيقاف الموسيقى</string>
+    <string name="widget_next_desc">الأغنية التالية</string>
+</resources>

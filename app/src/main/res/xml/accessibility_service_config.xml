@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/accessibility_service_description"
+    android:packageNames="com.byd.dilink,com.byd.auto,com.byd.vehicle,com.byd.auto.ac,com.byd.auto.navigation,com.byd.auto.media,com.byd.auto.settings,com.byd.auto.phone,com.byd.auto.launcher"
+    android:accessibilityEventTypes="typeWindowStateChanged|typeWindowContentChanged|typeViewClicked|typeViewFocused"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagDefault|flagIncludeNotImportantViews|flagReportViewIds|flagRetrieveInteractiveWindows"
+    android:canRetrieveWindowContent="true"
+    android:canPerformGestures="true"
+    android:notificationTimeout="100"
+    android:settingsActivity="com.binti.dilink.MainActivity" />
