@@ -1,21 +1,20 @@
 {
-  "version": "2.0.0",
-  "last_updated": "2025-01-01",
-  "min_app_version": "2.0.0",
+  "version": "2.2.0",
+  "last_updated": "2026-03-31",
+  "min_app_version": "2.2.0",
   "models": [
     {
       "id": "asr_arabic",
       "name": "Arabic ASR (Vosk MGB2)",
       "description": "Modern Standard Arabic speech recognition - REQUIRED model for the app to function. Also used for wake word detection via grammar constraint.",
       "file": "vosk-model-ar-mgb2-0.4.zip",
-      "download_url": "https://drive.google.com/uc?export=download&id=1bK1-pUCH5xykvKdB7nB7mZ_1wBKH05qZ",
-      "google_drive_id": "1bK1-pUCH5xykvKdB7nB7mZ_1wBKH05qZ",
+      "download_url": "https://github.com/waleedmandour/binti2/releases/download/v2.2.0-beta/vosk-model-ar-mgb2-0.4.zip",
       "size_mb": 318,
       "sha256": "",
       "required": true,
       "extract": true,
       "relative_path": "models",
-      "notes": "Large model - recommend WiFi for download. Used for both ASR and wake word detection.",
+      "notes": "Downloaded via Android DownloadManager from GitHub Releases. Recommend WiFi for download. Used for both ASR and wake word detection.",
       "source": "https://alphacephei.com/vosk/models",
       "wake_word_support": {
         "method": "vosk_grammar",
@@ -29,7 +28,6 @@
       "description": "Detects 'يا بنتي' wake word using TensorFlow Lite model (optional - Vosk grammar-based detection is used by default)",
       "file": "ya_binti_detector.tflite",
       "download_url": "",
-      "google_drive_id": "",
       "size_mb": 5,
       "sha256": "",
       "required": false,
@@ -43,7 +41,6 @@
       "description": "Egyptian Arabic intent classification (optional - fallback to rule-based matching)",
       "file": "egybert_tiny_int8.onnx",
       "download_url": "",
-      "google_drive_id": "",
       "size_mb": 25,
       "sha256": "",
       "required": false,
@@ -52,7 +49,7 @@
       "training_info": {
         "base_model": "aubmindlab/bert-base-arabertv02",
         "quantization": "int8",
-        "labels": ["AC_CONTROL", "NAVIGATION", "MEDIA", "PHONE", "INFO", "SYSTEM"]
+        "labels": ["AC_CONTROL", "NAVIGATION", "MEDIA", "PHONE", "INFO", "SYSTEM", "STATION"]
       },
       "fallback": "Rule-based intent matching is used if this model is unavailable"
     },
@@ -62,7 +59,6 @@
       "description": "Egyptian female voice for text-to-speech (optional - fallback to Android TTS)",
       "file": "ar-eg-female.zip",
       "download_url": "",
-      "google_drive_id": "",
       "size_mb": 80,
       "sha256": "",
       "required": false,
@@ -82,7 +78,6 @@
       "description": "JSON mapping of commands to intents (bundled in app assets)",
       "file": "dilink_intent_map.json",
       "download_url": "",
-      "google_drive_id": "",
       "size_mb": 0,
       "sha256": "",
       "required": true,
@@ -102,14 +97,16 @@
     "tts_voice": "Uses Android TTS or Huawei ML Kit TTS as fallback"
   },
   "hosting": {
-    "provider": "Google Drive",
-    "notes": "Models are hosted on Google Drive with public sharing. Users can also host their own models.",
-    "url_format": "https://drive.google.com/uc?export=download&id=FILE_ID"
+    "provider": "GitHub Releases",
+    "notes": "Models are hosted as release assets on GitHub. Downloaded via Android DownloadManager for reliable large-file handling with system-level retry and notification support.",
+    "base_url": "https://github.com/waleedmandour/binti2/releases/download",
+    "release_tag": "v2.2.0-beta"
   },
   "download_options": {
     "wifi_only_recommended": true,
     "show_size_warning_above_mb": 500,
-    "resume_supported": false,
-    "virus_scan_warning": "Files >100MB may show virus scan warning - handled automatically by app"
+    "resume_supported": true,
+    "download_manager": true,
+    "system_notification": true
   }
 }

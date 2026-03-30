@@ -8,6 +8,7 @@
   [![Android](https://img.shields.io/badge/Platform-Android_8.0+-green.svg)](https://www.android.com)
   [![Kotlin](https://img.shields.io/badge/Language-Kotlin_2.0-blue.svg)](https://kotlinlang.org)
   [![Huawei HMS](https://img.shields.io/badge/HMS-Enabled-red.svg)](https://developer.huawei.com/consumer/en/hms)
+  [![Release](https://img.shields.io/badge/Release-v2.2.0--beta-orange.svg)](https://github.com/waleedmandour/binti2/releases)
 
 </div>
 
@@ -29,9 +30,11 @@ Binti is optimized for the hardware and software environment of BYD vehicles, fe
 | 🔊 **Egyptian TTS** | Natural female voice with Sukoon-vocalized Egyptian tone | Huawei ML Kit / Android TTS |
 | 👤 **User Profile** | Personalized interaction with Formal/Informal tone modes | SharedPreferences / Context-Aware |
 | 🚙 **DiLink Control** | Control AC, Navigation, Media, and Phone via Accessibility | **Accessibility Service UI Automation** |
+| ⚡ **EV Charging Stations** | Find nearest charging station with auto-navigation | StationManager + GitHub Pages |
 | 📱 **Quick Actions Widget**| 4×1 Home screen widget for one-tap car control | Android RemoteViews |
 | 📐 **Car Display UX** | Optimized for 10.1", 12.8", and 15.6" BYD screens | Landscape-First UI |
 | 🌐 **Offline-First** | Full functionality without internet connectivity | Vosk + Local NLP + Local TTS |
+| 📥 **Smart Downloads** | System-level DownloadManager with retry & notifications | GitHub Releases |
 
 ---
 
@@ -78,6 +81,7 @@ The `DiLinkAccessibilityService` monitors all BYD DiLink system packages and int
 - **Telephony**: `"يا بنتي، كلمي أحمد"` — Opens the phone dialer via Accessibility or triggers `ACTION_DIAL` intent for direct calls.
 - **System Settings**: `"يا بنتي، زوّد الصوت شوية"` — Adjusts system volume directly via `AudioManager` (no Accessibility needed for audio routing).
 - **Vehicle Info**: `"يا بنتي، البطارية فيها كام؟"` — Reads battery percentage from the DiLink vehicle info screen using Accessibility node inspection.
+- **EV Charging**: `"يا بنتي، أقرب محطة شحن"` — Finds the nearest EV charging station from a database of 30+ stations across Egypt, speaks the details in Egyptian Arabic, and auto-launches BYD navigation to it.
 - **Greeting & Social**: `"يا بنتي، إزيك؟"` — Responds with contextually appropriate Egyptian Arabic greetings based on time of day and user profile.
 
 ### Supported BYD Models
@@ -91,6 +95,76 @@ Binti auto-detects the vehicle model from system properties (`ro.product.model`,
 - **BYD Tang EV**
 
 The `BYDModels.kt` configuration object provides primary resource IDs for the Yuan Plus along with fallback ID lists for other models, ensuring broad compatibility across the BYD lineup.
+
+---
+
+## ⚡ EV Charging Station Discovery
+
+Binti includes a built-in database of **30 EV charging stations** across Egypt, covering 22 cities from Alexandria to Hurghada. The system uses a three-tier data loading strategy for maximum reliability:
+
+### Data Loading Chain
+
+```
+Remote (GitHub Pages) → Local Cache → Bundled Asset
+```
+
+1. **Remote Fetch**: Station data is hosted on GitHub Pages at `waleedmandour.github.io/binti2/data/stations.json`. When a station query is made, Binti checks if the cached data is older than 24 hours and attempts a fresh fetch.
+2. **Local Cache**: Successfully fetched data is cached in app internal storage with a timestamp. This enables offline access after the first successful fetch.
+3. **Bundled Asset**: A full `stations.json` is bundled in the APK assets as a fallback, ensuring Binti always has station data available even without any network access.
+
+### Supported Operators
+
+| Operator | Stations | Cities | Power Range |
+|----------|----------|--------|-------------|
+| Revolt EV | 9 | Cairo, Alexandria, 6th Oct, Suez, Fayoum, Obour, Nile | 50–120 kW |
+| REVO | 8 | Dokki, Sidi Bishr, Dreamland, Hurghada, Tanta, Giza Pyramids, 5th Settlement, Zagazig | 75–100 kW |
+| Infinity EV | 7 | Tahrir, Abu Qir, Rehab City, Ain Sokhna, Assiut, Banha, Marina 6th Oct | 50–120 kW |
+| Morocco Cars | 6 | Maadi, Giza, Obour, Mansoura, Ismailia, Mohandessin | 50–100 kW |
+
+### Station Response Format
+
+When the driver asks for a charging station, Binti responds in natural Egyptian Arabic with:
+
+- **Station name** (Arabic)
+- **City** and **distance** (km or metres)
+- **Power output** (kW)
+- **Cost per kWh** (EGP)
+- **Available connectors** (CCS2, Type 2, CHAdeMO)
+- **Operating hours**
+- **Auto-navigation** to the station via BYD navigation (with generic geo fallback)
+
+### Updating Station Data
+
+To update the station database, edit the file hosted on GitHub Pages:
+```
+https://waleedmandour.github.io/binti2/data/stations.json
+```
+
+The JSON format follows this structure:
+```json
+{
+  "version": "1.0.0",
+  "last_updated": "2026-03-31",
+  "stations": [
+    {
+      "id": "station_001",
+      "name": "محطة شحن ريفولت - مصر الجديدة",
+      "name_en": "Revolt EV - Heliopolis Station",
+      "address": "شارع الحجاز، مصر الجديدة، القاهرة",
+      "city": "Heliopolis",
+      "latitude": 30.0866,
+      "longitude": 31.3289,
+      "operator": "Revolt EV",
+      "connectors": ["CCS2", "Type 2"],
+      "power_kw": 120,
+      "status": "active",
+      "amenities": ["cafe", "restroom", "wifi", "parking"],
+      "hours": "24/7",
+      "cost_per_kwh": 3.50
+    }
+  ]
+}
+```
 
 ---
 
@@ -115,7 +189,7 @@ Binti requires specific permissions to function as a full car assistant. For And
 2. **Storage** *(Required)*: To download and store offline AI models (~318 MB for the Vosk Arabic ASR model).
 3. **Accessibility Service** *(Required)*: Enables Binti to read and interact with DiLink system UI elements (AC, navigation, media, phone). This is the primary mechanism for all vehicle control.
 4. **Display Over Apps** *(Required)*: For the voice interaction overlay that shows listening state and transcription feedback.
-5. **Location** *(Optional)*: For navigation and finding nearby charging stations or restaurants.
+5. **Location** *(Optional)*: For navigation and finding nearby charging stations.
 6. **Phone & Contacts** *(Optional)*: For hands-free calling through the car's system.
 7. **Notifications** *(Optional)*: For displaying the persistent service notification.
 
@@ -123,7 +197,7 @@ Binti requires specific permissions to function as a full car assistant. For And
 
 1. Install the APK on your BYD DiLink system.
 2. On first launch, Binti plays a demo voice message in Egyptian Arabic introducing herself.
-3. Download the offline AI model (~318 MB) when prompted (WiFi recommended).
+3. Download the offline AI model (~318 MB) when prompted (WiFi recommended). Models are downloaded via **GitHub Releases** using Android's built-in DownloadManager with progress notifications and automatic retry.
 4. Grant **Accessibility Service** permission: Settings → Accessibility → find "يا بنتي" → Enable. This is the critical step that enables all vehicle control.
 5. Grant **Display Over Apps** permission for the voice overlay.
 6. Grant **Microphone** and **Storage** permissions.
@@ -143,9 +217,9 @@ Wake Word ("يا بنتي")  →  ASR (Vosk MGB2)  →  NLU (Intent Classifier) 
 ```
 
 1. **Wake Word Engine**: Always-on listener using Vosk grammar-based detection for "يا بنتي" — no dedicated ML model required.
-2. **Voice Processing (ASR)**: Vosk MGB2 model provides high-accuracy Arabic speech recognition entirely offline. Model hosted on Google Drive (~318 MB).
+2. **Voice Processing (ASR)**: Vosk MGB2 model provides high-accuracy Arabic speech recognition entirely offline. Model downloaded via **GitHub Releases** (~318 MB) using Android DownloadManager.
 3. **NLP Pipeline**: A rule-based intent matcher processes the transcription against the `dilink_intent_map.json` pattern database. An optional EgyBERT-tiny ML classifier can supplement the rule engine for complex or ambiguous commands.
-4. **Command Executor**: `DiLinkCommandExecutor` translates classified intents into Accessibility Service actions — finding UI nodes by resource ID, performing clicks, reading state, and launching apps. No shell commands or root access involved.
+4. **Command Executor**: `DiLinkCommandExecutor` translates classified intents into Accessibility Service actions — finding UI nodes by resource ID, performing clicks, reading state, and launching apps. For EV station queries, it uses `StationManager` to find the nearest station and auto-navigate via geo intent. No shell commands or root access involved.
 5. **Response Engine**: `EgyptianTTS` produces spoken responses in natural Egyptian Arabic. All responses in the intent map are fully vocalized with Tashkeel (diacritics), and Sukoon (ْ) is preserved at word endings to ensure natural cadence. The engine also applies dialect normalization, converting any MSA artifacts to Egyptian colloquial equivalents.
 
 ### Project Structure
@@ -157,7 +231,7 @@ app/src/main/java/com/binti/dilink/
 ├── MainActivity.kt              # Dashboard UI, permissions, model download, demo voice
 ├── dilink/
 │   ├── DiLinkAccessibilityService.kt  # Core: Accessibility-based DiLink UI automation
-│   ├── DiLinkCommandExecutor.kt       # Translates intents → Accessibility actions
+│   ├── DiLinkCommandExecutor.kt       # Translates intents → Accessibility actions + Station
 │   └── BYDModels.kt                   # View resource IDs per BYD model
 ├── nlp/
 │   └── IntentClassifier.kt     # Rule-based + ML intent classification
@@ -171,11 +245,37 @@ app/src/main/java/com/binti/dilink/
 ├── ui/
 │   └── QuickActionsWidget.kt   # Home screen widget
 └── utils/
-    ├── ModelManager.kt         # Google Drive model download & extraction
+    ├── ModelManager.kt         # GitHub Releases model download via DownloadManager
+    ├── StationManager.kt       # EV charging station database manager
     ├── VoiceProfileManager.kt  # User voice profile persistence
     ├── HMSUtils.kt             # Huawei ML Kit integration helpers
     └── OfflineFallbackManager.kt
+
+app/src/main/assets/
+├── commands/
+│   └── dilink_intent_map.json  # Intent patterns (AC, NAV, MEDIA, PHONE, INFO, SYSTEM, STATION, etc.)
+├── data/
+│   └── stations.json           # 30 EV charging stations across Egypt
+└── models/
+    └── model_config.json       # Model definitions & GitHub Releases download URLs
 ```
+
+### Model Hosting: GitHub Releases
+
+AI models are hosted as GitHub Release assets, downloaded using Android's **DownloadManager** API. This provides:
+
+- **System-level retry** on connectivity changes (WiFi ↔ mobile)
+- **Visible notification** with download progress and completion status
+- **Background downloads** that survive app restarts
+- **No virus scan warnings** (unlike Google Drive for large files)
+- **Direct download** without intermediate confirmation pages
+
+The model URL format is:
+```
+https://github.com/waleedmandour/binti2/releases/download/v2.2.0-beta/vosk-model-ar-mgb2-0.4.zip
+```
+
+After download, the ZIP archive is automatically extracted to the app's internal storage with zip-slip protection.
 
 ---
 
@@ -194,6 +294,8 @@ app/src/main/java/com/binti/dilink/
 | *يا بنتي، زوّد الصوت* | Volume up | Adjusts system volume |
 | *يا بنتي، الساعة كام دلوقتي؟* | What time is it? | Speaks current time |
 | *يا بنتي، البطارية فيها كام؟* | Battery level? | Reads battery from vehicle info |
+| *يا بنتي، أقرب محطة شحن* | Nearest charging station | Finds nearest EV station, speaks details, auto-navigates |
+| *يا بنتي، شحن العربية* | Charge the car | Finds nearest EV station and navigates |
 | *يا بنتي، إزيك النهاردة؟* | How are you? | Conversational greeting response |
 
 ---
