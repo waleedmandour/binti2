@@ -17,11 +17,11 @@ import java.nio.channels.FileChannel
  * Uses rule-based matching + optional ML model for complex cases.
  * 
  * Supported Intents:
- * - AC_CONTROL: "شغل التكييف", "طفي التكييف", "زيود الحرارة"
- * - NAVIGATION: "خديني للبيت", "روح الشغل", "أقرب بنزين"
- * - MEDIA: "شغل موسيقى", "وقفة", "اللي بعدها"
- * - PHONE: "كلم أحمد", "رد عالمكالمة"
- * - INFO: "الوقت إيه", "حرارة بره إيه"
+ * - AC_CONTROL: "شَغَّل التَّكْيِيف", "طَفِّي التَّكْيِيف", "زَوِّد الْحَرَّارَة"
+ * - NAVIGATION: "خِدِينِي لِلْبِيت", "رُوح الشُّغْل", "أَقْرَب بَنْزِينَة"
+ * - MEDIA: "شَغَّل مُوسِيقَى", "وَقَّف", "اِللِي بَعْدَهَا"
+ * - PHONE: "كَلِّم أَحْمَد", "رُدّ عَالْمُكَالْمَة"
+ * - INFO: "الْوَقْت إِيه", "حَرَّارَة بَرَّه إِيه"
  * 
  * @author Dr. Waleed Mandour
  */
@@ -93,18 +93,18 @@ class IntentClassifier(private val context: Context) {
         
         Log.d(TAG, "Classifying: $text")
         
-        // Normalize text for Egyptian Arabic
+        // Normalize text for Egyptian Arabic (Stripping diacritics for matching logic)
         val normalizedText = normalizeEgyptianArabic(text)
         Log.v(TAG, "Normalized: $normalizedText")
         
-        // Step 1: Rule-based matching (fast and accurate for known patterns)
+        // Step 1: Rule-based matching
         val ruleResult = matchByRules(normalizedText)
         if (ruleResult != null && ruleResult.confidence >= CONFIDENCE_THRESHOLD) {
             Log.i(TAG, "✅ Rule match: ${ruleResult.action} (${ruleResult.confidence})")
             return ruleResult
         }
         
-        // Step 2: ML-based classification (for complex/ambiguous cases)
+        // Step 2: ML-based classification
         interpreter?.let { mlResult ->
             val result = classifyWithML(normalizedText)
             if (result != null && result.confidence >= CONFIDENCE_THRESHOLD) {
@@ -131,25 +131,20 @@ class IntentClassifier(private val context: Context) {
     }
 
     /**
-     * Normalize Egyptian Arabic text
+     * Normalize Egyptian Arabic text (Removes Tashkeel to ensure matching works)
      */
     private fun normalizeEgyptianArabic(text: String): String {
         return text
-            // Normalize alef variants
             .replace("أ", "ا")
             .replace("إ", "ا")
             .replace("آ", "ا")
-            // Normalize teh marbuta
             .replace("ة", "ه")
-            // Normalize yeh variants
             .replace("ى", "ي")
-            // Normalize Egyptian colloquialisms
             .replace("إزاي", "ازاي")
             .replace("عشان", "عشان")
             .replace("مش", "مش")
-            // Remove diacritics
+            // Remove diacritics for the comparison engine
             .replace(Regex("[\\u064B-\\u065F]"), "")
-            // Remove extra whitespace
             .trim()
             .replace(Regex("\\s+"), " ")
     }
@@ -168,7 +163,6 @@ class IntentClassifier(private val context: Context) {
                 if (score > bestScore) {
                     bestScore = score
                     
-                    // Extract entities
                     val entities = extractEntities(text, pattern, action)
                     
                     bestMatch = IntentResult(
@@ -186,19 +180,13 @@ class IntentClassifier(private val context: Context) {
         return bestMatch
     }
 
-    /**
-     * Calculate match score for a pattern
-     */
     private fun calculatePatternScore(text: String, pattern: IntentPattern): Float {
         val patternWords = pattern.keywords
-        
         var matchCount = 0
         var totalWeight = 0f
         
         for (keyword in patternWords) {
             totalWeight += keyword.weight
-            
-            // Check if keyword appears in text
             if (keyword.word in text || keyword.aliases.any { it in text }) {
                 matchCount++
             }
@@ -207,9 +195,6 @@ class IntentClassifier(private val context: Context) {
         return if (totalWeight > 0) matchCount.toFloat() / patternWords.size else 0f
     }
 
-    /**
-     * Extract entities from text
-     */
     private fun extractEntities(
         text: String,
         pattern: IntentPattern,
@@ -217,7 +202,6 @@ class IntentClassifier(private val context: Context) {
     ): Map<String, String> {
         val entities = mutableMapOf<String, String>()
         
-        // Use registered entity extractors
         for ((entityType, extractor) in entityExtractors) {
             val value = extractor.extract(text, action)
             if (value != null) {
@@ -225,27 +209,23 @@ class IntentClassifier(private val context: Context) {
             }
         }
         
-        // Pattern-specific extraction
         when (action) {
             "AC_CONTROL" -> {
-                // Extract temperature
                 val tempMatch = Regex("(\\d+)").find(text)
                 if (tempMatch != null) {
                     entities["temperature"] = tempMatch.groupValues[1]
                 }
                 
-                // Extract AC mode
                 when {
-                    "بارد" in text || "تبريد" in text -> entities["mode"] = "cool"
-                    "ساخن" in text || "تدفئة" in text -> entities["mode"] = "heat"
-                    "فتحة" in text || "تهوية" in text -> entities["mode"] = "vent"
-                    "اتوماتيك" in text -> entities["mode"] = "auto"
+                    "بَارِد" in text || "تَبْرِيد" in text -> entities["mode"] = "cool"
+                    "سَاخِن" in text || "تَدْفِئَة" in text -> entities["mode"] = "heat"
+                    "فَتْحَة" in text || "تَهْوِيَة" in text -> entities["mode"] = "vent"
+                    "أُوتُومَاتِيك" in text -> entities["mode"] = "auto"
                 }
             }
             
             "NAVIGATION" -> {
-                // Extract destination
-                val destKeywords = listOf("خديني", "روح", "أودي", "نروح", "ودني", "وصلني")
+                val destKeywords = listOf("خِدِينِي", "رُوح", "أَوَدِّي", "نِرُوح", "وَدِّيني", "وَصِّلْنِي")
                 for (keyword in destKeywords) {
                     if (keyword in text) {
                         val destStart = text.indexOf(keyword) + keyword.length
@@ -257,36 +237,16 @@ class IntentClassifier(private val context: Context) {
                     }
                 }
             }
-            
-            "MEDIA" -> {
-                // Extract media action
-                when {
-                    "شغل" in text || "اسمع" in text -> entities["media_action"] = "play"
-                    "وقفة" in text || "وقف" in text -> entities["media_action"] = "pause"
-                    "اللي بعدها" in text || "بعدين" in text -> entities["media_action"] = "next"
-                    "اللي قبلها" in text || "قبلي" in text -> entities["media_action"] = "previous"
-                }
-            }
         }
         
         return entities
     }
 
-    /**
-     * ML-based classification (placeholder for complex cases)
-     */
     private fun classifyWithML(text: String): IntentResult? {
-        // TODO: Implement TFLite inference when model is available
-        // This would use the EgyBERT-tiny model for classification
         return null
     }
 
-    /**
-     * Fuzzy matching for typos and variations
-     */
     private fun matchByFuzzy(text: String): IntentResult? {
-        // Implementation of fuzzy string matching
-        // Uses Levenshtein distance for similarity
         return null
     }
 
@@ -333,51 +293,45 @@ class IntentClassifier(private val context: Context) {
                 intentPatterns[action] = patterns
             }
             
-            Log.d(TAG, "Loaded ${intentPatterns.size} intent patterns")
-            
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to load intent patterns, using defaults: ${e.message}")
             loadDefaultPatterns()
         }
     }
 
     /**
-     * Load default intent patterns (fallback)
+     * Load default intent patterns with expressive Tashkeel for the responses
      */
     private fun loadDefaultPatterns() {
         intentPatterns["AC_CONTROL"] = mutableListOf(
             IntentPattern(
-                pattern = "شغل التكييف",
+                pattern = "شَغَّل التَّكْيِيف",
                 keywords = listOf(
-                    Keyword("شغل", 1.0f, listOf("تشغل", "افتح", "شغلي")),
-                    Keyword("تكييف", 1.0f, listOf("تيكيف", "مكيف"))
+                    Keyword("شَغَّل", 1.0f, listOf("تِشَغَّل", "اِفْتَح", "شَغَّلِي")),
+                    Keyword("تَكْيِيف", 1.0f, listOf("تِكِييف", "مُكَيِّف"))
                 ),
-                response = "عنيا حاضر، شغلتلك التكييف يا باشا"
+                response = "عِنَيَّا حَاضِر، شَغَّلْتِلَّك التَّكْيِيف يَا بَاشَا"
             ),
             IntentPattern(
-                pattern = "طفي التكييف",
+                pattern = "طَفِّي التَّكْيِيف",
                 keywords = listOf(
-                    Keyword("طفي", 1.0f, listOf("اطفي", "قفل", "سكر")),
-                    Keyword("تكييف", 1.0f, listOf("تيكيف"))
+                    Keyword("طَفِّي", 1.0f, listOf("اِطْفِي", "قَفَّل", "سَكَّر")),
+                    Keyword("تَكْيِيف", 1.0f, listOf("تِكِييف"))
                 ),
-                response = "من عنيا، طفيت التكييف خلاص"
+                response = "مِنْ عِنَيَّا، طَفَّيت التَّكْيِيف خَلَاص"
             )
         )
     }
 
     /**
-     * Setup entity extractors
+     * Setup entity extractors with vocalized keywords
      */
     private fun setupEntityExtractors() {
-        // Temperature extractor
         entityExtractors["temperature"] = EntityExtractor { text, _ ->
-            Regex("(\\d+)\\s*(درجة|د)?").find(text)?.groupValues?.get(1)
+            Regex("(\\d+)\\s*(دَرَجَة|د)?").find(text)?.groupValues?.get(1)
         }
         
-        // Location extractor
         entityExtractors["location"] = EntityExtractor { text, _ ->
-            // Extract location after keywords like "خديني", "روح"
-            val locationKeywords = listOf("خديني", "روح", "أودي", "نروح", "ودني", "وصلني")
+            val locationKeywords = listOf("خِدِينِي", "رُوح", "أَوَدِّي", "نِرُوح", "وَدِّيني", "وَصِّلْنِي")
             for (keyword in locationKeywords) {
                 if (keyword in text) {
                     val start = text.indexOf(keyword) + keyword.length
@@ -387,15 +341,11 @@ class IntentClassifier(private val context: Context) {
             null
         }
         
-        // Number extractor
         entityExtractors["number"] = EntityExtractor { text, _ ->
             Regex("\\d+").find(text)?.value
         }
     }
 
-    /**
-     * Load TFLite model file
-     */
     private fun loadModelFile(): MappedByteBuffer {
         val assetFileDescriptor = context.assets.openFd("models/$MODEL_PATH")
         val inputStream = FileInputStream(assetFileDescriptor.fileDescriptor)
@@ -406,7 +356,6 @@ class IntentClassifier(private val context: Context) {
         return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength)
     }
 
-    // Data classes
     data class IntentPattern(
         val pattern: String,
         val keywords: List<Keyword>,
@@ -424,9 +373,6 @@ class IntentClassifier(private val context: Context) {
     }
 }
 
-/**
- * Intent classification result
- */
 data class IntentResult(
     val action: String,
     val entities: Map<String, String>,

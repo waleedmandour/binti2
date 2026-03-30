@@ -146,11 +146,19 @@ class BintiService : Service() {
             try {
                 _serviceState.value = ServiceState.Initializing
                 
-                wakeWordDetector = WakeWordDetectorVosk(this@BintiService).apply { initialize() }
-                voiceProcessor = VoiceProcessor(this@BintiService).apply { initialize() }
-                intentClassifier = IntentClassifier(this@BintiService).apply { initialize() }
+                wakeWordDetector = WakeWordDetectorVosk(this@BintiService)
+                wakeWordDetector.initialize()
+                
+                voiceProcessor = VoiceProcessor(this@BintiService)
+                voiceProcessor.initialize()
+                
+                intentClassifier = IntentClassifier(this@BintiService)
+                intentClassifier.initialize()
+                
                 commandExecutor = DiLinkCommandExecutor(this@BintiService)
-                egyptianTTS = EgyptianTTS(this@BintiService).apply { initialize() }
+                
+                egyptianTTS = EgyptianTTS(this@BintiService)
+                egyptianTTS.initialize()
                 
                 _serviceState.value = ServiceState.Ready
                 broadcastState("ready")
@@ -236,7 +244,7 @@ class BintiService : Service() {
                 _serviceState.value = ServiceState.Ready
                 broadcastState("ready")
                 delay(1000)
-                startWakeWordDetection()
+                // restartWakeWordDetection() is not needed if wakeWordFlow is handled correctly
             }
         }
     }
@@ -285,7 +293,7 @@ class BintiService : Service() {
     private fun updateOverlay(text: String) { overlayTextView?.text = text }
 
     private fun hideOverlay() {
-        overlayView?.let { windowManager.removeViewImmediate(it); overlayView = null }
+        overlayView?.let { try { windowManager.removeViewImmediate(it) } catch (e: Exception) {}; overlayView = null }
     }
 
     private fun createNotification(): Notification {

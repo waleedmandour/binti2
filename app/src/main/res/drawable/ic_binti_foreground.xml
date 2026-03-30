@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Outer Decorative Ring with Egyptian Motifs -->
+    <path
+        android:pathData="M54,54m-48,0a48,48 0,1 1,96 0a48,48 0,1 1,-96 0"
+        android:strokeWidth="3"
+        android:strokeColor="#1A3A5F"/>
+
+    <!-- Egyptian Symbols in Ring (Decorative Gold) -->
+    <path
+        android:pathData="M15,54c0,0 5,-5 10,0M93,54c0,0 -5,-5 -10,0"
+        android:strokeWidth="1.5"
+        android:strokeColor="#D4AF37" />
+
+    <!-- Central Motif Area -->
+    <!-- Female Profile (White) -->
+    <path
+        android:pathData="M48,22c-10,0 -18,8 -18,18c0,6 3,11 7,14c-4,6 -6,13 -6,21c0,12 10,22 22,22c12,0 22,-10 22,-22c0,-8 -2,-15 -6,-21c4,-3 7,-8 7,-14c0,-10 -8,-18 -18,-18z"
+        android:fillColor="#FFFFFF"/>
+
+    <!-- Integrated Steering Wheel (Gold) -->
+    <path
+        android:pathData="M58,68m-10,0a10,10 0,1 1,20 0a10,10 0,1 1,-20 0"
+        android:strokeWidth="2.5"
+        android:strokeColor="#D4AF37"/>
+    <path
+        android:pathData="M48,68h20M58,58v20"
+        android:strokeWidth="1.5"
+        android:strokeColor="#D4AF37"/>
+
+    <!-- Microphone Icon (Light Blue/Silver) -->
+    <path
+        android:pathData="M78,42v12c0,2.5 2,4.5 4.5,4.5s4.5,-2 4.5,-4.5v-12c0,-2.5 -2,-4.5 -4.5,-4.5s-4.5,2 -4.5,4.5z"
+        android:fillColor="#87CEEB"/>
+    <!-- Sound Waves -->
+    <path
+        android:pathData="M90,45c2.5,2.5 2.5,7.5 0,10M94,41c5,5 5,13 0,18"
+        android:strokeWidth="1.2"
+        android:strokeColor="#87CEEB"
+        android:strokeLineCap="round"/>
+
+    <!-- Arabic "بنتي" -->
+    <path
+        android:pathData="M35,88h38M40,84l-5,4M68,84l5,4"
+        android:strokeWidth="4"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round"/>
+    <!-- English "Binti" -->
+    <path
+        android:pathData="M40,100v6h4c2,0 3,-0.5 3,-1.5s-1,-1.5 -3,-1.5h-4M40,103h4c2,0 3,-0.5 3,-1.5s-1,-1.5 -3,-1.5h-4M52,103v3M52,103c0,-1.5 2,-1.5 2,0v3M58,100v6M61,103v3M64,100v6M64,103h4M70,103v3"
+        android:strokeWidth="1"
+        android:strokeColor="#FFFFFF"/>
+
+</vector>

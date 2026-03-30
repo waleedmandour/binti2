@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Colors -->
-    <color name="primary">#1976D2</color>
-    <color name="primary_dark">#1565C0</color>
+    <!-- Brand Colors from Logo -->
+    <color name="binti_dark_blue">#001C35</color>
+    <color name="binti_light_blue">#0082C8</color>
+    <color name="binti_gold">#D4AF37</color>
+
+    <!-- UI Colors -->
+    <color name="primary">#0082C8</color>
+    <color name="primary_dark">#001C35</color>
     <color name="primary_light">#42A5F5</color>
-    <color name="accent">#FF5722</color>
+    <color name="accent">#D4AF37</color>
     
     <color name="background">#FAFAFA</color>
     <color name="card_background">#FFFFFF</color>
@@ -21,9 +26,11 @@
     <color name="error">#F44336</color>
     <color name="warning">#FF9800</color>
     
-    <color name="overlay_background">#E61976D2</color>
+    <color name="overlay_background">#E6001C35</color>
     <color name="huawei_red">#CF0A2C</color>
     
     <color name="permission_granted">#E84CAF50</color>
     <color name="permission_denied">#E6F44336</color>
+
+    <color name="ic_launcher_background">#001C35</color>
 </resources>

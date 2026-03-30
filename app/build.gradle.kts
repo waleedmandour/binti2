@@ -90,6 +90,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.preference:preference-ktx:1.2.1")
+    implementation("androidx.gridlayout:gridlayout:1.0.0")
     
     // Material Design
     implementation("com.google.android.material:material:1.11.0")
