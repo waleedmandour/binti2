@@ -300,6 +300,32 @@ After download, the ZIP archive is automatically extracted to the app's internal
 
 ---
 
+## 📄 Quick Start Guide (Arabic)
+
+A comprehensive quick start guide is available in Standard Arabic (اللغة العربية الفصحى):
+
+📄 **[دليل الاستخدام السريع (PDF)](docs/Binti-Quick-Guide-ar.pdf)**
+
+The guide covers:
+
+1. **نبذة عن التطبيق** — Overview of Binti and its core capabilities
+2. **خطوات التثبيت والإعداد** — Installation, model download, permissions setup, and Accessibility Service activation
+3. **الأوامر الصوتية المدعومة** — Complete command reference across 10 categories (13 tables):
+   - التحكم في التكييف (AC Control)
+   - التنقل والملاحة (Navigation)
+   - الوسائط المتعددة (Media)
+   - الاتصالات الهاتفية (Phone)
+   - ضبط النظام (System)
+   - الاستعلامات (Info)
+   - محطات الشحن (EV Charging Stations)
+   - المحادثة الاجتماعية (Social)
+4. **الإعدادات الشخصية** — User name, conversation tone, smart suggestions
+5. **الأمان والخصوصية** — Privacy and security architecture
+6. **طرازات BYD المدعومة** — Compatible vehicle models
+7. **المعلومات التقنية** — Technical specifications
+
+---
+
 ## 📄 License & Credits
 
 Developed by **Dr. Waleed Mandour**.
