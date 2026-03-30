@@ -17,9 +17,6 @@
     <string name="user_menu_title">طريقة الإستخدام</string>
     <string name="save">حفظ</string>
 
-    <!-- Usage Guide (Professional MSA) -->
-    <string name="usage_instruction_msa">قُم بمُناداةِ المُساعدِ بكلمةِ \"يا بنتي\" ثم اطلبْ ما تشاءُ من أوامرِ التحكّمِ في السيارةِ أو الملاحةِ أو الاتصالِ الهاتفيّ.</string>
-
     <!-- Wake Word -->
     <string name="wake_word">يا بنتي</string>
     <string name="wake_word_arabic">يا بنتي</string>

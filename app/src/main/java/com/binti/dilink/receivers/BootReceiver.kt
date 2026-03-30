@@ -23,9 +23,10 @@ class BootReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED ||
-            intent.action == "android.intent.action.QUICKBOOT_POWERON") {
+            intent.action == "android.intent.action.QUICKBOOT_POWERON" ||
+            intent.action == Intent.ACTION_LOCKED_BOOT_COMPLETED) {
             
-            Log.i(TAG, "🚗 Boot completed, checking auto-start settings...")
+            Log.i(TAG, "Boot completed, checking auto-start settings...")
             
             // Check if auto-start is enabled in preferences
             val prefs = context.getSharedPreferences("binti_prefs", Context.MODE_PRIVATE)

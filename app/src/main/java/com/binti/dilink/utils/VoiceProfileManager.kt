@@ -275,7 +275,8 @@ class VoiceProfileManager(private val context: Context) {
 
         val featuresFile = File(profileDir, "voice_features.bin")
         featuresFile.outputStream().use { os ->
-            os.write(features.size) // Write array size
+            val sizeBytes = java.nio.ByteBuffer.allocate(4).putInt(features.size).array()
+            os.write(sizeBytes) // Write array size as 4-byte int
             features.forEach { value ->
                 os.write(java.nio.ByteBuffer.allocate(4).putFloat(value).array())
             }
@@ -291,7 +292,10 @@ class VoiceProfileManager(private val context: Context) {
 
         return try {
             featuresFile.inputStream().use { ios ->
-                val size = ios.read()
+                val sizeBuffer = ByteArray(4)
+                ios.read(sizeBuffer)
+                val size = java.nio.ByteBuffer.wrap(sizeBuffer).int
+                if (size <= 0 || size > 100000) return null // Sanity check
                 val features = FloatArray(size)
                 val buffer = ByteArray(4)
                 repeat(size) { i ->

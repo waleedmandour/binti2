@@ -627,10 +627,15 @@ class DiLinkAccessibilityService : AccessibilityService() {
      * Broadcast service state change
      */
     private fun broadcastServiceState(enabled: Boolean) {
-        val intent = Intent("com.binti.dilink.ACCESSIBILITY_STATE").apply {
-            putExtra("enabled", enabled)
+        try {
+            val intent = Intent("com.binti.dilink.ACCESSIBILITY_STATE").apply {
+                putExtra("enabled", enabled)
+                `package` = packageName
+            }
+            sendBroadcast(intent)
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to broadcast service state", e)
         }
-        sendBroadcast(intent)
     }
 
     // ========== BYD-Specific Helper Methods ==========

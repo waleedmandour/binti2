@@ -265,12 +265,12 @@
                 app:layout_constraintTop_toBottomOf="@id/layoutDownloadProgress">
 
                 <!-- Using 2-column grid for permissions instead of long list -->
-                <include android:id="@+id/layoutStoragePermission" layout="@layout/card_permission_mic" android:layout_width="0dp" android:layout_columnWeight="1" android:layout_margin="4dp"/>
-                <include android:id="@+id/layoutMicPermission" layout="@layout/card_permission_mic" android:layout_width="0dp" android:layout_columnWeight="1" android:layout_margin="4dp"/>
-                <include android:id="@+id/layoutAccessibilityPermission" layout="@layout/card_permission_accessibility" android:layout_width="0dp" android:layout_columnWeight="1" android:layout_margin="4dp"/>
-                <include android:id="@+id/layoutOverlayPermission" layout="@layout/card_permission_overlay" android:layout_width="0dp" android:layout_columnWeight="1" android:layout_margin="4dp"/>
-                <include android:id="@+id/layoutLocationPermission" layout="@layout/card_permission_mic" android:layout_width="0dp" android:layout_columnWeight="1" android:layout_margin="4dp"/>
-                <include android:id="@+id/layoutPhonePermission" layout="@layout/card_permission_mic" android:layout_width="0dp" android:layout_columnWeight="1" android:layout_margin="4dp" />
+                <include android:id="@+id/layoutStoragePermission" layout="@layout/card_permission_mic" android:layout_width="0dp" app:layout_columnWeight="1" android:layout_margin="4dp"/>
+                <include android:id="@+id/layoutMicPermission" layout="@layout/card_permission_mic" android:layout_width="0dp" app:layout_columnWeight="1" android:layout_margin="4dp"/>
+                <include android:id="@+id/layoutAccessibilityPermission" layout="@layout/card_permission_accessibility" android:layout_width="0dp" app:layout_columnWeight="1" android:layout_margin="4dp"/>
+                <include android:id="@+id/layoutOverlayPermission" layout="@layout/card_permission_overlay" android:layout_width="0dp" app:layout_columnWeight="1" android:layout_margin="4dp"/>
+                <include android:id="@+id/layoutLocationPermission" layout="@layout/card_permission_mic" android:layout_width="0dp" app:layout_columnWeight="1" android:layout_margin="4dp"/>
+                <include android:id="@+id/layoutPhonePermission" layout="@layout/card_permission_mic" android:layout_width="0dp" app:layout_columnWeight="1" android:layout_margin="4dp" />
             </androidx.gridlayout.widget.GridLayout>
 
         </androidx.constraintlayout.widget.ConstraintLayout>

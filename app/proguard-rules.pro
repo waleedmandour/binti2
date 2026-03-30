@@ -24,6 +24,8 @@
 # TensorFlow Lite
 -keep class org.tensorflow.lite.** { *; }
 -keepclassmembers class org.tensorflow.lite.** { *; }
+-dontwarn com.google.auto.value.**
+-dontwarn org.tensorflow.lite.gpu.**
 
 # ONNX Runtime
 -keep class ai.onnxruntime.** { *; }

@@ -182,7 +182,11 @@ class QuickActionsWidget : AppWidgetProvider() {
             }.toString())
         }
 
-        context.startService(intent)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            context.startForegroundService(intent)
+        } else {
+            context.startService(intent)
+        }
         updateWidgetStatus(context, context.getString(R.string.widget_status_ac))
     }
 
@@ -200,7 +204,11 @@ class QuickActionsWidget : AppWidgetProvider() {
             }.toString())
         }
 
-        context.startService(intent)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            context.startForegroundService(intent)
+        } else {
+            context.startService(intent)
+        }
         updateWidgetStatus(context, context.getString(R.string.widget_status_navigating))
     }
 
@@ -220,7 +228,11 @@ class QuickActionsWidget : AppWidgetProvider() {
             }.toString())
         }
 
-        context.startService(intent)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            context.startForegroundService(intent)
+        } else {
+            context.startService(intent)
+        }
         updateWidgetStatus(context, context.getString(R.string.widget_status_media))
     }
 
@@ -240,7 +252,11 @@ class QuickActionsWidget : AppWidgetProvider() {
             }.toString())
         }
 
-        context.startService(intent)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            context.startForegroundService(intent)
+        } else {
+            context.startService(intent)
+        }
     }
 
     /**
@@ -259,7 +275,11 @@ class QuickActionsWidget : AppWidgetProvider() {
             }.toString())
         }
 
-        context.startService(intent)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            context.startForegroundService(intent)
+        } else {
+            context.startService(intent)
+        }
     }
 
     /**

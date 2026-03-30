@@ -312,7 +312,15 @@ class BintiService : Service() {
     }
 
     private fun broadcastState(state: String) {
-        sendBroadcast(Intent(BROADCAST_STATE_CHANGED).apply { putExtra(EXTRA_STATE, state) })
+        try {
+            sendBroadcast(Intent(BROADCAST_STATE_CHANGED).apply { 
+                putExtra(EXTRA_STATE, state) 
+                // Set package to restrict to our app on Android 14+
+                `package` = packageName
+            })
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to broadcast state", e)
+        }
     }
 
     sealed class ServiceState {
