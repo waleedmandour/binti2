@@ -1,4 +1,4 @@
-# 🚗 Binti (بنتي) - Egyptian Arabic Voice Assistant for BYD DiLink
+# 🚗 BYD Binti (بنتي) - Egyptian Arabic Voice Assistant for BYD DiLink
 
 <div align="center">
 
@@ -16,7 +16,7 @@
 
 ## 📖 About
 
-**Binti** (بنتي - "my daughter") is a professional-grade Egyptian Arabic voice assistant designed specifically for BYD DiLink infotainment systems. It enables drivers to control vehicle functions using natural Egyptian dialect, responding to the wake word **"يا بنتي"** (Ya Binti).
+**BYD Binti** (بنتي - "my BYD daughter") is a professional-grade Egyptian Arabic voice assistant designed specifically for BYD DiLink infotainment systems. It enables drivers to control vehicle functions using natural Egyptian dialect, responding to the wake word **"يا بنتي"** (Ya Binti).
 
 Binti is optimized for the hardware and software environment of BYD vehicles, featuring a landscape-native UI and **Android Accessibility Service-based UI automation** to interact with DiLink system apps directly — no root or ADB required.
 
