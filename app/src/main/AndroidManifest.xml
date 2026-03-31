@@ -9,7 +9,6 @@
     <!-- Storage Permissions for AI Models -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" tools:ignore="ScopedStorage" />
-    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" tools:ignore="ScopedStorage" />
     <!-- Android 13+ Media Permissions -->
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
 
@@ -21,7 +20,6 @@
 
     <!-- UI & System Control Permissions -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-    <uses-permission android:name="android.permission.WRITE_SETTINGS" tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
 
@@ -47,9 +45,6 @@
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
 
-    <!-- App Management -->
-    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" tools:ignore="QueryAllPackagesPermission" />
-
     <!-- Features -->
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
@@ -57,6 +52,24 @@
     <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+
+    <!-- Package visibility: Only query DiLink packages (AppGallery compliant) -->
+    <queries>
+        <package android:name="com.byd.auto.ac" />
+        <package android:name="com.byd.auto.navigation" />
+        <package android:name="com.byd.auto.media" />
+        <package android:name="com.byd.auto.settings" />
+        <package android:name="com.byd.auto.phone" />
+        <package android:name="com.byd.auto.launcher" />
+        <package android:name="com.byd.auto.climate" />
+        <package android:name="com.byd.auto.vehicleinfo" />
+        <package android:name="com.byd.auto.energy" />
+        <package android:name="com.byd.auto.camera" />
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="geo" />
+        </intent>
+    </queries>
 
     <application
         android:name=".BintiApplication"

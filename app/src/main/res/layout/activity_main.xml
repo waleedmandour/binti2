@@ -59,13 +59,17 @@
                     android:padding="32dp">
 
                     <com.google.android.material.imageview.ShapeableImageView
-                        android:id="@+id/ivStatusIcon"
-                        android:layout_width="100dp"
-                        android:layout_height="100dp"
-                        android:background="@color/primary_light"
-                        android:padding="20dp"
-                        android:src="@drawable/ic_binti_foreground"
-                        app:shapeAppearanceOverlay="@style/ShapeAppearance.MaterialComponents.LargeComponent" />
+                        android:id="@+id/ivAppLogo"
+                        android:layout_width="88dp"
+                        android:layout_height="88dp"
+                        android:layout_gravity="center_horizontal"
+                        android:src="@drawable/ic_binti_logo"
+                        android:scaleType="centerCrop"
+                        android:contentDescription="@string/app_name"
+                        app:shapeAppearanceOverlay="@style/ShapeAppearance.MaterialComponents.LargeComponent"
+                        app:strokeColor="@color/accent"
+                        app:strokeWidth="2dp"
+                        android:elevation="4dp"/>
 
                     <TextView
                         android:id="@+id/tvAppNameInBody"

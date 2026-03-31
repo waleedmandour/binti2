@@ -157,6 +157,12 @@ class BintiService : Service() {
                 
                 commandExecutor = DiLinkCommandExecutor(this@BintiService)
                 
+                // Connect command executor to accessibility service if available
+                com.binti.dilink.dilink.DiLinkAccessibilityService.getInstance()?.let { a11yService ->
+                    a11yService.setCommandExecutor(commandExecutor)
+                    Log.i(TAG, "✅ Command executor connected to accessibility service")
+                } ?: Log.w(TAG, "⚠ Accessibility service not running, commands may not work")
+
                 egyptianTTS = EgyptianTTS(this@BintiService)
                 egyptianTTS.initialize()
                 

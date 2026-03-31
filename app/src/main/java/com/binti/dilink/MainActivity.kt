@@ -15,6 +15,7 @@ import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.provider.Settings
 import android.text.Editable
 import android.text.TextWatcher
@@ -154,8 +155,12 @@ class MainActivity : AppCompatActivity() {
             
             // Permissions UI Initialization
             setupPermissionClick(layoutStoragePermission, R.string.storage_permission_title, R.string.storage_permission_desc) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    startActivity(Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.parse("package:$packageName")))
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    requestPermissions(arrayOf(Manifest.permission.READ_MEDIA_AUDIO))
+                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    // Android 11-12: request legacy storage or app-specific
+                    @Suppress("DEPRECATION")
+                    requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE))
                 } else {
                     @Suppress("DEPRECATION")
                     requestPermissions(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE))
@@ -209,8 +214,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun checkPermissions() {
         hasStoragePermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            android.os.Environment.isExternalStorageManager()
+            // Android 11+: Check granular media permission or app-specific storage access
+            ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_AUDIO) == PackageManager.PERMISSION_GRANTED ||
+                    Environment.isExternalStorageManager()
         } else {
+            @Suppress("DEPRECATION")
             ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
         }
 
@@ -391,9 +399,7 @@ class MainActivity : AppCompatActivity() {
         
         binding.tvServiceState.text = text
         binding.tvServiceState.setTextColor(ContextCompat.getColor(this, colorRes))
-        binding.ivStatusIcon.setBackgroundColor(ContextCompat.getColor(this, colorRes))
-        binding.ivStatusIcon.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.white))
-        binding.ivStatusIcon.setImageResource(iconRes)
+        binding.ivAppLogo.imageTintList = null
         
         binding.btnStartService.text = if (BintiService.isServiceRunning()) getString(R.string.stop_service) else getString(R.string.start_service)
     }

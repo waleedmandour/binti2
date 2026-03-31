@@ -76,8 +76,12 @@ class DiLinkAccessibilityService : AccessibilityService() {
     // Command executor reference
     private var commandExecutor: DiLinkCommandExecutor? = null
 
-    // Debug mode for logging UI elements
-    private var debugMode = true
+    // Debug mode for logging UI elements (default off to prevent crashes)
+    private var debugMode = false
+
+    // Maximum recursion depth for tree traversal (prevents StackOverflow)
+    private val MAX_TREE_DEPTH = 15
+    private val MAX_PARENT_TRAVERSAL = 5
 
     // Detected BYD model
     private var detectedModel: String = "Unknown"
@@ -134,9 +138,12 @@ class DiLinkAccessibilityService : AccessibilityService() {
                     currentPackage = packageName
                     Log.d(TAG, "📱 Active app: $packageName")
 
-                    // Debug: Log available UI elements in new window
+                    // Debug: Log available UI elements in new window (depth-limited)
                     if (debugMode) {
-                        logAvailableUIElements()
+                        try { logAvailableUIElements() } catch (e: Exception) {
+                            Log.w(TAG, "UI element logging failed, disabling debug mode", e)
+                            debugMode = false
+                        }
                     }
                 }
             }
@@ -250,24 +257,31 @@ class DiLinkAccessibilityService : AccessibilityService() {
     }
 
     /**
-     * Recursively log node tree
+     * Recursively log node tree (depth-limited to prevent StackOverflow)
      */
     private fun logNodeTree(node: AccessibilityNodeInfo, depth: Int) {
-        val indent = "  ".repeat(depth)
-        val bounds = Rect()
-        node.getBoundsInScreen(bounds)
+        if (depth > MAX_TREE_DEPTH) {
+            Log.d(TAG, "${"  ".repeat(depth)}... (max depth reached)")
+            return
+        }
+        try {
+            val indent = "  ".repeat(depth)
+            val bounds = Rect()
+            node.getBoundsInScreen(bounds)
 
-        Log.d(TAG, "${indent}Node: ${node.className}")
-        Log.d(TAG, "${indent}  ID: ${node.viewIdResourceName}")
-        Log.d(TAG, "${indent}  Text: ${node.text}")
-        Log.d(TAG, "${indent}  Desc: ${node.contentDescription}")
-        Log.d(TAG, "${indent}  Bounds: $bounds")
-        Log.d(TAG, "${indent}  Clickable: ${node.isClickable}")
-        Log.d(TAG, "${indent}  Scrollable: ${node.isScrollable}")
-        Log.d(TAG, "${indent}  Editable: ${node.isEditable}")
+            Log.d(TAG, "${indent}Node: ${node.className}")
+            Log.d(TAG, "${indent}  ID: ${node.viewIdResourceName}")
+            Log.d(TAG, "${indent}  Text: ${node.text}")
+            Log.d(TAG, "${indent}  Desc: ${node.contentDescription}")
+            Log.d(TAG, "${indent}  Bounds: $bounds")
+            Log.d(TAG, "${indent}  Clickable: ${node.isClickable}")
+            Log.d(TAG, "${indent}  Scrollable: ${node.isScrollable}")
 
-        for (i in 0 until node.childCount) {
-            node.getChild(i)?.let { logNodeTree(it, depth + 1) }
+            for (i in 0 until node.childCount) {
+                try { node.getChild(i)?.let { logNodeTree(it, depth + 1) } } catch (e: Exception) { /* skip */ }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Error logging node at depth $depth", e)
         }
     }
 
@@ -389,18 +403,22 @@ class DiLinkAccessibilityService : AccessibilityService() {
     }
 
     /**
-     * Perform a click on a node
+     * Perform a click on a node (depth-limited parent traversal)
      */
     fun performClick(node: AccessibilityNodeInfo?): Boolean {
-        if (node == null) return false
+        return performClickInternal(node, 0)
+    }
+
+    private fun performClickInternal(node: AccessibilityNodeInfo?, depth: Int): Boolean {
+        if (node == null || depth > MAX_PARENT_TRAVERSAL) return false
 
         Log.d(TAG, "👆 Clicking: ${node.viewIdResourceName} - ${node.contentDescription}")
 
         return if (node.isClickable) {
             node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
         } else {
-            // Try clicking parent
-            performClick(node.parent)
+            val parent = try { node.parent } catch (e: Exception) { null }
+            performClickInternal(parent, depth + 1)
         }
     }
 
@@ -609,7 +627,7 @@ class DiLinkAccessibilityService : AccessibilityService() {
     }
 
     /**
-     * Wait for a node to appear
+     * Wait for a node to appear (uses coroutine delay, not Thread.sleep)
      */
     suspend fun waitForNode(id: String, timeoutMs: Long = 5000): AccessibilityNodeInfo? {
         val startTime = System.currentTimeMillis()
@@ -617,7 +635,7 @@ class DiLinkAccessibilityService : AccessibilityService() {
         while (System.currentTimeMillis() - startTime < timeoutMs) {
             val node = findNodeById(id)
             if (node != null) return node
-            Thread.sleep(100)
+            kotlinx.coroutines.delay(100)
         }
 
         return null
