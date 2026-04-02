@@ -1,0 +1,294 @@
+name: Build Binti APK
+
+on:
+  # Run on every push to main or develop
+  push:
+    branches: [ main, develop ]
+  # Run on every pull request targeting main
+  pull_request:
+    branches: [ main ]
+  # Allow manual trigger from GitHub Actions UI with options
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type'
+        required: true
+        default: 'debug'
+        type: choice
+        options:
+          - debug
+          - release
+          - both
+      upload_artifact:
+        description: 'Upload APK as artifact'
+        required: false
+        default: true
+        type: boolean
+
+# Cancel any in-progress run on the same branch when a new push arrives
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Java version required by the project (Kotlin 2.0 needs JDK 17+)
+  JAVA_VERSION: '17'
+  JAVA_DISTRIBUTION: 'temurin'
+  # Gradle cache key prefix
+  GRADLE_CACHE_KEY: gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/libs.versions.toml') }}
+
+jobs:
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Job 1: Lint & basic validation (fast feedback, runs in parallel with build)
+  # ─────────────────────────────────────────────────────────────────────────
+  lint:
+    name: Lint & Validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # Full history for version calculation
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ env.GRADLE_CACHE_KEY }}
+          restore-keys: gradle-
+
+      - name: Grant Gradle wrapper execute permission
+        run: chmod +x gradlew
+
+      - name: Run Android Lint
+        run: ./gradlew lint --continue --no-daemon
+
+      - name: Upload lint report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-report
+          path: app/build/reports/lint-results-*.html
+          retention-days: 7
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Job 2: Build Debug APK
+  # ─────────────────────────────────────────────────────────────────────────
+  build-debug:
+    name: Build Debug APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    # Skip if manual trigger asked for release only
+    if: |
+      github.event_name != 'workflow_dispatch' ||
+      inputs.build_type == 'debug' ||
+      inputs.build_type == 'both'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ env.GRADLE_CACHE_KEY }}
+          restore-keys: gradle-
+
+      - name: Grant Gradle wrapper execute permission
+        run: chmod +x gradlew
+
+      # Compute a version name from git: v<tag>-<distance>-g<sha>-debug
+      - name: Compute version name
+        id: version
+        run: |
+          VERSION=$(git describe --tags --always --dirty 2>/dev/null || echo "dev-$(git rev-parse --short HEAD)")
+          echo "version_name=${VERSION}-debug" >> $GITHUB_OUTPUT
+          echo "Version: ${VERSION}-debug"
+
+      - name: Build Debug APK
+        run: |
+          ./gradlew assembleDebug \
+            --no-daemon \
+            --stacktrace \
+            -Pandroid.injected.version.name=${{ steps.version.outputs.version_name }}
+
+      - name: Rename APK with version
+        run: |
+          mkdir -p artifacts
+          cp app/build/outputs/apk/debug/app-debug.apk \
+             artifacts/binti-${{ steps.version.outputs.version_name }}.apk
+
+      - name: Upload Debug APK artifact
+        if: |
+          github.event_name != 'workflow_dispatch' ||
+          inputs.upload_artifact == true
+        uses: actions/upload-artifact@v4
+        with:
+          name: binti-debug-${{ steps.version.outputs.version_name }}
+          path: artifacts/binti-${{ steps.version.outputs.version_name }}.apk
+          retention-days: 30
+
+      # Post APK download link as a PR comment for convenience
+      - name: Comment APK link on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `### ✅ Debug APK built successfully\n**Version:** \`${{ steps.version.outputs.version_name }}\`\n📦 [Download from Actions artifacts](${runUrl})`
+            });
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Job 3: Build Release APK (signed)
+  # ─────────────────────────────────────────────────────────────────────────
+  build-release:
+    name: Build Release APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    # Only run on main branch pushes, tags, or explicit manual trigger
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      startsWith(github.ref, 'refs/tags/v') ||
+      (github.event_name == 'workflow_dispatch' && (inputs.build_type == 'release' || inputs.build_type == 'both'))
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ env.GRADLE_CACHE_KEY }}
+          restore-keys: gradle-
+
+      - name: Grant Gradle wrapper execute permission
+        run: chmod +x gradlew
+
+      - name: Compute version name
+        id: version
+        run: |
+          VERSION=$(git describe --tags --always 2>/dev/null || echo "dev-$(git rev-parse --short HEAD)")
+          echo "version_name=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Version: ${VERSION}"
+
+      # Decode the base64-encoded keystore stored as a GitHub Secret
+      - name: Decode keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "⚠️  KEYSTORE_BASE64 secret not set — building unsigned release APK"
+            echo "signed=false" >> $GITHUB_ENV
+          else
+            echo "$KEYSTORE_BASE64" | base64 --decode > ${{ runner.temp }}/keystore.jks
+            echo "signed=true" >> $GITHUB_ENV
+          fi
+
+      - name: Build Release APK (signed)
+        if: env.signed == 'true'
+        env:
+          KEYSTORE_PATH: ${{ runner.temp }}/keystore.jks
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+        run: |
+          ./gradlew assembleRelease \
+            --no-daemon \
+            --stacktrace \
+            -Pandroid.injected.signing.store.file=$KEYSTORE_PATH \
+            -Pandroid.injected.signing.store.password=$STORE_PASSWORD \
+            -Pandroid.injected.signing.key.alias=$KEY_ALIAS \
+            -Pandroid.injected.signing.key.password=$KEY_PASSWORD \
+            -Pandroid.injected.version.name=${{ steps.version.outputs.version_name }}
+
+      - name: Build Release APK (unsigned fallback)
+        if: env.signed == 'false'
+        run: |
+          ./gradlew assembleRelease \
+            --no-daemon \
+            --stacktrace \
+            -Pandroid.injected.version.name=${{ steps.version.outputs.version_name }}
+
+      - name: Rename APK with version
+        run: |
+          mkdir -p artifacts
+          SOURCE=$(find app/build/outputs/apk/release -name "*.apk" | head -1)
+          SUFFIX=$([ "${{ env.signed }}" = "true" ] && echo "release-signed" || echo "release-unsigned")
+          cp "$SOURCE" "artifacts/binti-${{ steps.version.outputs.version_name }}-${SUFFIX}.apk"
+          echo "apk_path=artifacts/binti-${{ steps.version.outputs.version_name }}-${SUFFIX}.apk" >> $GITHUB_ENV
+
+      - name: Upload Release APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: binti-release-${{ steps.version.outputs.version_name }}
+          path: ${{ env.apk_path }}
+          retention-days: 90
+
+      # Automatically attach APK to a GitHub Release when a tag is pushed
+      - name: Attach APK to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.apk_path }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Job 4: Summary — posts a final status comment showing all artifact links
+  # ─────────────────────────────────────────────────────────────────────────
+  summary:
+    name: Build Summary
+    runs-on: ubuntu-latest
+    needs: [ lint, build-debug ]
+    if: always()
+
+    steps:
+      - name: Write job summary
+        run: |
+          echo "## 🚗 Binti Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Lint | ${{ needs.lint.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Debug APK | ${{ needs.build-debug.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📦 Download artifacts from the **Artifacts** section of this run." >> $GITHUB_STEP_SUMMARY
+          echo "🔌 Install with: \`adb install -r binti-*.apk\`" >> $GITHUB_STEP_SUMMARY
