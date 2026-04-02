@@ -1,11 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+
     android:description="@string/accessibility_service_description"
-    android:packageNames="com.byd.auto.ac,com.byd.auto.navigation,com.byd.auto.media,com.byd.auto.settings,com.byd.auto.phone,com.byd.auto.launcher,com.byd.auto.climate,com.byd.auto.vehicleinfo,com.byd.auto.energy,com.byd.auto.camera"
-    android:accessibilityEventTypes="typeWindowStateChanged|typeWindowContentChanged|typeViewClicked|typeViewFocused"
+
+    <!--
+        FIX #1 — packageNames is intentionally omitted here.
+        When set in the XML config it is applied at service LOAD time (before
+        onServiceConnected fires), so the service never sees events from packages
+        that launch AFTER the initial bind — including DiLink apps that restart
+        after a firmware update or a crash.  We set packageNames programmatically
+        inside onServiceConnected() in DiLinkAccessibilityService.kt, which is
+        the correct and more reliable approach.  Removing it here avoids the
+        double-filter that was silently dropping events.
+    -->
+
+    <!--
+        FIX #2 — added typeViewTextChanged and typeViewScrolled.
+        typeViewTextChanged is needed to detect when the navigation search field
+        is populated (callContact search flow).
+        typeViewScrolled is needed for the recent-calls list scroll in redialLastNumber().
+    -->
+    android:accessibilityEventTypes="typeWindowStateChanged|typeWindowContentChanged|typeViewClicked|typeViewFocused|typeViewTextChanged|typeViewScrolled"
+
     android:accessibilityFeedbackType="feedbackGeneric"
-    android:accessibilityFlags="flagDefault|flagIncludeNotImportantViews|flagReportViewIds|flagRetrieveInteractiveWindows"
+
+    <!--
+        FIX #3 — replaced flagDefault with explicit flags only.
+        flagDefault is a legacy alias that maps to 0 on modern Android and adds
+        nothing.  The three explicit flags are what actually matter.
+        Added flagRequestFilterKeyEvents so the service can intercept hardware
+        media keys (needed for endCall KEYCODE_ENDCALL dispatch).
+    -->
+    android:accessibilityFlags="flagIncludeNotImportantViews|flagReportViewIds|flagRetrieveInteractiveWindows|flagRequestFilterKeyEvents"
+
     android:canRetrieveWindowContent="true"
     android:canPerformGestures="true"
-    android:notificationTimeout="100"
+
+    <!--
+        FIX #4 — added canRequestFilterKeyEvents capability attribute.
+        flagRequestFilterKeyEvents above has no effect unless this capability
+        is also declared.  Without it KEYCODE_ENDCALL dispatch in endCall()
+        is silently ignored.
+    -->
+    android:canRequestFilterKeyEvents="true"
+
+    <!--
+        FIX #5 — reduced notificationTimeout from 100 ms to 0.
+        100 ms means the service coalesces/drops events that arrive within
+        100 ms of each other.  On a busy DiLink UI (e.g. AC screen animating)
+        this causes window-state events to be missed.  0 disables coalescing
+        and delivers every event immediately.
+    -->
+    android:notificationTimeout="0"
+
     android:settingsActivity="com.binti.dilink.MainActivity" />
