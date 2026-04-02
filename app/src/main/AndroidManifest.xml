@@ -2,58 +2,66 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Core Voice Assistant Permissions -->
+    <!-- Core Voice Assistant -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- Storage Permissions for AI Models -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" tools:ignore="ScopedStorage" />
-    <!-- Android 13+ Media Permissions -->
+    <!-- Storage — scoped correctly per API level -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"  android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28"
+        tools:ignore="ScopedStorage" />
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
 
-    <!-- Foreground Service Permissions for Android 14+ -->
+    <!-- Foreground service types (Android 14+) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <!-- FIX #1 — FOREGROUND_SERVICE_LOCATION requires ACCESS_FINE_LOCATION to be
+         declared before it AND the service to actively use location. Binti only uses
+         location for navigation queries, not continuous tracking. Removed to avoid
+         Play/AppGallery rejection; SPECIAL_USE covers the assistant use-case. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 
-    <!-- UI & System Control Permissions -->
+    <!-- UI & system control -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <!-- FIX #2 — WRITE_SETTINGS is required for setBrightness() in
+         DiLinkCommandExecutor but was missing from the manifest entirely. -->
+    <uses-permission android:name="android.permission.WRITE_SETTINGS"
+        tools:ignore="ProtectedPermissions" />
 
-    <!-- Connectivity & Background Permissions -->
+    <!-- Connectivity & background -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
-    <!-- Location Permissions for Navigation -->
+    <!-- Location -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
-    <!-- Phone & Contacts Permissions for Calls -->
+    <!-- Phone & contacts -->
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
 
-    <!-- Bluetooth for Car Connectivity -->
-    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <!-- Bluetooth -->
+    <uses-permission android:name="android.permission.BLUETOOTH"       android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation" />
 
-    <!-- Features -->
-    <uses-feature android:name="android.hardware.microphone" android:required="false" />
-    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
-    <uses-feature android:name="android.hardware.telephony" android:required="false" />
-    <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
-    <uses-feature android:name="android.software.leanback" android:required="false" />
-    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+    <!-- Hardware features — all optional for car head unit compatibility -->
+    <uses-feature android:name="android.hardware.microphone"      android:required="false" />
+    <uses-feature android:name="android.hardware.location.gps"    android:required="false" />
+    <uses-feature android:name="android.hardware.telephony"       android:required="false" />
+    <uses-feature android:name="android.hardware.bluetooth"       android:required="false" />
+    <uses-feature android:name="android.software.leanback"        android:required="false" />
+    <uses-feature android:name="android.hardware.touchscreen"     android:required="false" />
 
-    <!-- Package visibility: Only query DiLink packages (AppGallery compliant) -->
+    <!-- Package visibility: DiLink apps + geo intent -->
     <queries>
         <package android:name="com.byd.auto.ac" />
         <package android:name="com.byd.auto.navigation" />
@@ -69,6 +77,11 @@
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="geo" />
         </intent>
+        <!-- FIX #3 — tel: intent is needed for makePhoneCall() ACTION_DIAL -->
+        <intent>
+            <action android:name="android.intent.action.DIAL" />
+            <data android:scheme="tel" />
+        </intent>
     </queries>
 
     <application
@@ -83,11 +96,11 @@
         android:theme="@style/Theme.Binti"
         android:usesCleartextTraffic="false"
         android:networkSecurityConfig="@xml/network_security_config"
-        android:requestLegacyExternalStorage="true"
+        <!-- FIX #4 — requestLegacyExternalStorage has no effect on API 30+
+             (ignored by the OS) and triggers lint warnings. Removed. -->
         tools:targetApi="34"
         tools:replace="android:allowBackup,android:supportsRtl,android:fullBackupContent">
-        
-        <!-- Huawei AGConnect metadata - Placeholder for compatibility -->
+
         <meta-data
             android:name="com.huawei.hms.client.appid"
             android:value="appid=110123456" />
@@ -106,23 +119,31 @@
             </intent-filter>
         </activity>
 
-        <!-- Binti Voice Service (Android 14+ compliant) -->
+        <!-- Binti Voice Service -->
+        <!-- FIX #5 — foregroundServiceType must match the declared
+             FOREGROUND_SERVICE_* permissions. Removed |location since we
+             dropped FOREGROUND_SERVICE_LOCATION above. -->
         <service
             android:name=".BintiService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="microphone|location|specialUse"
+            android:foregroundServiceType="microphone|specialUse"
             android:directBootAware="true">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="voice_assistant" />
         </service>
 
-        <!-- Accessibility Service for DiLink Control -->
+        <!-- DiLink Accessibility Service -->
+        <!-- FIX #6 — label and description are required by Android for the
+             Accessibility Settings screen. Without them the service shows a
+             blank entry and some OEMs refuse to enable unnamed services. -->
         <service
             android:name=".dilink.DiLinkAccessibilityService"
             android:exported="false"
             android:directBootAware="true"
+            android:label="@string/accessibility_service_label"
+            android:description="@string/accessibility_service_description"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />
@@ -133,19 +154,24 @@
         </service>
 
         <!-- Boot Receiver -->
+        <!-- FIX #7 — QUICKBOOT_POWERON is a non-standard HTC/Qualcomm action.
+             On BYD DiLink (MTK/Qualcomm SoC) the correct fast-boot action is
+             android.intent.action.REBOOT or left as-is if confirmed on device.
+             Also added android:priority="1" so the receiver is processed before
+             other apps and the service starts promptly on boot. -->
         <receiver
             android:name=".receivers.BootReceiver"
             android:enabled="true"
             android:exported="true"
             android:directBootAware="true">
-            <intent-filter>
+            <intent-filter android:priority="1">
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
             </intent-filter>
         </receiver>
 
-        <!-- App Widget -->
+        <!-- Quick Actions Widget -->
         <receiver
             android:name=".ui.QuickActionsWidget"
             android:exported="true"
@@ -164,7 +190,7 @@
                 android:resource="@xml/quick_actions_widget_info" />
         </receiver>
 
-        <!-- FileProvider for model sharing -->
+        <!-- FileProvider -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
