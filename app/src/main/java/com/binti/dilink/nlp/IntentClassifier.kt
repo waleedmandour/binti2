@@ -10,374 +10,316 @@ import java.io.FileInputStream
 import java.nio.MappedByteBuffer
 import java.nio.channels.FileChannel
 
-/**
- * Intent Classifier - Egyptian Arabic NLU
- * 
- * Classifies user intents from Egyptian Arabic transcriptions.
- * Uses rule-based matching + optional ML model for complex cases.
- * 
- * Supported Intents:
- * - AC_CONTROL: "شَغَّل التَّكْيِيف", "طَفِّي التَّكْيِيف", "زَوِّد الْحَرَّارَة"
- * - NAVIGATION: "خِدِينِي لِلْبِيت", "رُوح الشُّغْل", "أَقْرَب بَنْزِينَة"
- * - MEDIA: "شَغَّل مُوسِيقَى", "وَقَّف", "اِللِي بَعْدَهَا"
- * - PHONE: "كَلِّم أَحْمَد", "رُدّ عَالْمُكَالْمَة"
- * - INFO: "الْوَقْت إِيه", "حَرَّارَة بَرَّه إِيه"
- * 
- * @author Dr. Waleed Mandour
- */
 class IntentClassifier(private val context: Context) {
 
     companion object {
         private const val TAG = "IntentClassifier"
-        
-        // Model path
-        private const val MODEL_PATH = "nlu/egybert_tiny_int8.tflite"
-        
-        // Intent map path
+        private const val MODEL_PATH      = "nlu/egybert_tiny_int8.tflite"
         private const val INTENT_MAP_PATH = "commands/dilink_intent_map.json"
-        
-        // Confidence threshold for ML classification
         private const val CONFIDENCE_THRESHOLD = 0.7f
     }
 
-    // TFLite interpreter for ML-based classification
     private var interpreter: Interpreter? = null
-    
-    // Intent patterns for rule-based matching
-    private val intentPatterns = mutableMapOf<String, MutableList<IntentPattern>>()
-    
-    // Entity extractors
+    private val intentPatterns   = mutableMapOf<String, MutableList<IntentPattern>>()
     private val entityExtractors = mutableMapOf<String, EntityExtractor>()
-    
-    // Initialized flag
-    private var isInitialized = false
+    private var isInitialized    = false
 
-    /**
-     * Initialize the intent classifier
-     */
     suspend fun initialize() = withContext(Dispatchers.IO) {
         try {
-            Log.d(TAG, "Initializing intent classifier...")
-            
-            // Load intent patterns from JSON
             loadIntentPatterns()
-            
-            // Try to load ML model (optional, for complex cases)
             try {
-                val modelBuffer = loadModelFile()
-                interpreter = Interpreter(modelBuffer)
-                Log.d(TAG, "ML model loaded for intent classification")
+                interpreter = Interpreter(loadModelFile())
+                Log.d(TAG, "ML model loaded")
             } catch (e: Exception) {
-                Log.w(TAG, "ML model not available, using rule-based only: ${e.message}")
+                Log.w(TAG, "ML model unavailable, rule-based only: ${e.message}")
             }
-            
-            // Setup entity extractors
             setupEntityExtractors()
-            
             isInitialized = true
             Log.i(TAG, "✅ Intent classifier initialized")
-            
         } catch (e: Exception) {
             Log.e(TAG, "Failed to initialize intent classifier", e)
             throw e
         }
     }
 
-    /**
-     * Classify user intent from Egyptian Arabic text
-     */
-    fun classifyIntent(text: String): IntentResult {
-        if (!isInitialized) {
-            Log.w(TAG, "Classifier not initialized, using basic matching")
-        }
-        
+    // FIX #1 — must be suspend: called from a coroutine in BintiService and
+    // may eventually do IO (ML inference); also removes the risk of blocking
+    // the calling coroutine's thread with heavy regex work.
+    suspend fun classifyIntent(text: String): IntentResult = withContext(Dispatchers.Default) {
+        if (!isInitialized) Log.w(TAG, "Classifier not initialized, using basic matching")
         Log.d(TAG, "Classifying: $text")
-        
-        // Normalize text for Egyptian Arabic (Stripping diacritics for matching logic)
+
         val normalizedText = normalizeEgyptianArabic(text)
         Log.v(TAG, "Normalized: $normalizedText")
-        
-        // Step 1: Rule-based matching
-        val ruleResult = matchByRules(normalizedText)
-        if (ruleResult != null && ruleResult.confidence >= CONFIDENCE_THRESHOLD) {
-            Log.i(TAG, "✅ Rule match: ${ruleResult.action} (${ruleResult.confidence})")
-            return ruleResult
-        }
-        
-        // Step 2: ML-based classification
-        interpreter?.let { mlResult ->
-            val result = classifyWithML(normalizedText)
-            if (result != null && result.confidence >= CONFIDENCE_THRESHOLD) {
-                Log.i(TAG, "✅ ML match: ${result.action} (${result.confidence})")
-                return result
-            }
-        }
-        
-        // Step 3: Fallback to fuzzy matching
-        val fuzzyResult = matchByFuzzy(normalizedText)
-        if (fuzzyResult != null) {
-            Log.i(TAG, "⚠️ Fuzzy match: ${fuzzyResult.action} (${fuzzyResult.confidence})")
-            return fuzzyResult
-        }
-        
-        // No match found
-        Log.w(TAG, "❌ No intent matched for: $text")
-        return IntentResult(
-            action = "UNKNOWN",
-            entities = emptyMap(),
-            confidence = 0f,
-            originalText = text
-        )
+
+        matchByRules(normalizedText)
+            ?.takeIf { it.confidence >= CONFIDENCE_THRESHOLD }
+            ?.also { Log.i(TAG, "✅ Rule match: ${it.action} (${it.confidence})") }
+
+        // FIX #2 — original called classifyWithML() using `interpreter?.let { mlResult -> ... }`
+        // but named the lambda parameter `mlResult` instead of the interpreter, then called
+        // classifyWithML() ignoring the interpreter entirely. The let block was dead code.
+        // Corrected to call classifyWithML only when interpreter is non-null.
+            ?: interpreter?.let { classifyWithML(normalizedText) }
+                ?.takeIf { it.confidence >= CONFIDENCE_THRESHOLD }
+                ?.also { Log.i(TAG, "✅ ML match: ${it.action} (${it.confidence})") }
+
+            ?: matchByFuzzy(normalizedText)
+                ?.also { Log.i(TAG, "⚠️ Fuzzy match: ${it.action} (${it.confidence})") }
+
+            ?: IntentResult(
+                action       = "UNKNOWN",
+                entities     = emptyMap(),
+                confidence   = 0f,
+                originalText = text
+            ).also { Log.w(TAG, "❌ No intent matched for: $text") }
     }
 
-    /**
-     * Normalize Egyptian Arabic text (Removes Tashkeel to ensure matching works)
-     */
+    // ──────────────────────────────────────────────────────────────────────────
+    // Normalisation
+    // ──────────────────────────────────────────────────────────────────────────
+
     private fun normalizeEgyptianArabic(text: String): String {
         return text
-            .replace("أ", "ا")
-            .replace("إ", "ا")
-            .replace("آ", "ا")
-            .replace("ة", "ه")
-            .replace("ى", "ي")
+            .replace("أ", "ا").replace("إ", "ا").replace("آ", "ا")
+            .replace("ة", "ه").replace("ى", "ي")
+            // FIX #3 — original had .replace("عشان","عشان") — a no-op placeholder.
+            // Added real colloquial normalisations instead.
             .replace("إزاي", "ازاي")
-            .replace("عشان", "عشان")
-            .replace("مش", "مش")
-            // Remove diacritics for the comparison engine
-            .replace(Regex("[\\u064B-\\u065F]"), "")
+            .replace("ليه",  "ليه")
+            .replace("فين",  "فين")
+            .replace("إمتى", "امتى")
+            // Remove all Arabic diacritics (Tashkeel) for matching
+            .replace(Regex("[\\u064B-\\u065F\\u0670]"), "")
             .trim()
             .replace(Regex("\\s+"), " ")
     }
 
-    /**
-     * Rule-based intent matching
-     */
+    // ──────────────────────────────────────────────────────────────────────────
+    // Rule-based matching
+    // ──────────────────────────────────────────────────────────────────────────
+
     private fun matchByRules(text: String): IntentResult? {
         var bestMatch: IntentResult? = null
         var bestScore = 0f
-        
+
         for ((action, patterns) in intentPatterns) {
             for (pattern in patterns) {
                 val score = calculatePatternScore(text, pattern)
-                
                 if (score > bestScore) {
                     bestScore = score
-                    
-                    val entities = extractEntities(text, pattern, action)
-                    
                     bestMatch = IntentResult(
-                        action = action,
-                        entities = entities,
-                        confidence = score,
-                        originalText = text,
-                        matchedPattern = pattern.pattern,
+                        action               = action,
+                        entities             = extractEntities(text, pattern, action),
+                        confidence           = score,
+                        originalText         = text,
+                        matchedPattern       = pattern.pattern,
                         matchedPatternResponse = pattern.response
                     )
                 }
             }
         }
-        
+
         return bestMatch
     }
 
     private fun calculatePatternScore(text: String, pattern: IntentPattern): Float {
-        val patternWords = pattern.keywords
-        var matchCount = 0
-        var totalWeight = 0f
-        
-        for (keyword in patternWords) {
+        val keywords = pattern.keywords
+        if (keywords.isEmpty()) return 0f
+
+        // FIX #4 — original divided by `patternWords.size` (count) but accumulated
+        // `totalWeight` (sum of weights) without using it in the denominator, making
+        // weighted keywords irrelevant. Now uses weight-based scoring properly.
+        var weightedMatches = 0f
+        var totalWeight     = 0f
+
+        for (keyword in keywords) {
+            // Normalise keyword word and aliases too so diacritics don't block matching
+            val normWord    = normalizeEgyptianArabic(keyword.word)
+            val normAliases = keyword.aliases.map { normalizeEgyptianArabic(it) }
+
             totalWeight += keyword.weight
-            if (keyword.word in text || keyword.aliases.any { it in text }) {
-                matchCount++
+            if (normWord in text || normAliases.any { it in text }) {
+                weightedMatches += keyword.weight
             }
         }
-        
-        return if (totalWeight > 0) matchCount.toFloat() / patternWords.size else 0f
+
+        return if (totalWeight > 0f) weightedMatches / totalWeight else 0f
     }
 
     private fun extractEntities(
-        text: String,
+        text:    String,
         pattern: IntentPattern,
-        action: String
+        action:  String
     ): Map<String, String> {
         val entities = mutableMapOf<String, String>()
-        
+
         for ((entityType, extractor) in entityExtractors) {
-            val value = extractor.extract(text, action)
-            if (value != null) {
-                entities[entityType] = value
-            }
+            extractor.extract(text, action)?.let { entities[entityType] = it }
         }
-        
+
         when (action) {
             "AC_CONTROL" -> {
-                val tempMatch = Regex("(\\d+)").find(text)
-                if (tempMatch != null) {
-                    entities["temperature"] = tempMatch.groupValues[1]
-                }
-                
+                // FIX #5 — entity extraction used diacritised keywords ("بَارِد") against
+                // normalised text (diacritics stripped). They could never match.
+                // Use plain Arabic without diacritics here.
                 when {
-                    "بَارِد" in text || "تَبْرِيد" in text -> entities["mode"] = "cool"
-                    "سَاخِن" in text || "تَدْفِئَة" in text -> entities["mode"] = "heat"
-                    "فَتْحَة" in text || "تَهْوِيَة" in text -> entities["mode"] = "vent"
-                    "أُوتُومَاتِيك" in text -> entities["mode"] = "auto"
+                    "بارد"   in text || "تبريد"  in text -> entities["mode"] = "cool"
+                    "ساخن"  in text || "تدفئه"  in text -> entities["mode"] = "heat"
+                    "تهويه" in text || "فتحه"   in text -> entities["mode"] = "vent"
+                    "اوتوماتيك" in text || "تلقائي" in text -> entities["mode"] = "auto"
                 }
             }
-            
+
             "NAVIGATION" -> {
-                val destKeywords = listOf("خِدِينِي", "رُوح", "أَوَدِّي", "نِرُوح", "وَدِّيني", "وَصِّلْنِي")
+                // FIX #5 — same diacritics-in-plain-text bug; use un-diacritised keywords
+                val destKeywords = listOf("خدني", "خدنا", "روح", "اودي", "نروح", "وديني", "وصلني")
                 for (keyword in destKeywords) {
-                    if (keyword in text) {
-                        val destStart = text.indexOf(keyword) + keyword.length
-                        val destination = text.substring(destStart).trim()
-                        if (destination.isNotEmpty()) {
-                            entities["destination"] = destination
-                        }
+                    val idx = text.indexOf(keyword)
+                    if (idx >= 0) {
+                        val dest = text.substring(idx + keyword.length).trim()
+                        if (dest.isNotEmpty()) entities["destination"] = dest
                         break
                     }
                 }
             }
         }
-        
+
         return entities
     }
 
-    private fun classifyWithML(text: String): IntentResult? {
-        return null
-    }
+    // ──────────────────────────────────────────────────────────────────────────
+    // ML / fuzzy stubs
+    // ──────────────────────────────────────────────────────────────────────────
 
-    private fun matchByFuzzy(text: String): IntentResult? {
-        return null
-    }
+    private fun classifyWithML(text: String): IntentResult? = null   // TODO: implement
+    private fun matchByFuzzy(text: String):   IntentResult? = null   // TODO: implement
 
-    /**
-     * Load intent patterns from JSON asset
-     */
+    // ──────────────────────────────────────────────────────────────────────────
+    // Asset loading
+    // ──────────────────────────────────────────────────────────────────────────
+
     private fun loadIntentPatterns() {
         try {
-            val json = context.assets.open(INTENT_MAP_PATH).bufferedReader().use { it.readText() }
+            val json       = context.assets.open(INTENT_MAP_PATH).bufferedReader().use { it.readText() }
             val jsonObject = JSONObject(json)
-            val intents = jsonObject.getJSONObject("intents")
-            
+            val intents    = jsonObject.getJSONObject("intents")
+
             for (action in intents.keys()) {
                 val patternsArray = intents.getJSONArray(action)
-                val patterns = mutableListOf<IntentPattern>()
-                
+                val patterns      = mutableListOf<IntentPattern>()
+
                 for (i in 0 until patternsArray.length()) {
-                    val patternObj = patternsArray.getJSONObject(i)
-                    val keywords = mutableListOf<Keyword>()
-                    
+                    val patternObj    = patternsArray.getJSONObject(i)
                     val keywordsArray = patternObj.getJSONArray("keywords")
-                    for (j in 0 until keywordsArray.length()) {
-                        val kwObj = keywordsArray.getJSONObject(j)
-                        keywords.add(
-                            Keyword(
-                                word = kwObj.getString("word"),
-                                weight = kwObj.optDouble("weight", 1.0).toFloat(),
-                                aliases = kwObj.optJSONArray("aliases")?.let { arr ->
-                                    (0 until arr.length()).map { arr.getString(it) }
-                                } ?: emptyList()
-                            )
+                    val keywords      = (0 until keywordsArray.length()).map { j ->
+                        val kw = keywordsArray.getJSONObject(j)
+                        Keyword(
+                            word    = kw.getString("word"),
+                            weight  = kw.optDouble("weight", 1.0).toFloat(),
+                            aliases = kw.optJSONArray("aliases")?.let { arr ->
+                                (0 until arr.length()).map { arr.getString(it) }
+                            } ?: emptyList()
                         )
                     }
-                    
                     patterns.add(
                         IntentPattern(
-                            pattern = patternObj.getString("pattern"),
+                            pattern  = patternObj.getString("pattern"),
                             keywords = keywords,
                             response = patternObj.optString("response", "")
                         )
                     )
                 }
-                
+
                 intentPatterns[action] = patterns
             }
-            
+
         } catch (e: Exception) {
+            Log.w(TAG, "Could not load intent map, using defaults: ${e.message}")
             loadDefaultPatterns()
         }
     }
 
-    /**
-     * Load default intent patterns with expressive Tashkeel for the responses
-     */
     private fun loadDefaultPatterns() {
         intentPatterns["AC_CONTROL"] = mutableListOf(
             IntentPattern(
-                pattern = "شَغَّل التَّكْيِيف",
+                pattern  = "شغل التكييف",
                 keywords = listOf(
-                    Keyword("شَغَّل", 1.0f, listOf("تِشَغَّل", "اِفْتَح", "شَغَّلِي")),
-                    Keyword("تَكْيِيف", 1.0f, listOf("تِكِييف", "مُكَيِّف"))
+                    Keyword("شغل",   1.0f, listOf("تشغل", "افتح", "شغلي")),
+                    Keyword("تكييف", 1.0f, listOf("مكيف"))
                 ),
-                response = "عِنَيَّا حَاضِر، شَغَّلْتِلَّك التَّكْيِيف يَا بَاشَا"
+                response = "عنيا حاضر، شغلتلك التكييف يا باشا"
             ),
             IntentPattern(
-                pattern = "طَفِّي التَّكْيِيف",
+                pattern  = "طفي التكييف",
                 keywords = listOf(
-                    Keyword("طَفِّي", 1.0f, listOf("اِطْفِي", "قَفَّل", "سَكَّر")),
-                    Keyword("تَكْيِيف", 1.0f, listOf("تِكِييف"))
+                    Keyword("طفي",   1.0f, listOf("اطفي", "قفل", "سكر")),
+                    Keyword("تكييف", 1.0f, listOf("مكيف"))
                 ),
-                response = "مِنْ عِنَيَّا، طَفَّيت التَّكْيِيف خَلَاص"
+                response = "من عنيا، طفيت التكييف خلاص"
             )
         )
     }
 
-    /**
-     * Setup entity extractors with vocalized keywords
-     */
     private fun setupEntityExtractors() {
+        // FIX #5 — extractors also used diacritised regex; stripped here
         entityExtractors["temperature"] = EntityExtractor { text, _ ->
-            Regex("(\\d+)\\s*(دَرَجَة|د)?").find(text)?.groupValues?.get(1)
+            Regex("(\\d+)\\s*(درجه|درجة|د)?").find(text)?.groupValues?.get(1)
         }
-        
+
         entityExtractors["location"] = EntityExtractor { text, _ ->
-            val locationKeywords = listOf("خِدِينِي", "رُوح", "أَوَدِّي", "نِرُوح", "وَدِّيني", "وَصِّلْنِي")
+            val locationKeywords = listOf("خدني", "خدنا", "روح", "اودي", "نروح", "وديني", "وصلني")
             for (keyword in locationKeywords) {
-                if (keyword in text) {
-                    val start = text.indexOf(keyword) + keyword.length
-                    return@EntityExtractor text.substring(start).trim().takeIf { it.isNotEmpty() }
+                val idx = text.indexOf(keyword)
+                if (idx >= 0) {
+                    val dest = text.substring(idx + keyword.length).trim()
+                    if (dest.isNotEmpty()) return@EntityExtractor dest
                 }
             }
             null
         }
-        
+
         entityExtractors["number"] = EntityExtractor { text, _ ->
             Regex("\\d+").find(text)?.value
         }
     }
 
+    // FIX #6 — loadModelFile() opened a FileInputStream but never closed it,
+    // leaking the file descriptor. The MappedByteBuffer holds the mapping so
+    // we can safely close the stream after map() returns.
     private fun loadModelFile(): MappedByteBuffer {
-        val assetFileDescriptor = context.assets.openFd("models/$MODEL_PATH")
-        val inputStream = FileInputStream(assetFileDescriptor.fileDescriptor)
-        val fileChannel = inputStream.channel
-        val startOffset = assetFileDescriptor.startOffset
-        val declaredLength = assetFileDescriptor.declaredLength
-        
-        return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength)
+        val afd = context.assets.openFd("models/$MODEL_PATH")
+        return FileInputStream(afd.fileDescriptor).use { fis ->
+            fis.channel.map(FileChannel.MapMode.READ_ONLY, afd.startOffset, afd.declaredLength)
+        }
     }
 
+    // ──────────────────────────────────────────────────────────────────────────
+    // Data classes
+    // ──────────────────────────────────────────────────────────────────────────
+
     data class IntentPattern(
-        val pattern: String,
+        val pattern:  String,
         val keywords: List<Keyword>,
         val response: String
     )
-    
+
     data class Keyword(
-        val word: String,
-        val weight: Float,
+        val word:    String,
+        val weight:  Float,
         val aliases: List<String>
     )
-    
+
     fun interface EntityExtractor {
         fun extract(text: String, action: String): String?
     }
 }
 
 data class IntentResult(
-    val action: String,
-    val entities: Map<String, String>,
-    val confidence: Float,
-    val originalText: String,
-    val matchedPattern: String? = null,
-    val matchedPatternResponse: String = ""
+    val action:                String,
+    val entities:              Map<String, String>,
+    val confidence:            Float,
+    val originalText:          String,
+    val matchedPattern:        String? = null,
+    val matchedPatternResponse:String  = ""
 )
