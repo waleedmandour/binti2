@@ -5,6 +5,10 @@
     <string name="app_description">مُسَاعِد صَوْتِي ذَكِي لِسَيَّارَات BYD DiLink</string>
     <string name="ui_header_title">مُسَاعِد القِيَادَة الذَّكِيَّة - يَا بِنْتِي</string>
 
+    <string name="accessibility_service_label">يا بنتي — مساعد BYD</string>
+    <string name="accessibility_service_description">يتحكم في نظام DiLink بالأوامر الصوتية</string>
+
+
     <!-- User Profile & Settings -->
     <string name="header_settings">الإِعْدَادَات الشَّخْصِيَّة</string>
     <string name="user_name_label">أَحِبّ أَنَادِيك بـِ إِيه؟</string>
