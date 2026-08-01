@@ -268,7 +268,8 @@ class AdvancedTelemetryProbe(
         // hierarchy varies by DiLink firmware version; the reference tool
         // tries several in turn.
         val stubCandidates = listOf(
-            "android.hardware.bydauto.IBydAuto${serviceName.removePrefix("bydauto.").capitalize()}",
+            "android.hardware.bydauto.IBydAuto${serviceName.removePrefix("bydauto.")
+                .replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }}",
             "android.hardware.bydauto.IBydAutoService",
             "android.hardware.bydauto.IBydService"
         )

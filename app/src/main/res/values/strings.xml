@@ -76,7 +76,9 @@
     <!-- Accessibility Guide -->
     <string name="accessibility_guide_title">تفعيل خدمة الوصول</string>
     <string name="accessibility_guide_message">الرجاء تفعيل خدمة الوصول للتحكم في السيارة.</string>
-    <string name="accessibility_service_description">تستخدم هذه الخدمة للتحكم في وظائف سيارة BYD DiLink عبر الأوامر الصوتية.</string>
+    <!-- Note: accessibility_service_description is already declared above
+         (App Info section) and is referenced by AndroidManifest.xml.
+         Do NOT re-declare it here — Android resource merger rejects duplicates. -->
 
     <!-- Battery Optimization -->
     <string name="battery_optimization_title">تحسين البطارية</string>

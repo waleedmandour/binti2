@@ -66,7 +66,6 @@ object VehicleSnapshotParser {
         val batteryText = lookup.findText(ids.ID_VEHICLE_BATTERY,  fallbackIds)
         val rangeText   = lookup.findText(ids.ID_VEHICLE_RANGE,    fallbackIds)
         val tempOutText = lookup.findText(ids.ID_VEHICLE_TEMP_OUT, fallbackIds)
-        val tempInText  = lookup.findText(ids.ID_VEHICLE_TEMP_IN,  fallbackIds)
         val acTempText  = lookup.findText(ids.ID_AC_TEMP_DISPLAY,  fallbackIds)
         val acOn        = lookup.findState(ids.ID_AC_POWER,        fallbackIds)
 
@@ -80,6 +79,9 @@ object VehicleSnapshotParser {
             // NOTE: doorsLocked and isCharging intentionally left null —
             // Tier 1 has no confirmed node IDs for these; they're populated
             // only by Tier 2 (AdvancedTelemetryProbe).
+            // insideTempC is also intentionally omitted: the original brief's
+            // VehicleSnapshot doesn't carry it, and no voice command surfaces
+            // it. The ID_VEHICLE_TEMP_IN lookup is skipped to save a tree walk.
         )
     }
 

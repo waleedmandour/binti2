@@ -210,6 +210,18 @@
                     app:icon="@android:drawable/stat_sys_download"
                     android:layout_marginBottom="12dp"/>
 
+                <!-- Developer / QA shortcut — launches Vehicle State debug screen.
+                     Must mirror the same id in layout/activity_main.xml so
+                     ViewBinding resolves consistently in portrait + landscape. -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnVehicleState"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/vehicle_state_title"
+                    app:icon="@android:drawable/ic_menu_info_details"
+                    android:layout_marginBottom="12dp"/>
+
                 <LinearLayout
                     android:id="@+id/layoutDownloadProgress"
                     android:layout_width="match_parent"

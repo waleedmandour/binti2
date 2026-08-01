@@ -55,8 +55,7 @@ class AdvancedTelemetryOnboardingActivity : AppCompatActivity() {
         btnToggle.setOnClickListener {
             if (consent.isGranted) {
                 consent.revoke()
-                TelemetryConsentManager.get(this).let { /* refresh */ }
-                // Also clear the snapshot's Tier 2 fields — falling back to Tier 1 only.
+                // Clear the snapshot's Tier 2 fields — falling back to Tier 1 only.
                 com.binti.dilink.dilink.DiLinkAccessibilityService.vehicleDataRepository.reset()
             } else {
                 if (!cbAcknowledge.isChecked) {

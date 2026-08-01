@@ -10,7 +10,6 @@ import androidx.lifecycle.lifecycleScope
 import com.binti.dilink.BuildConfig
 import com.binti.dilink.R
 import com.binti.dilink.dilink.DiLinkAccessibilityService
-import com.binti.dilink.dilink.VehicleSnapshot
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
