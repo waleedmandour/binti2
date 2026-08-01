@@ -68,6 +68,16 @@ class BintiApplication : Application() {
             Log.w(TAG, "TelemetryInitializer.init() failed — Tier 2 unavailable", e)
         }
 
+        // Brightness control wiring — flavor-dependent. The enthusiast flavor
+        // registers a RealBrightnessBridge (with WRITE_SETTINGS declared in the
+        // enthusiast manifest). The store flavor leaves the NoOpBrightnessBridge
+        // in place — no WRITE_SETTINGS permission in the store build.
+        try {
+            com.binti.dilink.dilink.settings.BrightnessInitializer.init(this)
+        } catch (e: Throwable) {
+            Log.w(TAG, "BrightnessInitializer.init() failed — brightness control unavailable", e)
+        }
+
         // Initialize in background to avoid blocking startup
         applicationScope.launch {
             initializeNotificationChannel()

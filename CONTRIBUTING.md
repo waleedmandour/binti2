@@ -80,7 +80,7 @@ For feature requests, please describe:
 
 ## 📜 License
 
-By contributing, you agree that your contributions will be licensed under the MIT License.
+By contributing, you agree that your contributions will be licensed under the Apache License, Version 2.0. See the [LICENSE](LICENSE) file for the full text and [NOTICE](NOTICE) for third-party attributions.
 
 ---
 

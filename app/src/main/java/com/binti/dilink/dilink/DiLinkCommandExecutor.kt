@@ -837,37 +837,25 @@ class DiLinkCommandExecutor(private val context: Context) {
         }
     }
 
-    private suspend fun setBrightness(level: Int): CommandResult = try {
-        if (Settings.System.canWrite(context)) {
-            Settings.System.putInt(
-                context.contentResolver,
-                Settings.System.SCREEN_BRIGHTNESS_MODE,
-                Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL
-            )
-            val brightness = level.coerceIn(0, 255)
-            Settings.System.putInt(context.contentResolver, Settings.System.SCREEN_BRIGHTNESS, brightness)
-            CommandResult(true, "تم ضبط الإضاءة على $level%")
-        } else {
-            requestWriteSettings()
-            CommandResult(false, "اسمح بتعديل الإعدادات أولاً")
+    private suspend fun setBrightness(level: Int): CommandResult {
+        val bridge = com.binti.dilink.dilink.settings.BrightnessLoader.get()
+        if (!bridge.isAvailable) {
+            return CommandResult(false, bridge.setBrightness(level))
         }
-    } catch (e: Exception) {
-        CommandResult(false, "فشل ضبط الإضاءة: ${e.message}")
+        val msg = bridge.setBrightness(level)
+        // Success if the message doesn't start with a failure indicator
+        val success = !msg.startsWith("اسمح") && !msg.startsWith("فشل")
+        return CommandResult(success, msg)
     }
 
     private suspend fun adjustBrightness(delta: Int): CommandResult {
-        if (!Settings.System.canWrite(context)) {
-            requestWriteSettings()
-            return CommandResult(false, "اسمح بتعديل الإعدادات أولاً")
+        val bridge = com.binti.dilink.dilink.settings.BrightnessLoader.get()
+        if (!bridge.isAvailable) {
+            return CommandResult(false, bridge.adjustBrightness(delta))
         }
-        return try {
-            val current    = Settings.System.getInt(context.contentResolver, Settings.System.SCREEN_BRIGHTNESS, 128)
-            val newVal     = (current + delta * 255 / 100).coerceIn(0, 255)
-            Settings.System.putInt(context.contentResolver, Settings.System.SCREEN_BRIGHTNESS, newVal)
-            CommandResult(true, "الإضاءة ${newVal * 100 / 255}%")
-        } catch (e: Exception) {
-            CommandResult(false, "فشل تعديل الإضاءة: ${e.message}")
-        }
+        val msg = bridge.adjustBrightness(delta)
+        val success = !msg.startsWith("اسمح") && !msg.startsWith("فشل")
+        return CommandResult(success, msg)
     }
 
     private suspend fun setVolume(level: Int): CommandResult = try {
@@ -970,15 +958,6 @@ class DiLinkCommandExecutor(private val context: Context) {
     private fun sendMediaKeyEvent(keyCode: Int) {
         audioManager.dispatchMediaKeyEvent(android.view.KeyEvent(android.view.KeyEvent.ACTION_DOWN, keyCode))
         audioManager.dispatchMediaKeyEvent(android.view.KeyEvent(android.view.KeyEvent.ACTION_UP, keyCode))
-    }
-
-    private fun requestWriteSettings() {
-        context.startActivity(
-            Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS).apply {
-                data = Uri.parse("package:${context.packageName}")
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-        )
     }
 
     private fun prefs() = context.getSharedPreferences("binti_prefs", Context.MODE_PRIVATE)

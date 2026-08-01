@@ -7,6 +7,104 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.3.2-beta] - 2026-08-01
+
+### 🔒 Security & Architecture Fixes
+
+#### WRITE_SETTINGS Isolation (Fix #1)
+- **Brightness control moved to enthusiast flavor only** — the `WRITE_SETTINGS` permission (required for `Settings.System` brightness control) is no longer declared in the shared `AndroidManifest.xml`. It now lives in `app/src/enthusiast/AndroidManifest.xml` only.
+- **New `BrightnessBridge` interface** (`app/src/main/.../settings/BrightnessBridge.kt`) — mirrors the `AdvancedTelemetryBridge` pattern. Main-source code calls `BrightnessLoader.get()` and never references the enthusiast implementation directly.
+- **`BrightnessLoader` registry** (`BrightnessLoader.kt`) with `NoOpBrightnessBridge` default — the store flavor returns "not available" for all brightness commands; the enthusiast flavor registers `RealBrightnessBridge`.
+- **Store flavor** `BrightnessInitializer` — no-op, asserts no real bridge is registered.
+- **Enthusiast flavor** `RealBrightnessBridge` — implements `Settings.System.putInt` brightness control with `WRITE_SETTINGS` (declared in enthusiast manifest).
+- **`DiLinkCommandExecutor`** refactored — `setBrightness()` and `adjustBrightness()` now delegate to `BrightnessLoader.get()` instead of calling `Settings.System` directly. Dead `requestWriteSettings()` method removed.
+- **Verified**: store APK has zero `WRITE_SETTINGS` references (`aapt2 dump permissions`); enthusiast APK has the permission.
+
+#### Hardcoded Keystore Password Removed (Fix #2)
+- **`app/build.gradle.kts`** `signingConfigs.release` — removed the `"binti2026beta"` fallback for `storePassword` and `keyPassword`, and the `"binti_release"` fallback for `keyAlias`. All three now default to empty string.
+- **Release build type** — now checks that the keystore exists AND all three env vars (`KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`) are non-empty before using the release signing config. Falls back to debug signing with a clear `logger.warn` message if credentials are missing.
+- No release APK can ever be silently signed with the public weak password again.
+
+#### License Reference Fix (Fix #3)
+- **`CONTRIBUTING.md`** — changed "MIT License" to "Apache License, Version 2.0" to match the actual `LICENSE` file.
+
+#### Changelog Update (Fix #4)
+- Added entries for v2.3.0-beta, v2.3.1-beta, and this v2.3.2-beta fix set (the changelog previously stopped at v2.2.0-beta).
+
+#### Version Drift Fix (Fix #5)
+- **`app/src/main/assets/models/model_config.json`** — bumped `"version"` and `"min_app_version"` to `"2.3.2-beta"` to match the current app version.
+- **`app/src/main/assets/commands/dilink_intent_map.json`** — bumped `"version"` to `"2.3.2-beta"`.
+
+#### CI Model Manifest Fix (Fix #6)
+- **`.github/workflows/ci.yml`** `model-manifest` job — replaced the stale Google Drive hosting URL (`drive.google.com/uc?export=download&id=...`) and incorrect "1247 MB" model size with the actual GitHub Releases hosting (`github.com/waleedmandour/binti2/releases/download/...`) and correct ~318 MB size.
+
+---
+
+## [2.3.1-beta] - 2026-08-01
+
+### 🏗️ Build & CI Fixes
+
+#### Build-blocking compile errors fixed
+- **Duplicate string resource** — `accessibility_service_description` was declared twice in `values/strings.xml` (lines 9 and 79). Android resource merger rejects duplicates. Removed the second declaration.
+- **XML comments inside tag attribute lists** — `AndroidManifest.xml` and `accessibility_service_config.xml` had XML comments between attributes of a start tag, causing AAPT2 parse errors ("Element type must be followed by either attribute specifications, > or />"). Moved all comments into top-level comment blocks.
+- **Missing string resources** — added `download_error` (referenced by `MainActivity.kt:403`) and `state_off` (referenced by `MainActivity.updateServiceState()`).
+- **Kotlin compile errors** — `BootReceiver.kt` (val shadowing of `Intent.setAction()`), `ModelManager.kt` (`isActive` without `CoroutineScope` receiver), `AdvancedTelemetryProbe.kt` (`return` in expression body).
+- **`CONTENT_SCRAPE_THROTTLE_MS`** — declared as `fun` but used as `val`; changed to `val`.
+
+#### Unit test infrastructure
+- **`testOptions.unitTests.isReturnDefaultValues = true`** — added to `build.gradle.kts` so `android.util.Log` calls don't throw "Method not mocked" during unit tests.
+- **Initial snapshot `timestamp = 0L`** — `VehicleDataRepository` now starts with epoch timestamp so `isStale()` returns true on a never-published repository.
+- **Test correctness fixes** — Arabic-Indic digit parsing (JVM handles them by default), `parseRange` replacement order (longer units first), `mergeAdvanced` no-op semantics.
+
+#### CI workflow fixes
+- **`permissions: contents: write`** — added to both workflow files. Without this, `softprops/action-gh-release@v2` failed with "Resource not accessible by integration".
+- **`generate_release_notes: false`** — the auto-notes API call was the specific blocked endpoint.
+- **Removed redundant `build.yml`** — `ci.yml` is now the single CI workflow. `build.yml` was racing with `ci.yml` and failing with 0 jobs.
+- **`gradle-home-cache-cleanup: false`** — transient GitHub cache service outages were marking jobs as failed even when all build steps succeeded.
+
+### 🔒 License Change
+- **MIT → Apache 2.0** — see v2.3.0-beta's LICENSE-ANALYSIS.md for rationale. Updated LICENSE, NOTICE, README, CONTRIBUTING, and added SPDX-License-Identifier headers to all 32 Kotlin source files.
+
+### 📖 Documentation
+- **`docs/BUILD.md`** — comprehensive local build guide (prerequisites, debug/release commands, keystore setup, troubleshooting, CI trigger instructions).
+- **`docs/LICENSE-ANALYSIS.md`** — analysis of MIT vs Apache 2.0 for the project's characteristics (patent grant, Android ecosystem norm, NOTICE file protection, trademark exclusion).
+- **`docs/Binti-Guide-ar.pdf`** (9 pages, 581 KB) — professional Arabic user guide with full RTL layout, 8 chapters covering installation, permissions, voice commands, advanced telemetry, troubleshooting, and privacy.
+
+---
+
+## [2.3.0-beta] - 2026-07-31
+
+### 🎉 Tier 1 + Tier 2 Vehicle Data Architecture
+
+#### Tier 1 — Accessibility-layer structured vehicle data (ship-ready)
+- **`VehicleSnapshot`** data class — Tier 1 + Tier 2 nullable fields, merge semantics, `hasAdvancedTelemetry` flag, `DataSource` enum.
+- **`VehicleDataRepository`** — `StateFlow<VehicleSnapshot>` with 15-second staleness check. `DiLinkAccessibilityService` publishes into it whenever a vehicle-info / energy / climate screen comes to the foreground.
+- **`VehicleSnapshotParser`** — pure extractor with pluggable `IDLookup` interface so the parsing logic is unit-testable without the Android Accessibility API. Top-level `parsePercent` / `parseRange` / `parseTemp` extension functions handle Arabic unit suffixes (٪, كم, °).
+- **`DiLinkCommandExecutor`** INFO commands refactored — `getBatteryInfo`, `getRangeInfo`, `getChargingInfo`, `getTemperatureInfo`, `getWeatherInfo`, `getVehicleStatus` now read from the repository first, with a fresh Accessibility scrape fallback. "⚠️ (تجريبي)" badge appended when Tier 2 fields are present.
+- **New voice intents** — "الرينج فيه كام؟" (range), "العربية بتشحن؟" (charging), "حالة العربية" (composite status) added to `dilink_intent_map.json`.
+- **Developer debug screen** — Settings → Developer → Vehicle State. Collects from `vehicleDataRepository.snapshot` StateFlow, has Refresh / Probe / Telemetry Settings buttons.
+
+#### Tier 2 — Optional Advanced Telemetry (experimental, opt-in, gated)
+- **Product flavors** — `store` (Huawei AppGallery, Tier 2 compiled out entirely) and `enthusiast` (GitHub Releases sideload, Tier 2 available). Gradle source-set isolation guarantees the store flavor never contains `android.hardware.bydauto.*` code.
+- **`AdvancedTelemetryBridge`** interface + `AdvancedTelemetryLoader` registry + `NoOpAdvancedTelemetryBridge` default — shared contract in main source so the developer debug screen and command executor can query Tier 2 without importing enthusiast classes.
+- **`TelemetryConsentManager`** — three-state consent (NOT_SHOWN / GRANTED / REVOKED), version-gated, persisted in SharedPreferences.
+- **`AdvancedTelemetryProbe`** (enthusiast only) — reflection-based reader modelled on the MIT-licensed `wheregoes/byd-apps` BYD Probe research. Allow-list of service prefixes (battery, tyre, motor, hvbus, auxbattery, energy, vehicle) + hard-blocked substrings (steer, brake, abs, esp, torque, airbag, srs, adas, cruise, control, actuator, drive) as the primary safety boundary.
+- **`AdvancedTelemetryOnboardingActivity`** (enthusiast only) — verbose warning, acknowledgement checkbox, reversible toggle. Calls `consent.grant()` / `consent.revoke()` and resets the repository on revoke.
+
+#### Documentation
+- **`docs/ADVANCED_TELEMETRY.md`** — scope table, architecture diagram, consent model, MIT attribution, `bydauto` isolation verification command.
+- **`docs/APP_GALLERY_SUBMISSION_CHECKLIST.md`** — 10-section pre-submission checklist for the store flavor.
+- **`NOTICE`** — MIT attribution for `wheregoes/byd-apps` reference research; explicit non-inclusion of BUSL-1.1-licensed `angoikon/byd-trip-stats`; trademark disclaimer.
+- **README.md** — "Independent, unofficial project" banner; "A note on BYD D++" section; "Tiered Vehicle Data Architecture" section.
+
+#### Unit tests (37 tests, 0 failures)
+- `VehicleSnapshotTest` — merge semantics, `hasAdvancedTelemetry`, source promotion, `toDebugString`.
+- `VehicleDataRepositoryTest` — publish/merge/staleness/`freshOrNull` contract.
+- `VehicleSnapshotParserTest` — happy path with Yuan Plus IDs, Arabic unit suffixes, fallback ID walking, Dolphin/Seal ID sets, `parsePercent`/`parseRange`/`parseTemp` helpers.
+- `BYDModelsTest` — Yuan Plus ID constants, `forModel()` factory for all 5 models + unknown fallback, `FallbackIDs` coverage.
+
+---
+
 ## [2.2.0-beta] - 2026-03-31
 
 ### 🎉 New Features

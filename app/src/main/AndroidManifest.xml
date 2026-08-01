@@ -25,10 +25,11 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
-    <!-- FIX #2 — WRITE_SETTINGS is required for setBrightness() in
-         DiLinkCommandExecutor but was missing from the manifest entirely. -->
-    <uses-permission android:name="android.permission.WRITE_SETTINGS"
-        tools:ignore="ProtectedPermissions" />
+    <!-- WRITE_SETTINGS is NOT declared in the shared manifest. Brightness control
+         (which requires WRITE_SETTINGS) is isolated to the enthusiast flavor via
+         the BrightnessBridge/BrightnessLoader pattern. The enthusiast manifest
+         fragment at app/src/enthusiast/AndroidManifest.xml declares the permission;
+         the store flavor never includes it. -->
 
     <!-- Connectivity & background -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />

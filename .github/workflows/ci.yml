@@ -319,12 +319,11 @@ jobs:
                 "name": "ASR (Vosk MGB2 v0.4)",
                 "description": "Modern Standard Arabic speech recognition model",
                 "file": "vosk-model-ar-mgb2-0.4.zip",
-                "size_mb": 1247,
+                "size_mb": 318,
                 "required": true,
                 "download": {
-                  "provider": "Google Drive",
-                  "google_drive_id": "1bK1-pUCH5xykvKdB7nB7mZ_1wBKH05qZ",
-                  "url": "https://drive.google.com/uc?export=download&id=1bK1-pUCH5xykvKdB7nB7mZ_1wBKH05qZ"
+                  "provider": "GitHub Releases",
+                  "url": "https://github.com/waleedmandour/binti2/releases/download/v2.3.2-beta/vosk-model-ar-mgb2-0.4.zip"
                 },
                 "installation": {
                   "extract": true,
@@ -365,9 +364,9 @@ jobs:
               }
             ],
             "model_summary": {
-              "total_required_size_mb": 1247,
+              "total_required_size_mb": 318,
               "total_optional_size_mb": 105,
-              "hosting": "Google Drive",
+              "hosting": "GitHub Releases",
               "download_recommendations": {
                 "wifi_recommended": true,
                 "size_warning_threshold_mb": 500
@@ -376,7 +375,7 @@ jobs:
             "required_models": {
               "asr_arabic": {
                 "purpose": "Speech recognition - core functionality",
-                "size": "1247 MB",
+                "size": "318 MB",
                 "must_download": true
               }
             },
@@ -421,7 +420,7 @@ jobs:
           echo "### Models Required" >> $GITHUB_STEP_SUMMARY
           echo "| Model | Size | Required | Hosted On |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|------|----------|-----------|" >> $GITHUB_STEP_SUMMARY
-          echo "| ASR (Vosk MGB2 v0.4) | 1247 MB | ✅ Yes | Google Drive |" >> $GITHUB_STEP_SUMMARY
+          echo "| ASR (Vosk MGB2 v0.4) | 318 MB | ✅ Yes | GitHub Releases |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Models Optional" >> $GITHUB_STEP_SUMMARY
           echo "| Model | Size | Fallback |" >> $GITHUB_STEP_SUMMARY
@@ -430,4 +429,4 @@ jobs:
           echo "| NLU Classifier | 25 MB | Rule-based |" >> $GITHUB_STEP_SUMMARY
           echo "| TTS Voice | 80 MB | System TTS |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Total Required Download:** 1247 MB" >> $GITHUB_STEP_SUMMARY
+          echo "**Total Required Download:** 318 MB" >> $GITHUB_STEP_SUMMARY

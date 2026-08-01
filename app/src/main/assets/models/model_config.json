@@ -1,14 +1,14 @@
 {
-  "version": "2.2.0",
-  "last_updated": "2026-03-31",
-  "min_app_version": "2.2.0",
+  "version": "2.3.2-beta",
+  "last_updated": "2026-08-01",
+  "min_app_version": "2.3.2-beta",
   "models": [
     {
       "id": "asr_arabic",
       "name": "Arabic ASR (Vosk MGB2)",
       "description": "Modern Standard Arabic speech recognition - REQUIRED model for the app to function. Also used for wake word detection via grammar constraint.",
       "file": "vosk-model-ar-mgb2-0.4.zip",
-      "download_url": "https://github.com/waleedmandour/binti2/releases/download/v2.2.0-beta/vosk-model-ar-mgb2-0.4.zip",
+      "download_url": "https://github.com/waleedmandour/binti2/releases/download/v2.3.2-beta/vosk-model-ar-mgb2-0.4.zip",
       "size_mb": 318,
       "sha256": "",
       "required": true,
@@ -100,7 +100,7 @@
     "provider": "GitHub Releases",
     "notes": "Models are hosted as release assets on GitHub. Downloaded via Android DownloadManager for reliable large-file handling with system-level retry and notification support.",
     "base_url": "https://github.com/waleedmandour/binti2/releases/download",
-    "release_tag": "v2.2.0-beta"
+    "release_tag": "v2.3.2-beta"
   },
   "download_options": {
     "wifi_only_recommended": true,

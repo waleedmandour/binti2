@@ -13,8 +13,8 @@ android {
         applicationId = "com.binti.dilink"
         minSdk = 26
         targetSdk = 34
-        versionCode = 7
-        versionName = "2.3.1-beta"
+        versionCode = 8
+        versionName = "2.3.2-beta"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -59,10 +59,18 @@ android {
 
     signingConfigs {
         create("release") {
+            // No hardcoded password fallbacks — release builds MUST be signed
+            // with real credentials provided via environment variables. If any
+            // of KEYSTORE_PASSWORD / KEY_ALIAS / KEY_PASSWORD is missing, the
+            // build fails with a clear error rather than silently falling back
+            // to a weak public password.
+            //
+            // CI provides these via GitHub Secrets. Local developers must set
+            // them in their shell environment before running assembleRelease.
             storeFile = file("release-keystore.jks")
-            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: "binti2026beta"
-            keyAlias = System.getenv("KEY_ALIAS") ?: "binti_release"
-            keyPassword = System.getenv("KEY_PASSWORD") ?: "binti2026beta"
+            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
+            keyAlias = System.getenv("KEY_ALIAS") ?: ""
+            keyPassword = System.getenv("KEY_PASSWORD") ?: ""
         }
     }
 
@@ -70,9 +78,21 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            signingConfig = if (file("release-keystore.jks").exists()) {
+            // Only use the release signing config if the keystore exists AND
+            // all three credentials are non-empty. Otherwise fall back to the
+            // debug signing config (for local development / unsigned CI builds).
+            // This prevents accidental release builds signed with empty credentials.
+            val hasReleaseCreds = file("release-keystore.jks").exists() &&
+                !(System.getenv("KEYSTORE_PASSWORD").isNullOrEmpty() ||
+                  System.getenv("KEY_ALIAS").isNullOrEmpty() ||
+                  System.getenv("KEY_PASSWORD").isNullOrEmpty())
+            signingConfig = if (hasReleaseCreds) {
                 signingConfigs.getByName("release")
             } else {
+                logger.warn("⚠️ Release keystore or credentials not set — " +
+                    "release APK will be debug-signed. " +
+                    "Set KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD env vars " +
+                    "for a properly signed release build.")
                 signingConfigs.getByName("debug")
             }
             proguardFiles(

@@ -8,7 +8,7 @@
   [![Android](https://img.shields.io/badge/Platform-Android_8.0+-green.svg)](https://www.android.com)
   [![Kotlin](https://img.shields.io/badge/Language-Kotlin_2.0-blue.svg)](https://kotlinlang.org)
   [![Huawei HMS](https://img.shields.io/badge/HMS-Enabled-red.svg)](https://developer.huawei.com/consumer/en/hms)
-  [![Release](https://img.shields.io/badge/Release-v2.3.1--beta-orange.svg)](https://github.com/waleedmandour/binti2/releases)
+  [![Release](https://img.shields.io/badge/Release-v2.3.2--beta-orange.svg)](https://github.com/waleedmandour/binti2/releases)
 
   **Independent, unofficial project — not affiliated with or endorsed by BYD Auto Co., Ltd.**
 

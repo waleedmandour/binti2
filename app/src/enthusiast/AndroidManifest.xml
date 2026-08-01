@@ -11,8 +11,18 @@
   This is the architectural guarantee behind Tier 2's build-time isolation:
   no `android.hardware.bydauto.*` references can survive into the store build,
   because the source files that contain them are not even compiled.
+
+  Additionally, WRITE_SETTINGS is declared HERE (enthusiast only) so that
+  RealBrightnessBridge can control screen brightness. The store flavor never
+  requests this permission, keeping the AppGallery build cleaner for review.
 -->
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Brightness control — enthusiast flavor only.
+         The store flavor does NOT declare this permission. -->
+    <uses-permission android:name="android.permission.WRITE_SETTINGS"
+        tools:ignore="ProtectedPermissions" />
 
     <application>
 
