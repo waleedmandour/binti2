@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>دليل بنتي الشامل — مساعد BYD الصوتي</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+<style>
+@page {
+    size: 720px 1020px;
+    margin: 0;
+}
+
+:root {
+    --c-bg: #0a1628;
+    --c-bg-light: #f0f4f8;
+    --c-text: #1a202c;
+    --c-text-light: #e2e8f0;
+    --c-primary: #0d9488;
+    --c-primary-dark: #0f766e;
+    --c-accent: #f59e0b;
+    --c-accent-dark: #d97706;
+    --c-danger: #dc2626;
+    --c-success: #16a34a;
+    --c-muted: #64748b;
+    --c-border: #cbd5e1;
+    --c-card-bg: #ffffff;
+    --c-card-border: #e2e8f0;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 720px;
+    background: var(--c-bg);
+    color: var(--c-text);
+    font-family: 'Tajawal', 'Cairo', sans-serif;
+    direction: rtl;
+    text-align: right;
+}
+
+@media screen {
+    html {
+        height: auto;
+        display: flex;
+        justify-content: center;
+        background: #1a1a1a;
+    }
+    body {
+        transform-origin: top center;
+        margin: 20px auto;
+        box-shadow: 0 0 40px rgba(0,0,0,0.5);
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   COVER PAGE
+   ═══════════════════════════════════════════════════════════════ */
+.cover {
+    width: 720px;
+    height: 1020px;
+    background: linear-gradient(135deg, #0a1628 0%, #0d9488 50%, #0f766e 100%);
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 60px 50px;
+    position: relative;
+    overflow: hidden;
+    break-after: page;
+    font-family: 'Cairo', sans-serif;
+}
+
+.cover::before {
+    content: '';
+    position: absolute;
+    top: -150px;
+    right: -150px;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(245, 158, 11, 0.15) 0%, transparent 70%);
+    border-radius: 50%;
+}
+
+.cover::after {
+    content: '';
+    position: absolute;
+    bottom: -100px;
+    left: -100px;
+    width: 350px;
+    height: 350px;
+    background: radial-gradient(circle, rgba(13, 148, 136, 0.2) 0%, transparent 70%);
+    border-radius: 50%;
+}
+
+.cover-badge {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: #f59e0b;
+    text-transform: uppercase;
+    margin-bottom: 30px;
+    position: relative;
+    z-index: 2;
+}
+
+.cover-icon {
+    font-size: 72px;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 2;
+}
+
+.cover-title {
+    font-size: 56px;
+    font-weight: 900;
+    line-height: 1.2;
+    margin-bottom: 16px;
+    position: relative;
+    z-index: 2;
+}
+
+.cover-subtitle {
+    font-size: 22px;
+    font-weight: 400;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.85);
+    margin-bottom: 40px;
+    max-width: 500px;
+    position: relative;
+    z-index: 2;
+}
+
+.cover-divider {
+    width: 80px;
+    height: 4px;
+    background: #f59e0b;
+    border-radius: 2px;
+    margin-bottom: 30px;
+    position: relative;
+    z-index: 2;
+}
+
+.cover-meta {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.8;
+    position: relative;
+    z-index: 2;
+}
+
+.cover-version {
+    position: absolute;
+    bottom: 40px;
+    right: 50px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.5);
+    z-index: 2;
+}
+
+.cover-author {
+    position: absolute;
+    bottom: 40px;
+    left: 50px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.5);
+    z-index: 2;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MAIN CONTENT
+   ═══════════════════════════════════════════════════════════════ */
+.main-content {
+    background: var(--c-bg-light);
+    padding: 50px 55px 40px 55px;
+}
+
+/* Chapter headers */
+.chapter-header {
+    break-after: avoid;
+    break-inside: avoid;
+    margin-top: 30px;
+    margin-bottom: 20px;
+}
+
+.chapter-header:first-child {
+    margin-top: 0;
+}
+
+.section-tag {
+    font-family: 'Cairo', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--c-primary);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.section-title {
+    font-family: 'Cairo', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--c-text);
+    line-height: 1.3;
+    margin-bottom: 12px;
+}
+
+.divider {
+    width: 50px;
+    height: 3px;
+    background: var(--c-accent);
+    border-radius: 2px;
+    margin-bottom: 20px;
+}
+
+/* Body text */
+.body-text {
+    font-size: 15px;
+    line-height: 1.85;
+    color: #334155;
+    margin-bottom: 14px;
+    text-align: justify;
+}
+
+.body-text strong {
+    color: var(--c-primary-dark);
+    font-weight: 700;
+}
+
+/* Sub-headings */
+.sub-heading {
+    font-family: 'Cairo', sans-serif;
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--c-text);
+    margin-top: 20px;
+    margin-bottom: 10px;
+    break-after: avoid;
+}
+
+/* Cards */
+.card {
+    background: var(--c-card-bg);
+    border: 1px solid var(--c-card-border);
+    border-radius: 12px;
+    padding: 20px 22px;
+    margin-bottom: 14px;
+    break-inside: avoid;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.card-title {
+    font-family: 'Cairo', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--c-primary-dark);
+    margin-bottom: 8px;
+}
+
+.card-body {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #475569;
+}
+
+/* Command table */
+.cmd-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+    break-inside: avoid;
+    font-size: 14px;
+}
+
+.cmd-table th {
+    background: var(--c-primary);
+    color: #ffffff;
+    font-family: 'Cairo', sans-serif;
+    font-weight: 600;
+    padding: 10px 12px;
+    text-align: right;
+    font-size: 13px;
+}
+
+.cmd-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--c-card-border);
+    color: #334155;
+    line-height: 1.6;
+}
+
+.cmd-table tr:nth-child(even) td {
+    background: #f8fafc;
+}
+
+.cmd-ar {
+    font-weight: 600;
+    color: var(--c-text);
+}
+
+/* Callout boxes */
+.callout {
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 14px;
+    break-inside: avoid;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.callout-warning {
+    background: #fef3c7;
+    border-right: 4px solid var(--c-accent);
+    color: #78350f;
+}
+
+.callout-danger {
+    background: #fee2e2;
+    border-right: 4px solid var(--c-danger);
+    color: #7f1d1d;
+}
+
+.callout-info {
+    background: #dbeafe;
+    border-right: 4px solid #2563eb;
+    color: #1e3a5f;
+}
+
+.callout-success {
+    background: #dcfce7;
+    border-right: 4px solid var(--c-success);
+    color: #14532d;
+}
+
+.callout-title {
+    font-family: 'Cairo', sans-serif;
+    font-weight: 700;
+    margin-bottom: 6px;
+    font-size: 15px;
+}
+
+/* Numbered steps */
+.steps {
+    counter-reset: step-counter;
+    list-style: none;
+    padding-right: 0;
+    margin-bottom: 16px;
+}
+
+.steps li {
+    counter-increment: step-counter;
+    position: relative;
+    padding-right: 45px;
+    margin-bottom: 14px;
+    font-size: 14px;
+    line-height: 1.75;
+    color: #334155;
+    break-inside: avoid;
+}
+
+.steps li::before {
+    content: counter(step-counter);
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 30px;
+    height: 30px;
+    background: var(--c-primary);
+    color: #ffffff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cairo', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.steps li strong {
+    color: var(--c-primary-dark);
+}
+
+/* Feature list */
+.feature-list {
+    list-style: none;
+    padding-right: 0;
+    margin-bottom: 16px;
+}
+
+.feature-list li {
+    padding-right: 24px;
+    position: relative;
+    margin-bottom: 10px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #334155;
+    break-inside: avoid;
+}
+
+.feature-list li::before {
+    content: '✓';
+    position: absolute;
+    right: 0;
+    top: 0;
+    color: var(--c-success);
+    font-weight: 700;
+    font-size: 15px;
+}
+
+/* Badge for experimental */
+.badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: 'Cairo', sans-serif;
+    vertical-align: middle;
+    margin-right: 6px;
+}
+
+.badge-experimental {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #f59e0b;
+}
+
+.badge-store {
+    background: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #3b82f6;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ENDING PAGE
+   ═══════════════════════════════════════════════════════════════ */
+.ending {
+    width: 720px;
+    height: 1020px;
+    background: linear-gradient(135deg, #0a1628 0%, #0d9488 100%);
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 60px 50px;
+    position: relative;
+    overflow: hidden;
+    break-before: page;
+    font-family: 'Cairo', sans-serif;
+}
+
+.ending::before {
+    content: '';
+    position: absolute;
+    top: -100px;
+    left: -100px;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, transparent 70%);
+    border-radius: 50%;
+}
+
+.ending-icon {
+    font-size: 60px;
+    margin-bottom: 20px;
+}
+
+.ending-title {
+    font-size: 36px;
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+
+.ending-text {
+    font-size: 18px;
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.8);
+    max-width: 450px;
+    margin-bottom: 30px;
+}
+
+.ending-divider {
+    width: 60px;
+    height: 3px;
+    background: #f59e0b;
+    border-radius: 2px;
+    margin-bottom: 30px;
+}
+
+.ending-meta {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+    line-height: 1.8;
+}
+
+.ending-disclaimer {
+    position: absolute;
+    bottom: 40px;
+    right: 50px;
+    left: 50px;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.4);
+    line-height: 1.5;
+    text-align: center;
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     COVER PAGE
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="cover">
+    <div class="cover-badge">دليل المستخدم الشامل</div>
+    <div class="cover-icon">🚗</div>
+    <div class="cover-title">بنتي</div>
+    <div class="cover-subtitle">مساعدك الصوتي المصري العربي لسيارات BYD المزودة بنظام DiLink — تحكم بصوتك في التكييف، الملاحة، الموسيقى، والمزيد</div>
+    <div class="cover-divider"></div>
+    <div class="cover-meta">
+        الإصدار 2.3.1 — بيتا<br>
+        دليل شامل للتثبيت والإعداد والاستخدام
+    </div>
+    <div class="cover-version">v2.3.1-beta</div>
+    <div class="cover-author">تطوير: د. وليد مندور</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MAIN CONTENT
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="main-content">
+
+<!-- ─── Chapter 1: Introduction ─── -->
+<div class="chapter-header">
+    <div class="section-tag">الفصل الأول</div>
+    <div class="section-title">ما هي بنتي؟</div>
+    <div class="divider"></div>
+</div>
+
+<div class="body-text">
+    <strong>بنتي</strong> (يا بنتي) هي مساعد صوتي ذكي مصمم خصيصًا لسيارات BYD الكهربائية المزودة بنظام الترفيه DiLink. تتيح بنتي للسائق التحكم في وظائف السيارة الأساسية باستخدام صوته باللهجة المصرية، دون الحاجة للمس الشاشة أو تشتيت الانتباه عن الطريق. تعمل بنتي بكلمة تنشيط واحدة هي "يا بنتي"، تليها الأمر المطلوب باللهجة المصرية الطبيعية.
+</div>
+
+<div class="body-text">
+    تعتمد بنتي على تقنية <strong>Android Accessibility Service</strong> للتحكم في تطبيقات DiLink المثبتة مسبقًا على وحدة التحكم في السيارة. هذا يعني أنها لا تحتاج إلى صلاحيات root أو وصول خاص للنظام، بل تستخدم نفس آلية قارئات الشاشة المعتمدة من Android للتفاعل مع واجهة المستخدم. هذه الطريقة آمنة، معتمدة من نظام Android، وتعمل على جميع طرازات BYD التي تدعم DiLink.
+</div>
+
+<div class="callout callout-info">
+    <div class="callout-title">ℹ️ ملاحظة مهمة حول "BYD D++"</div>
+    أعلنت BYD في عام 2018 عن مبادرة مطورين اسمها "D++" لطراز Qin Pro، لكنها لم تتحول إلى بوابة مطورين عامة متاحة للفرق المستقلة. بنتي ليست مرتبطة بـ D++ ولا تدعي ذلك. ما تستخدمه بنتي هو بحث مجتمعي متاح للهندسة العكسية لخدمات Android الداخلية على DiLink، مع Attribution كامل لمصادره.
+</div>
+
+<div class="sub-heading">الطرازات المدعومة</div>
+<div class="body-text">
+    تدعم بنتي بشكل أساسي طراز <strong>BYD Yuan Plus / Atto 3</strong> (2023 فأحدث) بأقصى دقة، حيث تم التحقق من معرفات الموارد الخاصة به. كما تعمل على الطرازات الأخرى — Dolphin وSeal وHan وTang — باستخدام قوائم معرفات احتياطية تغطي الفروق بين الطرازات. يتم اكتشاف طراز السيارة تلقائيًا من خصائص النظام عند بدء التشغيل.
+</div>
+
+<!-- ─── Chapter 2: Installation ─── -->
+<div class="chapter-header">
+    <div class="section-tag">الفصل الثاني</div>
+    <div class="section-title">التثبيت والإعداد</div>
+    <div class="divider"></div>
+</div>
+
+<div class="sub-heading">متطلبات ما قبل التثبيت</div>
+<div class="body-text">
+    قبل تثبيت بنتي، تأكد من توفر الآتي: سيارة BYD مزودة بنظام DiLink (أي طراز من Yuan Plus / Atto 3 أو Dolphin أو Seal أو Han أو Tang)، وحدة DiLink تعمل بنظام Android 8.0 أو أحدث، مساحة تخزين لا تقل عن 500 ميجابايت لتطبيق بنتي نفسه، واتصال بالإنترنت (واي فاي أو بيانات الهاتف) لتحميل نموذج الذكاء الاصطناعي للمرة الأولى بحجم 318 ميجابايت تقريبًا.
+</div>
+
+<div class="sub-heading">خطوات التثبيت</div>
+<ol class="steps">
+    <li><strong>تحميل التطبيق:</strong> احصل على ملف APK من صفحة الإصدارات على GitHub (waleedmandour/binti2/releases). يتوفر نوعان: <span class="badge badge-store">Store</span> للتوزيع الرسمي على Huawei AppGallery، و<span class="badge badge-experimental">Enthusiast</span> للمستخدمين المتقدمين. ابدأ بنوع Store للتجربة الأساسية.</li>
+    <li><strong>نقل الملف للسيارة:</strong> انسخ ملف APK إلى فلاش USB بتنسيق FAT32، أو استخدم ADB عبر كابل USB متصل بوحدة DiLink.</li>
+    <li><strong>تثبيت التطبيق:</strong> افتح مدير الملفات على شاشة DiLink، ابحث عن ملف APK، وانقر عليه للتثبيت. إذا ظهر تحذير "مصدر غير معروف"، فعّل خيار "السماح بمصادر غير معروفة" من الإعدادات الأمنية.</li>
+    <li><strong>الفتح الأول:</strong> عند فتح بنتي لأول مرة، ستلقي عليك تحية صوتية باللهجة المصرية تشرح كيفية استخدامها. استمع للمقدمة كاملة قبل المتابعة.</li>
+    <li><strong>تحميل نموذج الذكاء الاصطناعي:</strong> سيُطلب منك تحميل نموذج التعرف على الصوت العربي (318 ميجابايت). يُنصح باستخدام واي فاي لهذا التحميل. سيستخدم التطبيق نظام DownloadManager الخاص بأندرويد، مما يعني أن التحميل سيستمر حتى لو أغلقت التطبيق.</li>
+</ol>
+
+<div class="callout callout-warning">
+    <div class="callout-title">⚠️ تنبيه بشأن التحميل</div>
+    نموذج الذكاء الاصطناعي حجمه 318 ميجابايت تقريبًا. تأكد من وجود مساحة كافية على جهاز DiLink وأن اتصال الإنترنت مستقر قبل بدء التحميل. إذا فشل التحميل، يمكن إعادة المحاولة من زر "تحديث الملفات" في الشاشة الرئيسية.
+</div>
+
+<!-- ─── Chapter 3: Permissions ─── -->
+<div class="chapter-header">
+    <div class="section-tag">الفصل الثالث</div>
+    <div class="section-title">الصلاحيات المطلوبة</div>
+    <div class="divider"></div>
+</div>
+
+<div class="body-text">
+    تحتاج بنتي إلى عدة صلاحيات للعمل بشكل كامل. كل صلاحية لها غرض محدد وواضح، ولا تجمع بنتي أي بيانات شخصية أو ترسلها لأي خادم خارجي — كل المعالجة تتم محليًا على جهاز DiLink.
+</div>
+
+<div class="card">
+    <div class="card-title">🎤 الميكروفون (ضروري)</div>
+    <div class="card-body">
+        لاكتشاف كلمة التنشيط "يا بنتي" والاستماع للأوامر الصوتية. يعمل الميكروفون فقط بعد سماع كلمة التنشيط، ولا يتم تسجيل أي صوت في الأوقات الأخرى.
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-title">♿ خدمة الوصول Accessibility (ضروري)</div>
+    <div class="card-body">
+        وهي الصلاحية الأساسية التي تتيح لبنتي التحكم في تطبيقات DiLink (التكييف، الملاحة، الموسيقى، الهاتف). تُفعّل يدويًا من: الإعدادات ← الوصول ← بنتي ← تفعيل. تراقب بنتي فقط تطبيقات com.byd.auto.* وتتجاهل كل التطبيقات الأخرى.
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-title">🖥️ العرض فوق التطبيقات (ضروري)</div>
+    <div class="card-body">
+        لإظهار نافذة التفاعل الصوتي الشفافة التي تعرض حالة الاستماع والنص المحول أثناء القيادة، دون إغلاق التطبيق الحالي.
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-title">📁 التخزين (ضروري)</div>
+    <div class="card-body">
+        لحفظ نموذج الذكاء الاصطناعي (318 ميجابايت) في الذاكرة الداخلية للجهاز. لا يتم الوصول لملفات المستخدم الشخصية.
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-title">📍 الموقع (اختياري)</div>
+    <div class="card-body">
+        للملاحة وإيجاد أقرب محطة شحن. يمكن استخدام بنتي بدون هذه الصلاحية، لكن أوامر الملاحة ومحطات الشحن لن تعمل.
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-title">📞 الهاتف و جهات الاتصال (اختياري)</div>
+    <div class="card-body">
+        لإجراء المكالمات الصوتية بأسماء جهات الاتصال. بدونها، يمكن فقط الاتصال بأرقام مباشرة.
+    </div>
+</div>
+
+<!-- ─── Chapter 4: Voice Commands ─── -->
+<div class="chapter-header">
+    <div class="section-tag">الفصل الرابع</div>
+    <div class="section-title">الأوامر الصوتية</div>
+    <div class="divider"></div>
+</div>
+
+<div class="body-text">
+    جميع الأوامر تبدأ بكلمة التنشيط <strong>"يا بنتي"</strong>، ثم تنتظر بنتي ثانية واحدة قبل الاستماع للأمر. تحدث بصوت طبيعي وواضح باللهجة المصرية. لا حاجة لاستخدام الفصحى أو نطق محدد — بنتي مصممة لفهم الكلام اليومي العادي.
+</div>
+
+<div class="sub-heading"> التحكم في التكييف والمناخ</div>
+<table class="cmd-table">
+    <thead>
+        <tr>
+            <th style="width: 50%">الأمر الصوتي</th>
+            <th style="width: 50%">الإجراء</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td class="cmd-ar">يا بنتي، شغلي التكييف</td>
+            <td>يفتح تطبيق التكييف ويضغط زر التشغيل</td>
+        </tr>
+        <tr>
+            <td class="cmd-ar">يا بنتي، طفي التكييف</td>
+            <td>يضغط زر التشغيل لإيقاف التكييف</td>
+        </tr>
+        <tr>
+            <td class="cmd-ar">يا بنتي، علي الحرارة</td>
+            <td>يرفع درجة حرارة التكييف درجة واحدة</td>
+        </tr>
+        <tr>
+            <td class="cmd-ar">يا بنتي، قلل الحرارة</td>
+            <td>يخفض درجة حرارة التكييف درجة واحدة</td>
+        </tr>
+        <tr>
+            <td class="cmd-ar">يا بنتي، حطها أوتوماتيك</td>
+            <td>يضبط التكييف على الوضع التلقائي</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="sub-heading"> الملاحة والتنقل</div>
+<table class="cmd-table">
+    <thead>
+        <tr>
+            <th style="width: 50%">الأمر الصوتي</th>
+            <th style="width: 50%">الإجراء</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td class="cmd-ar">يا بنتي، روّحيني البيت</td>
+            <td>يبدأ الملاحة إلى موقع المنزل</td>
+        </tr>
+        <tr>
+            <td class="cmd-ar">يا بنتي، وديني الشغل</td>
+            <td>يبدأ الملاحة إلى موقع العمل</td>
+        </tr>
+        <tr>
+            <td class="cmd-ar">يا بنتي، أقرب محطة شحن</td>
+            <td>يجد أقرب محطة شحن ويبدأ الملاحة إليها</td>
+        </tr>
+        <tr>
+            <td class="cmd-ar">يا بنتي، أنا جعان</td>
+            <td>يبحث عن أقرب مطعم ويبدأ الملاحة</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="sub-heading"> الوسائط المتعددة</div>
+<table class="cmd-table">
+    <thead>
+        <tr>
+            <th style="width: 50%">الأمر الصوتي</th>
+            <th style="width: 50%">الإجراء</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td class="cmd-ar">يا بنتي، شغلي الموسيقى</td>
+            <td>يفتح مشغل الوسائط ويضغط زر التشغيل</td>
+        </tr>
+        <tr>
+            <td class="cmd-ar">يا بنتي، وقفي الموسيقى</td>
+            <td>يوقف تشغيل الموسيقى</td>
+        </tr>
+        <tr>
+            <td class="cmd-ar">يا بنتي، الأغنية التالية</td>
+            <td>ينتقل للأغنية التالية في القائمة</td>
+        </tr>
+        <tr>
+            <td class="cmd-ar">يا بنتي، اللي قبلها</td>
+            <td>يعود للأغنية السابقة</td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="sub-heading"> الاستعلامات والمعلومات</div>
+<table class="cmd-table">
+    <thead>
+        <tr>
+            <th style="width: 50%">الأمر الصوتي</th>
+            <th style="width: 50%">الإجراء</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td class="cmd-ar">يا بنتي، البطارية فيها كام؟</td>
+            <td>تقرأ نسبة بطارية السيارة من شاشة معلومات السيارة</td>
+        </tr>
+        <tr>
+            <td class="cmd-ar">يا بنتي، الرينج فيه كام؟</td>
+            <td>تقرأ المدى المتوقع بالكيلومتر</td>
+        </tr>
+        <tr>
+            <td class="cmd-ar">يا بنتي، العربية بتشحن؟</td>
+            <td>تتحقق من حالة الشحن وتجيب بنعم أو لا</td>
+        </tr>
+        <tr>
+            <td class="cmd-ar">يا بنتي، الساعة كام دلوقتي؟</td>
+            <td>تنطق الوقت الحالي</td>
+        </tr>
+        <tr>
+            <td class="cmd-ar">يا بنتي، حرارة بره إيه؟</td>
+            <td>تقرأ الحرارة الخارجية من مستشعرات السيارة</td>
+        </tr>
+        <tr>
+            <td class="cmd-ar">يا بنتي، حالة العربية</td>
+            <td>تلخص حالة السيارة: البطارية، المدى، الحرارة، الشحن</td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- ─── Chapter 5: Advanced Telemetry ─── -->
+<div class="chapter-header">
+    <div class="section-tag">الفصل الخامس</div>
+    <div class="section-title">القياس المتقدم (تجريبي) <span class="badge badge-experimental">Enthusiast</span></div>
+    <div class="divider"></div>
+</div>
+
+<div class="body-text">
+    يتوفر في إصدار <strong>Enthusiast</strong> فقط (الموزع عبر GitHub Releases، وليس على Huawei AppGallery) وحدة قياس متقدم اختيارية تقرأ بيانات تيليمتري إضافية من السيارة: ضغط الإطارات، جهد الناقل العالي (HV)، جهد بطارية 12 فولت، سرعة المحرك الكهربائي، وفولتية خلايا البطارية. هذه الوحدة تجريبية، غير مفعّلة افتراضيًا، وتتطلب موافقة صريحة من المستخدم.
+</div>
+
+<div class="callout callout-danger">
+    <div class="callout-title">⚠️ تحذير مهم</div>
+    القياس المتقدم ميزة تجريبية وغير رسمية، مبنية على الهندسة العكسية لخدمات Android الداخلية للسيارة على نظام DiLink. هي غير مدعومة أو معتمدة من BYD، وقد تتوقف عن العمل بعد تحديث البرنامج الثابت، وقد يؤثر استخدامها على ضمان السيارة أو شروط الخدمة الخاصة بـ BYD. فعّلها فقط إذا فهمت وقبلت ذلك.
+</div>
+
+<div class="sub-heading">البيانات المقروءة (للقراءة فقط)</div>
+<ul class="feature-list">
+    <li><strong>ضغط الإطارات</strong> — للإطارات الأربعة بالكيلوباسكال</li>
+    <li><strong>جهد الناقل العالي</strong> — بالفولت (300-400 فولت للسيارات الكهربائية)</li>
+    <li><strong>جهد بطارية 12 فولت</strong> — البطارية المساعدة</li>
+    <li><strong>سرعة المحرك</strong> — RPM (دورة في الدقيقة)</li>
+    <li><strong>فولتية خلايا البطارية</strong> — أعلى وأقل قيمة، والفرق بينهما</li>
+</ul>
+
+<div class="callout callout-success">
+    <div class="callout-title">✅ حدود الأمان</div>
+    تقرأ الوحدة بيانات الراحة والمعلومات فقط. لا تلمس الأنظمة الحرجة مثل: الفرامل، التوجيه، الدفع، الوسائد الهوائية، أو أنظمة المساعدة في القيادة (ADAS). هذه الحدود مضمّنة في الكود ولا يمكن تجاوزها.
+</div>
+
+<div class="sub-heading">تفعيل القياس المتقدم</div>
+<ol class="steps">
+    <li>افتح شاشة "حالة السيارة" من: الإعدادات ← المطور ← حالة السيارة.</li>
+    <li>اضغط زر "إعدادات القياس المتقدم".</li>
+    <li>اقرأ التحذير كاملًا، ثم ضع علامة على checkbox "قرأت التحذير وفهمته وأقبل المخاطر".</li>
+    <li>اضغط زر "تفعيل القياس المتقدم".</li>
+    <li>سيظهر شارة "⚠️ تجريبي" بجوار أي بيانات مصدرها القياس المتقدم في الاستجابات الصوتية.</li>
+</ol>
+
+<div class="callout callout-info">
+    <div class="callout-title">ℹ️ كيفية الإيقاف</div>
+    يمكنك إيقاف القياس المتقدم في أي وقت من نفس الشاشة — سيظهر زر "إيقاف القياس المتقدم" بدلًا من زر التفعيل. عند الإيقاف، يتم مسح جميع بيانات الطبقة الثانية فورًا، وتعود بنتي للاعتماد على بيانات الطبقة الأولى فقط.
+</div>
+
+<!-- ─── Chapter 6: Troubleshooting ─── -->
+<div class="chapter-header">
+    <div class="section-tag">الفصل السادس</div>
+    <div class="section-title">حل المشكلات الشائعة</div>
+    <div class="divider"></div>
+</div>
+
+<div class="card">
+    <div class="card-title">بنتي لا تستجيب لكلمة "يا بنتي"</div>
+    <div class="card-body">
+        تأكد من تفعيل خدمة الوصول (Accessibility) من الإعدادات. تأكد من منح صلاحية الميكروفون. تأكد من تشغيل الخدمة الأمامية (ستظهر إشعار دائم في شريط الإشعارات). إذا استمرت المشكلة، أعد تشغيل جهاز DiLink.
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-title">بنتي تسمعني لكن لا تنفذ الأمر</div>
+    <div class="card-body">
+        تأكد من نطق الأمر بلهجة مصرية طبيعية. تجنب الكلام السريع جدًا أو البطيء جدًا. إذا كان هناك ضجيج في السيارة (مكيف قوي، نوافذ مفتوحة)، قلل الضجيج ثم أعد المحاولة. للأوامر المتعلقة بالبطارية والمدى، تأكد من فتح تطبيق معلومات السيارة مرة واحدة على الأقل لتخزين البيانات.
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-title">التطبيق يفتح لكن الأوامر لا تعمل</div>
+    <div class="card-body">
+        هذه عادة مشكلة في خدمة الوصول. اذهب إلى: الإعدادات ← الوصول ← بنتي ← تأكد من التفعيل. إذا كانت مفعّلة، عطّلها ثم أعد تفعيلها. إذا استمرت المشكلة، أعد تثبيت التطبيق.
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-title">فشل تحميل نموذج الذكاء الاصطناعي</div>
+    <div class="card-body">
+        تأكد من اتصال الإنترنت (واي فاي يُنصح به بشدة لحجم الملف). تأكد من وجود مساحة كافية (500 ميجابايت على الأقل). إذا فشل التحميل متكرر، جرّب شبكة واي فاي مختلفة، أو استخدم بيانات الهاتف كـ Hotspot لوحدة DiLink.
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-title">شاشة "حالة السيارة" لا تعرض البيانات</div>
+    <div class="card-body">
+        اضغط زر "إعادة قراءة البيانات الآن" لتحديث البيانات يدويًا. إذا لم تظهر البيانات، افتح تطبيق معلومات السيارة الأصلي من DiLink مرة واحدة — هذا يتيح لبنتي قراءة البيانات من الشاشة. البيانات تتحدد تلقائيًا كل 15 ثانية، لكن قد تحتاج لتحديث يدوي بعد إعادة تشغيل السيارة.
+    </div>
+</div>
+
+<!-- ─── Chapter 7: Privacy ─── -->
+<div class="chapter-header">
+    <div class="section-tag">الفصل السابع</div>
+    <div class="section-title">الخصوصية والأمان</div>
+    <div class="divider"></div>
+</div>
+
+<div class="body-text">
+    صُممت بنتي بمنهج <strong>"الأوفلاين أولًا"</strong> — كل المعالجة الصوتية (التعرف على الكلام، تصنيف النية، تحويل النص لصوت) تتم محليًا على جهاز DiLink. لا يتم إرسال أي صوت أو نص أو بيانات شخصية لأي خادم خارجي. هذا يضمن عمل بنتي حتى في المناطق بدون إنترنت، ويحمي خصوصية المستخدم تمامًا.
+</div>
+
+<div class="sub-heading">ماذا تقرأ بنتي؟</div>
+<ul class="feature-list">
+    <li>نسبة بطارية السيارة والمدى المتوقع — من شاشة معلومات السيارة</li>
+    <li>حالة التكييف ودرجة الحرارة — من تطبيق التكييف</li>
+    <li>الحرارة الخارجية — من مستشعرات السيارة</li>
+    <li>ضغط الإطارات، جهد البطارية، RPM (في إصدار Enthusiast فقط، وبموافقة صريحة)</li>
+</ul>
+
+<div class="sub-heading">ماذا لا تقرأ بنتي؟</div>
+<ul class="feature-list">
+    <li>لا تسجل الصوت إلا بعد سماع كلمة التنشيط "يا بنتي"</li>
+    <li>لا ترسل أي بيانات لأي خادم خارجي</li>
+    <li>لا تلمس الأنظمة الحرجة (الفرامل، التوجيه، الوسائد الهوائية)</li>
+    <li>لا تطلب كلمات مرور أو معلومات حسابك على BYD Cloud</li>
+    <li>لا تتواصل مع تطبيق BYD Mobile أو واجهة برمجة تطبيقات BYD السحابية</li>
+</ul>
+
+<div class="callout callout-info">
+    <div class="callout-title">ℹ️ نموذج التعرف على الصوت</div>
+    يتم تحميل نموذج Vosk MGB2 العربي (318 ميجابايت) من GitHub Releases باستخدام DownloadManager الخاص بأندرويد. هذا التحميل هو الاتصال الوحيد بالإنترنت الذي تقوم به بنتي — وعنوان IP الخاص بك سيكون مرئيًا لـ GitHub أثناء التحميل، لكن لا يتم إرسال أي بيانات أخرى.
+</div>
+
+<!-- ─── Chapter 8: Two Flavors ─── -->
+<div class="chapter-header">
+    <div class="section-tag">الفصل الثامن</div>
+    <div class="section-title">نوعا التطبيق: Store و Enthusiast</div>
+    <div class="divider"></div>
+</div>
+
+<div class="body-text">
+    يتوفر بنتي في نوعين (flavors) مختلفين، كل منهما مصمم لجمهور مختلف:
+</div>
+
+<div class="card">
+    <div class="card-title"><span class="badge badge-store">Store</span> إصدار المتجر (Huawei AppGallery)</div>
+    <div class="card-body">
+        الإصدار الأساسي للتوزيع العام على Huawei AppGallery. يحتوي على الطبقة الأولى فقط (البيانات من Accessibility Service). لا يحتوي على أي إشارة لخدمات BYD الداخلية أو أي كود هندسة عكسية — مضمون ومحقق منه. مناسب لجميع المستخدمين وآمن للتوزيع التجاري. معرّف الحزمة: com.binti.dilink
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-title"><span class="badge badge-experimental">Enthusiast</span> إصدار المتحمسين (GitHub Releases)</div>
+    <div class="card-body">
+        إصدار تجريبي موزع عبر GitHub Releases فقط (sideload)، يحتوي على الطبقة الأولى + الطبقة الثانية (القياس المتقدم). يضيف قراءات إضافية (ضغط الإطارات، جهد HV، RPM، فولتية الخلايا) عبر الهندسة العكسية لخدمات android.hardware.bydauto.*. يتطلب موافقة صريحة لتفعيل القياس المتقدم. مناسب للمستخدمين المتقدمين الذين يفهمون المخاطر. معرّف الحزمة: com.binti.dilink.enthusiast
+    </div>
+</div>
+
+<div class="callout callout-warning">
+    <div class="callout-title">⚠️ التحقق من العزل</div>
+    إصدار Store مضمون عدم احتوائه على أي إشارة لـ bydauto — يتم التحقق من ذلك آليًا في CI بفحص classes.dex للملف APK بعد البناء. إذا وجدت أي إشارة، يفشل البناء. هذا يضمن أن النسخة الموزعة على AppGallery نظيفة تمامًا.
+</div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     ENDING PAGE
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="ending">
+    <div class="ending-icon">🚗</div>
+    <div class="ending-title">بنتي في خدمتك دائمًا</div>
+    <div class="ending-divider"></div>
+    <div class="ending-text">
+        قول "يا بنتي" وأنا تحت أمرك في أي وقت. طريق السلامة دائمًا، وربنا يخليك ليا ولأهلك.
+    </div>
+    <div class="ending-meta">
+        الإصدار 2.3.1-beta — ترخيص Apache 2.0<br>
+        تطوير: د. وليد مندور<br>
+        w.abumandour@squ.edu.om
+    </div>
+    <div class="ending-disclaimer">
+        بنتي مشروع مستقل وغير رسمي، غير مرتبط بـ BYD Auto Co., Ltd. أو معتمد منها. "BYD" و"DiLink" و"Atto 3" و"Yuan Plus" و"Dolphin" و"Seal" و"Han" و"Tang" هي علامات تجارية مملوكة لشركة BYD Auto Co., Ltd. القياس المتقدم ميزة تجريبية قد تتوقف بعد تحديث البرنامج الثابت.
+    </div>
+</div>
+
+</body>
+</html>

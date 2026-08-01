@@ -1,3 +1,5 @@
+
+
 package com.binti.dilink.dilink.telemetry
 
 import com.binti.dilink.dilink.VehicleSnapshot

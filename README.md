@@ -4,7 +4,7 @@
 
   **Egyptian Arabic Voice Assistant | BYD DiLink Integration | Accessibility Driven**
 
-  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+  [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
   [![Android](https://img.shields.io/badge/Platform-Android_8.0+-green.svg)](https://www.android.com)
   [![Kotlin](https://img.shields.io/badge/Language-Kotlin_2.0-blue.svg)](https://kotlinlang.org)
   [![Huawei HMS](https://img.shields.io/badge/HMS-Enabled-red.svg)](https://developer.huawei.com/consumer/en/hms)
@@ -26,7 +26,7 @@ Binti is optimized for the hardware and software environment of BYD vehicles, fe
 
 BYD announced an open-developer initiative called "D++" in 2018 alongside the Qin Pro "developer edition." It was scoped to partner integrations (Baidu Apollo, etc.) for the China market. There is no confirmed, currently-live self-service developer portal that an independent team can register with today for export-market BYD EVs (Atto 3/Yuan Plus, Dolphin, Seal, Han, Tang). Binti does NOT claim to be "D++-powered" or "officially integrated with BYD."
 
-What *is* real and available today is a body of community reverse-engineering of BYD's internal, undocumented Android framework services (`android.hardware.bydauto.*`) that run locally on the DiLink head unit. Binti uses this research as the basis for its optional **Tier 2 — Advanced Telemetry** module (see §Architecture). The reference project is `github.com/wheregoes/byd-apps` (MIT licensed) — see the `NOTICE` file for full attribution.
+What *is* real and available today is a body of community reverse-engineering of BYD's internal, undocumented Android framework services (`android.hardware.bydauto.*`) that run locally on the DiLink head unit. Binti uses this research as the basis for its optional **Tier 2 — Advanced Telemetry** module (see §Architecture). The reference project is `github.com/wheregoes/byd-apps` (MIT licensed) — see the `NOTICE` file for full attribution. Binti itself is licensed under Apache 2.0 (see [`docs/LICENSE-ANALYSIS.md`](docs/LICENSE-ANALYSIS.md) for the rationale).
 
 ### ✨ Key Features
 
@@ -256,7 +256,7 @@ For users who explicitly want it, the `enthusiast` build flavor adds richer read
 - **Reversible** — the same screen has a "Disable" toggle that revokes consent and wipes Tier 2 fields from the live snapshot.
 - **Scope-restricted** — only reads comfort/info services. Steering, braking, propulsion torque, airbags, and ADAS are hard-blocked at the service-name level.
 - **Best-effort** — a firmware update that renames a service or method produces a `null` field, not a crash. Tier 1 values are always preserved.
-- **Attributed** — modelled on the public MIT-licensed `BYD Probe` research tool from `github.com/wheregoes/byd-apps`. See `NOTICE` and `docs/ADVANCED_TELEMETRY.md` for full attribution.
+- **Attributed** — modelled on the public MIT-licensed `BYD Probe` research tool from `github.com/wheregoes/byd-apps`. See `NOTICE` and `docs/ADVANCED_TELEMETRY.md` for full attribution. Binti itself is Apache 2.0 licensed.
 
 The `store` flavor never contains any Tier 2 source code — Gradle's source-set isolation guarantees this at build time. Verify with:
 
@@ -336,7 +336,8 @@ docs/
 ├── MODEL_SETUP_GUIDE.md
 └── WAKE_WORD_RESEARCH.md
 
-NOTICE                                  # MIT attribution for wheregoes/byd-apps reference research
+NOTICE                                  # Apache 2.0 attribution file (wheregoes/byd-apps MIT reference, trademark notice)
+LICENSE                                 # Apache License 2.0
 ```
 
 ### Model Hosting: GitHub Releases
@@ -410,10 +411,11 @@ The guide covers:
 Developed by **Dr. Waleed Mandour**.
 Email: w.abumandour@squ.edu.om
 
-Licensed under the MIT License — see [`LICENSE`](LICENSE) for the full text.
+Licensed under the **Apache License, Version 2.0** — see [`LICENSE`](LICENSE) for the full text.
 Third-party attributions (including the MIT-licensed `wheregoes/byd-apps`
 reference research used by the optional Tier 2 Advanced Telemetry module)
-are listed in [`NOTICE`](NOTICE).
+are listed in [`NOTICE`](NOTICE). See [`docs/LICENSE-ANALYSIS.md`](docs/LICENSE-ANALYSIS.md)
+for the rationale behind choosing Apache 2.0 over MIT.
 
 Built for BYD DiLink infotainment systems using Android Accessibility Service
 technology. **Binti is an independent, unofficial project with no affiliation
