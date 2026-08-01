@@ -31,6 +31,14 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Explicit permissions for the GITHUB_TOKEN. The 'contents: write' grant is
+# required by softprops/action-gh-release@v2 to upload APK assets to a GitHub
+# Release. Without this, the release-upload step fails with
+# "Resource not accessible by integration".
+permissions:
+  contents: write
+  packages: read
+
 env:
   # Java version required by the project (Kotlin 2.0 needs JDK 17+)
   JAVA_VERSION: '17'
@@ -367,7 +375,11 @@ jobs:
           files: |
             artifacts/binti-${{ steps.version.outputs.version_name }}-store-release-*.apk
             artifacts/binti-${{ steps.version.outputs.version_name }}-enthusiast-release-*.apk
-          generate_release_notes: true
+          # generate_release_notes calls the generate-release-notes API which
+          # requires contents:write (granted above). Set to false because the
+          # release is created manually with a full body.
+          generate_release_notes: false
+          fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

@@ -9,6 +9,14 @@ on:
   release:
     types: [published]
 
+# Explicit permissions for the GITHUB_TOKEN. The 'contents: write' grant is
+# required by softprops/action-gh-release@v2 to upload APK assets to a GitHub
+# Release and to generate release notes. Without this, the release-upload
+# step fails with "Resource not accessible by integration".
+permissions:
+  contents: write
+  packages: read
+
 env:
   GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.caching=true"
   JAVA_VERSION: "17"
@@ -40,7 +48,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master' }}
-          gradle-home-cache-cleanup: true
+          gradle-home-cache-cleanup: false
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -165,7 +173,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
-          gradle-home-cache-cleanup: true
+          gradle-home-cache-cleanup: false
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -233,7 +241,14 @@ jobs:
           files: |
             app/build/outputs/apk/store/release/*.apk
             app/build/outputs/apk/enthusiast/release/*.apk
-          generate_release_notes: true
+          # generate_release_notes calls the generate-release-notes API which
+          # requires contents:write (granted above). Set to false because the
+          # release is created manually with a full body, and auto-generated
+          # notes would overwrite it.
+          generate_release_notes: false
+          # Don't fail the job if the release already has assets with the same
+          # name (e.g. from a re-run) — just overwrite them.
+          fail_on_unmatched_files: false
 
   # ============================================================================
   # MODEL MANIFEST (only on release)
