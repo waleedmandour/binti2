@@ -119,6 +119,18 @@
             </intent-filter>
         </activity>
 
+        <!-- Developer Debug Screen — Vehicle State.
+             Settings → Developer → Vehicle State.
+             Shows live Tier 1 + Tier 2 snapshot for QA across BYD models.
+             Present in BOTH flavors; the Tier 2 controls are hidden at runtime
+             in the store flavor via `BuildConfig.ENTHUSIAST_FLAVOR`. -->
+        <activity
+            android:name=".dilink.telemetry.VehicleStateActivity"
+            android:exported="false"
+            android:label="@string/vehicle_state_title"
+            android:screenOrientation="sensorLandscape"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout" />
+
         <!-- Binti Voice Service -->
         <!-- FIX #5 — foregroundServiceType must match the declared
              FOREGROUND_SERVICE_* permissions. Removed |location since we

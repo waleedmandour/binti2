@@ -17,13 +17,43 @@ android {
         versionName = "2.3.0-beta"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        
+
         ndk {
             abiFilters += listOf("armeabi-v7a", "arm64-v8a")
         }
-        
+
         vectorDrawables {
             useSupportLibrary = true
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────────────────
+    // Tier 2 — Product Flavors
+    //
+    // `store`       — the build that ships to Huawei AppGallery. Tier 2
+    //                (Advanced Telemetry) code is COMPILED OUT entirely;
+    //                no references to `android.hardware.bydauto.*` or any
+    //                reflection-based probing can survive into this build.
+    //
+    // `enthusiast`  — distributed only via GitHub Releases and sideload.
+    //                Contains the optional Advanced Telemetry module under
+    //                `src/enthusiast/java/...`. All Tier 2 code lives here.
+    //
+    // The shared `BUILD_FLAVOR_ENTHUSIAST` BuildConfig flag lets main-source
+    // code conditionally surface the Advanced Telemetry opt-in UI without
+    // ever referencing the enthusiast classes directly.
+    // ──────────────────────────────────────────────────────────────────────
+    flavorDimensions += "distribution"
+    productFlavors {
+        create("store") {
+            dimension = "distribution"
+            buildConfigField("boolean", "ENTHUSIAST_FLAVOR", "false")
+        }
+        create("enthusiast") {
+            dimension = "distribution"
+            applicationIdSuffix = ".enthusiast"
+            versionNameSuffix = "-enthusiast"
+            buildConfigField("boolean", "ENTHUSIAST_FLAVOR", "true")
         }
     }
 

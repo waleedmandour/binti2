@@ -10,6 +10,8 @@
   [![Huawei HMS](https://img.shields.io/badge/HMS-Enabled-red.svg)](https://developer.huawei.com/consumer/en/hms)
   [![Release](https://img.shields.io/badge/Release-v2.2.0--beta-orange.svg)](https://github.com/waleedmandour/binti2/releases)
 
+  **Independent, unofficial project — not affiliated with or endorsed by BYD Auto Co., Ltd.**
+
 </div>
 
 ---
@@ -19,6 +21,12 @@
 **BYD Binti** (بنتي - "my BYD daughter") is a professional-grade Egyptian Arabic voice assistant designed specifically for BYD DiLink infotainment systems. It enables drivers to control vehicle functions using natural Egyptian dialect, responding to the wake word **"يا بنتي"** (Ya Binti).
 
 Binti is optimized for the hardware and software environment of BYD vehicles, featuring a landscape-native UI and **Android Accessibility Service-based UI automation** to interact with DiLink system apps directly — no root or ADB required.
+
+### A note on "BYD D++"
+
+BYD announced an open-developer initiative called "D++" in 2018 alongside the Qin Pro "developer edition." It was scoped to partner integrations (Baidu Apollo, etc.) for the China market. There is no confirmed, currently-live self-service developer portal that an independent team can register with today for export-market BYD EVs (Atto 3/Yuan Plus, Dolphin, Seal, Han, Tang). Binti does NOT claim to be "D++-powered" or "officially integrated with BYD."
+
+What *is* real and available today is a body of community reverse-engineering of BYD's internal, undocumented Android framework services (`android.hardware.bydauto.*`) that run locally on the DiLink head unit. Binti uses this research as the basis for its optional **Tier 2 — Advanced Telemetry** module (see §Architecture). The reference project is `github.com/wheregoes/byd-apps` (MIT licensed) — see the `NOTICE` file for full attribution.
 
 ### ✨ Key Features
 
@@ -222,6 +230,45 @@ Wake Word ("يا بنتي")  →  ASR (Vosk MGB2)  →  NLU (Intent Classifier) 
 4. **Command Executor**: `DiLinkCommandExecutor` translates classified intents into Accessibility Service actions — finding UI nodes by resource ID, performing clicks, reading state, and launching apps. For EV station queries, it uses `StationManager` to find the nearest station and auto-navigate via geo intent. No shell commands or root access involved.
 5. **Response Engine**: `EgyptianTTS` produces spoken responses in natural Egyptian Arabic. All responses in the intent map are fully vocalized with Tashkeel (diacritics), and Sukoon (ْ) is preserved at word endings to ensure natural cadence. The engine also applies dialect normalization, converting any MSA artifacts to Egyptian colloquial equivalents.
 
+### Tiered Vehicle Data Architecture
+
+Binti's vehicle data access is split into two tiers, isolated at the build-flavor level so the AppGallery-bound APK never contains any of the Tier 2 code:
+
+#### Tier 1 — Accessibility-layer data (default, ship-ready)
+
+A typed `VehicleSnapshot` data class and `VehicleDataRepository` (a `StateFlow<VehicleSnapshot>`) replace the ad-hoc "scrape battery % off the vehicle info screen" pattern with a single source of truth. `DiLinkAccessibilityService` publishes into the repository whenever a vehicle-info / energy / climate screen comes to the foreground; voice queries like `"الرينج فيه كام؟"` and `"البطارية فيها كام؟"` read from the repository with a 15-second staleness check rather than re-scraping the screen on every utterance.
+
+| Field              | Source                                        | Tier |
+|--------------------|-----------------------------------------------|------|
+| `batteryPercent`   | `com.byd.auto.vehicleinfo:id/tv_battery_percent` | 1 |
+| `estimatedRangeKm` | `com.byd.auto.vehicleinfo:id/tv_range`        | 1 |
+| `acOn`             | `com.byd.auto.ac:id/btn_power` (toggle state) | 1 |
+| `acTargetTempC`    | `com.byd.auto.ac:id/tv_temperature`           | 1 |
+| `outsideTempC`     | `com.byd.auto.vehicleinfo:id/tv_outside_temp` | 1 |
+
+Tier 1 ships in **both** flavors and is the only data path in the `store` (Huawei AppGallery) build.
+
+#### Tier 2 — Advanced Telemetry (experimental, opt-in, enthusiast flavor only)
+
+For users who explicitly want it, the `enthusiast` build flavor adds richer read-only telemetry (tyre pressure, HV bus voltage, 12V aux battery, motor RPM, battery-cell voltage spread) by reflecting against BYD's internal `android.hardware.bydauto.*` services on-device. The probe is:
+
+- **Off by default** — requires explicit onboarding with a verbose warning, an acknowledgement checkbox, and a confirm button.
+- **Reversible** — the same screen has a "Disable" toggle that revokes consent and wipes Tier 2 fields from the live snapshot.
+- **Scope-restricted** — only reads comfort/info services. Steering, braking, propulsion torque, airbags, and ADAS are hard-blocked at the service-name level.
+- **Best-effort** — a firmware update that renames a service or method produces a `null` field, not a crash. Tier 1 values are always preserved.
+- **Attributed** — modelled on the public MIT-licensed `BYD Probe` research tool from `github.com/wheregoes/byd-apps`. See `NOTICE` and `docs/ADVANCED_TELEMETRY.md` for full attribution.
+
+The `store` flavor never contains any Tier 2 source code — Gradle's source-set isolation guarantees this at build time. Verify with:
+
+```bash
+./gradlew :app:assembleStoreRelease
+unzip -p app/build/outputs/apk/store/release/app-store-release.apk classes.dex \
+    | strings | grep -i bydauto
+# Expected: no output.
+```
+
+See [`docs/ADVANCED_TELEMETRY.md`](docs/ADVANCED_TELEMETRY.md) for the full Tier 2 design and [`docs/APP_GALLERY_SUBMISSION_CHECKLIST.md`](docs/APP_GALLERY_SUBMISSION_CHECKLIST.md) for the AppGallery submission checklist.
+
 ### Project Structure
 
 ```
@@ -232,7 +279,15 @@ app/src/main/java/com/binti/dilink/
 ├── dilink/
 │   ├── DiLinkAccessibilityService.kt  # Core: Accessibility-based DiLink UI automation
 │   ├── DiLinkCommandExecutor.kt       # Translates intents → Accessibility actions + Station
-│   └── BYDModels.kt                   # View resource IDs per BYD model
+│   ├── BYDModels.kt                   # View resource IDs per BYD model
+│   ├── VehicleSnapshot.kt             # Tier 1 + Tier 2 data model
+│   ├── VehicleSnapshotParser.kt       # Pure extractor (Accessibility tree → VehicleSnapshot)
+│   └── VehicleDataRepository.kt       # StateFlow<VehicleSnapshot> — single source of truth
+├── dilink/telemetry/
+│   ├── VehicleStateActivity.kt        # Developer debug screen (Settings → Developer → Vehicle State)
+│   ├── TelemetryConsentManager.kt     # Tier 2 consent state (shared by both flavors)
+│   ├── AdvancedTelemetryBridge.kt     # Tier 2 contract — what main source can ask of the probe
+│   └── AdvancedTelemetryLoader.kt     # Flavor-polymorphic registry (no-op default)
 ├── nlp/
 │   └── IntentClassifier.kt     # Rule-based + ML intent classification
 ├── response/
@@ -251,6 +306,16 @@ app/src/main/java/com/binti/dilink/
     ├── HMSUtils.kt             # Huawei ML Kit integration helpers
     └── OfflineFallbackManager.kt
 
+app/src/store/java/com/binti/dilink/telemetry/
+└── TelemetryInitializer.kt     # Store flavor — no-op (Tier 2 unavailable)
+
+app/src/enthusiast/java/com/binti/dilink/
+├── telemetry/
+│   ├── AdvancedTelemetryProbe.kt       # Reflection-based reader (android.hardware.bydauto.*)
+│   └── TelemetryInitializer.kt         # Enthusiast flavor — registers the real probe
+└── ui/
+    └── AdvancedTelemetryOnboardingActivity.kt   # Consent screen (verbose warning + toggle)
+
 app/src/main/assets/
 ├── commands/
 │   └── dilink_intent_map.json  # Intent patterns (AC, NAV, MEDIA, PHONE, INFO, SYSTEM, STATION, etc.)
@@ -258,6 +323,20 @@ app/src/main/assets/
 │   └── stations.json           # 30 EV charging stations across Egypt
 └── models/
     └── model_config.json       # Model definitions & GitHub Releases download URLs
+
+app/src/test/java/com/binti/dilink/dilink/
+├── VehicleSnapshotTest.kt              # Snapshot merge + hasAdvancedTelemetry
+├── VehicleSnapshotParserTest.kt        # Pure parser — Yuan Plus/Dolphin/Seal IDs + fallbacks
+├── VehicleDataRepositoryTest.kt        # publish/merge/staleness/freshOrNull contract
+└── BYDModelsTest.kt                    # Resource ID constants + forModel() factory
+
+docs/
+├── ADVANCED_TELEMETRY.md               # Tier 2 design, scope, attribution, verification
+├── APP_GALLERY_SUBMISSION_CHECKLIST.md # Pre-submission checklist for the store flavor
+├── MODEL_SETUP_GUIDE.md
+└── WAKE_WORD_RESEARCH.md
+
+NOTICE                                  # MIT attribution for wheregoes/byd-apps reference research
 ```
 
 ### Model Hosting: GitHub Releases
@@ -331,5 +410,13 @@ The guide covers:
 Developed by **Dr. Waleed Mandour**.
 Email: w.abumandour@squ.edu.om
 
-Licensed under the MIT License.
-Built for BYD DiLink infotainment systems using Android Accessibility Service technology.
+Licensed under the MIT License — see [`LICENSE`](LICENSE) for the full text.
+Third-party attributions (including the MIT-licensed `wheregoes/byd-apps`
+reference research used by the optional Tier 2 Advanced Telemetry module)
+are listed in [`NOTICE`](NOTICE).
+
+Built for BYD DiLink infotainment systems using Android Accessibility Service
+technology. **Binti is an independent, unofficial project with no affiliation
+to, endorsement by, or sponsorship from BYD Auto Co., Ltd.** "BYD", "DiLink",
+"Atto 3", "Yuan Plus", "Dolphin", "Seal", "Han", and "Tang" are trademarks
+of BYD Auto Co., Ltd.

@@ -170,4 +170,25 @@
     <string name="widget_status_ac">جاري الضبط</string>
     <string name="widget_status_navigating">جاري الملاحة</string>
     <string name="widget_status_media">جاري التحكم</string>
+
+    <!-- ────────────────────────────────────────────────────────────────
+         Developer Debug Screen — Vehicle State (Settings → Developer → Vehicle State)
+         ──────────────────────────────────────────────────────────────── -->
+    <string name="vehicle_state_title">حالة العربية (للمطوّرين)</string>
+    <string name="vehicle_state_refresh">إعادة قراءة البيانات الآن</string>
+    <string name="vehicle_state_probe">قراءة بيانات تجريبية متقدمة</string>
+    <string name="vehicle_state_telemetry_settings">إعدادات القياس المتقدم</string>
+    <string name="vehicle_state_disclaimer">شاشة فحص للمطوّرين. البيانات تُقرأ من واجهة DiLink عبر Accessibility Service فقط في إصدار المتجر، أو بالإضافة إلى القياس المتقدم في الإصدار التجريبي.</string>
+
+    <!-- Tier 2 — Advanced Telemetry (enthusiast flavor only) -->
+    <string name="advanced_telemetry_title">القياس المتقدم (تجريبي)</string>
+    <string name="advanced_telemetry_warning_full">القياس المتقدم ميزة تجريبية وغير رسمية، مبنية على الهندسة العكسية لخدمات Android الداخلية للسيارة على نظام DiLink. هي غير مدعومة أو معتمدة من BYD، وقد تتوقف عن العمل بعد تحديث البرنامج الثابت، وقد يؤثر استخدامها على ضمان السيارة أو شروط الخدمة الخاصة بـ BYD. فعّلها فقط إذا فهمت وقبلت ذلك.\n\nالبيانات المُجمَّعة تشمل: ضغط الإطارات، جهد الفولتية العالية، جهد بطارية 12 فولت، سرعة الموتور، وفولتية خلايا البطارية — للقراءة فقط، ولن تلمس أي أنظمة حرجة مثل الفرامل أو التوجيه أو الوسائد الهوائية.</string>
+    <string name="advanced_telemetry_acknowledge">قرأت التحذير وفهمته وأقبل المخاطر</string>
+    <string name="advanced_telemetry_enable">تفعيل القياس المتقدم</string>
+    <string name="advanced_telemetry_disable">إيقاف القياس المتقدم</string>
+    <string name="advanced_telemetry_must_acknowledge">لازم تأكد على checkbox إنك قريت التحذير الأول</string>
+    <string name="advanced_telemetry_status_not_shown">حالة الموافقة: لم يُطلب منك بعد</string>
+    <string name="advanced_telemetry_status_granted">حالة الموافقة: مُفعّل منذ %1$s</string>
+    <string name="advanced_telemetry_status_revoked">حالة الموافقة: تم الإيقاف من قِبلك</string>
+    <string name="advanced_telemetry_attribution">يعتمد هذا الإصدار على بحث مرجعي منشور بترخيص MIT من مستودع github.com/wheregoes/byd-apps. انظر ملف NOTICE للتفاصيل.</string>
 </resources>

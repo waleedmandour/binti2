@@ -630,12 +630,22 @@ class DiLinkCommandExecutor(private val context: Context) {
     // ──────────────────────────────────────────────────────────────────────────
 
     private suspend fun executeInfoCommand(intent: IntentResult): CommandResult {
-        val pattern = intent.matchedPattern ?: ""
+        // Strip Arabic diacritics (Tashkeel) and normalize ة→ه / ى→ي / أإآ→ا
+        // so substring matching against un-diacritized keywords works. The
+        // classifier stores the raw pattern from dilink_intent_map.json which
+        // keeps diacritics; we mirror the same normalization it applies to
+        // the user's input so both sides are comparable.
+        val pattern = (intent.matchedPattern ?: "")
+            .replace(Regex("[\\u064B-\\u065F\\u0670]"), "")
+            .replace("أ", "ا").replace("إ", "ا").replace("آ", "ا")
+            .replace("ة", "ه").replace("ى", "ي")
         return when {
-            "الساعة" in pattern || "time" in pattern                -> getTimeInfo()
-            "بطارية" in pattern || "battery" in pattern             -> getBatteryInfo()
-            "مدى"    in pattern || "range"   in pattern             -> getRangeInfo()
-            "الحرارة" in pattern || "درجة"  in pattern             -> getTemperatureInfo()
+            "الساعه" in pattern || "time" in pattern                -> getTimeInfo()
+            "بطاريه" in pattern || "battery" in pattern             -> getBatteryInfo()
+            "مدى"    in pattern || "range"   in pattern ||
+            "رينج"   in pattern                                      -> getRangeInfo()
+            "شحن"    in pattern && ("بتاع" in pattern || "بتشحن" in pattern || "فشحن" in pattern) -> getChargingInfo()
+            "حراره" in pattern || "درجه"  in pattern                -> getTemperatureInfo()
             "التاريخ" in pattern || "date"  in pattern              -> getDateInfo()
             "الطقس"  in pattern || "weather" in pattern             -> getWeatherInfo()
             else                                                    -> getVehicleStatus()
@@ -656,71 +666,136 @@ class DiLinkCommandExecutor(private val context: Context) {
         CommandResult(false, "معرفتش أجيب التاريخ")
     }
 
+    /**
+     * Tier 1: read battery from the shared [VehicleDataRepository] first.
+     * If the cached snapshot is fresh and has a battery value, respond
+     * immediately without any Accessibility scrape. If stale or missing,
+     * fall back to [DiLinkAccessibilityService.forceRefreshSnapshot], then
+     * to the Android BATTERY_CHANGED sticky broadcast as a last resort.
+     */
     private suspend fun getBatteryInfo(): CommandResult {
-        return withService { service ->
-            val battery = service.getBatteryPercentage()
-            if (battery != null) {
-                CommandResult(true, "البطارية $battery%", isInfo = true)
-            } else {
-                // Android battery broadcast fallback
-                val batteryIntent = context.registerReceiver(
-                    null,
-                    android.content.IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED)
-                )
-                val level = batteryIntent?.getIntExtra(android.os.BatteryManager.EXTRA_LEVEL, -1) ?: -1
-                if (level >= 0) CommandResult(true, "البطارية $level%", isInfo = true)
-                else            CommandResult(false, "معرفتش أجيب مستوى البطارية")
+        val repo = DiLinkAccessibilityService.vehicleDataRepository
+
+        // 1) Fresh cached value?
+        repo.freshOrNull()?.batteryPercent?.let { pct ->
+            return CommandResult(true, formatBatteryMessage(pct, repo.current().hasAdvancedTelemetry), isInfo = true)
+        }
+
+        // 2) Try a forced Accessibility refresh
+        val service = accessibilityService
+        if (service != null) {
+            val snap = service.forceRefreshSnapshot()
+            snap.batteryPercent?.let { pct ->
+                return CommandResult(true, formatBatteryMessage(pct, snap.hasAdvancedTelemetry), isInfo = true)
             }
         }
+
+        // 3) Final fallback: Android sticky battery broadcast (tablet battery, not EV HV — but better than nothing)
+        val batteryIntent = context.registerReceiver(
+            null,
+            android.content.IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED)
+        )
+        val level = batteryIntent?.getIntExtra(android.os.BatteryManager.EXTRA_LEVEL, -1) ?: -1
+        return if (level >= 0) CommandResult(true, "البطارية $level% (من نظام الجهاز)", isInfo = true)
+               else             CommandResult(false, "معرفتش أجيب مستوى البطارية")
     }
 
+    /** Formats the battery response, appending the Experimental badge when Tier 2 is active. */
+    private fun formatBatteryMessage(pct: Int, hasAdvanced: Boolean): String {
+        val base = "البطارية $pct%"
+        return if (hasAdvanced) "$base ⚠️ (تجريبي)" else base
+    }
+
+    /**
+     * Tier 1: read estimated range from [VehicleDataRepository]. Falls back to
+     * a forced Accessibility refresh, then to a "please open the vehicle app"
+     * hint if neither succeeds.
+     */
     private suspend fun getRangeInfo(): CommandResult {
-        return withService { service ->
-            val range = service.getRange()
-            if (range != null) {
-                CommandResult(true, "المدى المتوقع $range كيلومتر", isInfo = true)
-            } else {
-                service.openDiLinkApp(DILINK_VEHICLE_PACKAGE)
-                kotlinx.coroutines.delay(APP_LAUNCH_DELAY_MS)
+        val repo = DiLinkAccessibilityService.vehicleDataRepository
 
-                val rangeText = service.findNodeById(BYDModels.YuanPlus2023.ID_VEHICLE_RANGE)
-                    ?.text?.toString()
+        repo.freshOrNull()?.estimatedRangeKm?.let { km ->
+            return CommandResult(true, formatRangeMessage(km, repo.current().hasAdvancedTelemetry), isInfo = true)
+        }
 
-                if (rangeText != null) CommandResult(true, "المدى المتوقع $rangeText", isInfo = true)
-                else                  CommandResult(false, "افتح تطبيق معلومات السيارة للمزيد")
+        val service = accessibilityService
+        if (service != null) {
+            val snap = service.forceRefreshSnapshot()
+            snap.estimatedRangeKm?.let { km ->
+                return CommandResult(true, formatRangeMessage(km, snap.hasAdvancedTelemetry), isInfo = true)
             }
+        }
+        return CommandResult(false, "افتح تطبيق معلومات العربية للمزيد")
+    }
+
+    private fun formatRangeMessage(km: Int, hasAdvanced: Boolean): String {
+        val base = "المدى المتوقع $km كيلومتر"
+        return if (hasAdvanced) "$base ⚠️ (تجريبي)" else base
+    }
+
+    /**
+     * Tier 1: surface charging state. The Accessibility layer doesn't have a
+     * dedicated charging-status node, so we infer it from the energy/vehicle
+     * info screen content when possible. If unavailable, ask the user to open
+     * the energy app.
+     */
+    private suspend fun getChargingInfo(): CommandResult {
+        val repo = DiLinkAccessibilityService.vehicleDataRepository
+        val snap = repo.freshOrNull() ?: accessibilityService?.forceRefreshSnapshot() ?: repo.current()
+
+        return when (snap.isCharging) {
+            true  -> CommandResult(true, "نعم، العربية بتشحن دلوقتي", isInfo = true)
+            false -> CommandResult(true, "لأ، العربية مش بتنشحن دلوقتي", isInfo = true)
+            null  -> CommandResult(false, "افتح تطبيق الطاقة عشان أعرف حالة الشحن")
         }
     }
 
+    /**
+     * Tier 1: read all available temperatures (outside / inside / AC target)
+     * from [VehicleDataRepository]. Falls back to a forced refresh.
+     */
     private suspend fun getTemperatureInfo(): CommandResult {
-        return withService { service ->
-            val parts = mutableListOf<String>()
-            service.getOutsideTemperature()?.let { parts.add("الخارج $it°") }
-            service.getInsideTemperature()?.let  { parts.add("الداخل $it°") }
-            service.getACTemperature()?.let      { parts.add("المكيف $it°") }
+        val repo = DiLinkAccessibilityService.vehicleDataRepository
+        val snap = repo.freshOrNull() ?: accessibilityService?.forceRefreshSnapshot() ?: repo.current()
 
-            if (parts.isNotEmpty()) CommandResult(true, "الحرارة: ${parts.joinToString("، ")}", isInfo = true)
-            else                   CommandResult(false, "افتح تطبيق المناخ للمزيد")
-        }
+        val parts = mutableListOf<String>()
+        snap.outsideTempC?.let  { parts.add("الخارج $it°") }
+        snap.acTargetTempC?.let { parts.add("المكيف $it°") }
+
+        return if (parts.isNotEmpty())
+                   CommandResult(true, "الحرارة: ${parts.joinToString("، ")}", isInfo = true)
+               else
+                   CommandResult(false, "افتح تطبيق المناخ للمزيد")
     }
 
     private suspend fun getWeatherInfo(): CommandResult {
-        return withService { service ->
-            val temp = service.getOutsideTemperature()
-            if (temp != null) CommandResult(true, "الحرارة الخارجية $temp°", isInfo = true)
-            else              CommandResult(false, "معلومات الطقس مش متاحة دلوقتي")
-        }
+        val repo = DiLinkAccessibilityService.vehicleDataRepository
+        val snap = repo.freshOrNull() ?: accessibilityService?.forceRefreshSnapshot() ?: repo.current()
+        val temp = snap.outsideTempC
+        return if (temp != null) CommandResult(true, "الحرارة الخارجية $temp°", isInfo = true)
+               else              CommandResult(false, "معلومات الطقس مش متاحة دلوقتي")
     }
 
+    /**
+     * Tier 1: composite vehicle status. Reads everything available from the
+     * repository in one shot — the canonical "حالة العربية" voice response.
+     */
     private suspend fun getVehicleStatus(): CommandResult {
-        return withService { service ->
-            val parts = mutableListOf<String>()
-            service.getBatteryPercentage()?.let { parts.add("البطارية $it%") }
-            service.getRange()?.let             { parts.add("المدى $it كم") }
-            service.getInsideTemperature()?.let { parts.add("الحرارة $it°") }
+        val repo = DiLinkAccessibilityService.vehicleDataRepository
+        val snap = repo.freshOrNull() ?: accessibilityService?.forceRefreshSnapshot() ?: repo.current()
 
-            if (parts.isNotEmpty()) CommandResult(true, "حالة السيارة: ${parts.joinToString("، ")}", isInfo = true)
-            else                   CommandResult(false, "معلومات السيارة مش متاحة")
+        val parts = mutableListOf<String>()
+        snap.batteryPercent?.let  { parts.add("البطارية $it%") }
+        snap.estimatedRangeKm?.let { parts.add("المدى $it كم") }
+        snap.outsideTempC?.let    { parts.add("الحرارة $it°") }
+        snap.isCharging?.let      { if (it) parts.add("بتشحن") }
+
+        return if (parts.isNotEmpty()) {
+            val msg = "حالة العربية: ${parts.joinToString("، ")}" +
+                      (if (snap.hasAdvancedTelemetry) " ⚠️ (تجريبي)" else "")
+            CommandResult(true, msg, isInfo = true)
+        } else {
+            CommandResult(false, "معلومات العربية مش متاحة")
         }
     }
 

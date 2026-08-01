@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Enthusiast-flavor manifest fragment.
+
+  This file is MERGED into the final manifest ONLY when building the
+  `enthusiast` product flavor. The `store` flavor never sees it, so the
+  Advanced Telemetry Onboarding activity — and the entire AdvancedTelemetryProbe
+  class tree under src/enthusiast/java/... — is completely absent from
+  Huawei-AppGallery-bound APKs.
+
+  This is the architectural guarantee behind Tier 2's build-time isolation:
+  no `android.hardware.bydauto.*` references can survive into the store build,
+  because the source files that contain them are not even compiled.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+
+        <!-- Tier 2 — Advanced Telemetry Onboarding (enthusiast flavor only). -->
+        <activity
+            android:name="com.binti.dilink.ui.AdvancedTelemetryOnboardingActivity"
+            android:exported="false"
+            android:label="@string/advanced_telemetry_title"
+            android:screenOrientation="sensorLandscape"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout" />
+
+    </application>
+
+</manifest>

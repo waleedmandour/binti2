@@ -127,6 +127,13 @@ class MainActivity : AppCompatActivity() {
 
             btnDownloadModels.setOnClickListener { checkWifiAndDownload() }
 
+            // Developer / QA shortcut — open the Vehicle State debug screen.
+            // (Settings → Developer → Vehicle State per the project brief.)
+            btnVehicleState.setOnClickListener {
+                startActivity(Intent(this@MainActivity,
+                    com.binti.dilink.dilink.telemetry.VehicleStateActivity::class.java))
+            }
+
             btnVocalizeGuide.setOnClickListener {
                 lifecycleScope.launch {
                     egyptianTTS.speak(getString(R.string.usage_instruction_egyptian))

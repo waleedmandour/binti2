@@ -60,11 +60,25 @@ class DiLinkAccessibilityService : AccessibilityService() {
         private const val MAX_TREE_DEPTH       = 15
         private const val MAX_PARENT_TRAVERSAL = 5
 
+        /** Time to wait for the vehicle-info app UI to settle before re-scraping. */
+        const val SNAPSHOT_REFRESH_LAUNCH_DELAY_MS: Long = 600L
+
         @Volatile
         private var instance: DiLinkAccessibilityService? = null
 
         fun getInstance(): DiLinkAccessibilityService? = instance
         fun isServiceEnabled(): Boolean = instance != null
+
+        /**
+         * Tier 1 single-source-of-truth. Shared across the Accessibility
+         * service (publisher), the command executor (consumer), and the
+         * developer debug screen (observer).
+         *
+         * Tier 2 (Advanced Telemetry, enthusiast flavor only) also publishes
+         * into this same singleton — see `AdvancedTelemetryManager`.
+         */
+        @JvmStatic
+        val vehicleDataRepository: VehicleDataRepository = VehicleDataRepository()
     }
 
     // FIX #2 — explicit package list instead of null (monitor all)
@@ -134,13 +148,45 @@ class DiLinkAccessibilityService : AccessibilityService() {
                         }
                     }
                 }
+
+                // Tier 1: whenever a vehicle-info / energy / climate screen comes
+                // to the foreground, opportunistically scrape it into the shared
+                // repository so voice queries don't have to re-open the app.
+                if (packageName in VEHICLE_DATA_PACKAGES) {
+                    try { publishSnapshotFromCurrentScreen() }
+                    catch (e: Exception) { Log.w(TAG, "Snapshot publish failed", e) }
+                }
             }
-            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> { /* reserved for future state polling */ }
+            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
+                // Content changed inside an already-open vehicle data screen —
+                // also refresh the snapshot, but throttle to avoid excessive
+                // scraping on animated UIs.
+                if (packageName in VEHICLE_DATA_PACKAGES) {
+                    val now = System.currentTimeMillis()
+                    if (now - lastContentScrapeMs > CONTENT_SCRAPE_THROTTLE_MS) {
+                        lastContentScrapeMs = now
+                        try { publishSnapshotFromCurrentScreen() }
+                        catch (e: Exception) { Log.w(TAG, "Throttled snapshot publish failed", e) }
+                    }
+                }
+            }
             AccessibilityEvent.TYPE_VIEW_CLICKED      -> Log.v(TAG, "👆 Click: ${event.contentDescription}")
             AccessibilityEvent.TYPE_VIEW_FOCUSED      -> Log.v(TAG, "🎯 Focus: ${event.contentDescription}")
             AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED -> Log.v(TAG, "📝 Text: ${event.text}")
         }
     }
+
+    /** Packages whose UI contains Tier 1 vehicle data worth scraping. */
+    private val VEHICLE_DATA_PACKAGES = setOf(
+        BYDModels.Packages.VEHICLE,
+        BYDModels.Packages.ENERGY,
+        BYDModels.Packages.AC,
+        BYDModels.Packages.CLIMATE
+    )
+
+    /** Throttle for TYPE_WINDOW_CONTENT_CHANGED scrapes. */
+    private var lastContentScrapeMs: Long = 0L
+    private fun CONTENT_SCRAPE_THROTTLE_MS(): Long = 2_000L
 
     override fun onInterrupt() {
         Log.w(TAG, "Accessibility service interrupted")
@@ -526,6 +572,54 @@ class DiLinkAccessibilityService : AccessibilityService() {
     // ──────────────────────────────────────────────────────────────────────────
     // BYD-specific helpers
     // ──────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Tier 1: scrape whatever vehicle-data fields are visible on the current
+     * screen and publish them into [vehicleDataRepository]. Called by
+     * `onAccessibilityEvent` whenever a vehicle-info / energy / climate window
+     * comes to the foreground, and may also be invoked on-demand by
+     * [forceRefreshSnapshot] when a voice query finds the snapshot stale.
+     *
+     * Failures are non-fatal — any field that can't be read stays null in the
+     * published partial snapshot, and the repository preserves previously
+     * known values via [VehicleSnapshot.merge].
+     */
+    fun publishSnapshotFromCurrentScreen() {
+        val root = rootInActiveWindow
+        val partial = if (root == null) {
+            VehicleSnapshot(source = DataSource.ACCESSIBILITY)
+        } else {
+            val lookup = VehicleSnapshotParser.AccessibilityLookup(root)
+            val fallbacks = mapOf(
+                BYDModels.YuanPlus2023.ID_AC_POWER to BYDModels.FallbackIDs.AC_POWER
+            )
+            VehicleSnapshotParser.parse(
+                ids         = BYDModels.YuanPlus2023,
+                lookup      = lookup,
+                fallbackIds = fallbacks
+            )
+        }
+        vehicleDataRepository.publishAccessibility(partial)
+        Log.d(TAG, "📊 Published Tier 1 snapshot: battery=${partial.batteryPercent} range=${partial.estimatedRangeKm} acOn=${partial.acOn}")
+    }
+
+    /**
+     * On-demand snapshot refresh for voice queries.
+     *
+     * Opens the DiLink vehicle-info app if it isn't already in the foreground,
+     * waits briefly for the UI to settle, then scrapes and publishes. Returns
+     * the freshly published snapshot (or the existing one if the Accessibility
+     * service couldn't open the app).
+     */
+    suspend fun forceRefreshSnapshot(): VehicleSnapshot {
+        val activePkg = rootInActiveWindow?.packageName?.toString()
+        if (activePkg != BYDModels.Packages.VEHICLE) {
+            openDiLinkApp(BYDModels.Packages.VEHICLE)
+            kotlinx.coroutines.delay(SNAPSHOT_REFRESH_LAUNCH_DELAY_MS)
+        }
+        publishSnapshotFromCurrentScreen()
+        return vehicleDataRepository.current()
+    }
 
     fun isACAppActive(): Boolean =
         currentPackage in listOf(

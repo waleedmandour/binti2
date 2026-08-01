@@ -173,4 +173,23 @@
     <string name="widget_nav_desc">الملاحة للمنزل</string>
     <string name="widget_media_desc">تشغيل/إيقاف الموسيقى</string>
     <string name="widget_next_desc">الأغنية التالية</string>
+
+    <!-- شاشة فحص المطوّرين — حالة السيارة -->
+    <string name="vehicle_state_title">حالة السيارة (للمطوّرين)</string>
+    <string name="vehicle_state_refresh">إعادة قراءة البيانات الآن</string>
+    <string name="vehicle_state_probe">قراءة بيانات تجريبية متقدمة</string>
+    <string name="vehicle_state_telemetry_settings">إعدادات القياس المتقدم</string>
+    <string name="vehicle_state_disclaimer">شاشة فحص للمطوّرين. تُقرأ البيانات من واجهة DiLink عبر خدمة Accessibility فقط في إصدار المتجر، أو مع القياس المتقدم في الإصدار التجريبي.</string>
+
+    <!-- القياس المتقدم — الإصدار التجريبي فقط -->
+    <string name="advanced_telemetry_title">القياس المتقدم (تجريبي)</string>
+    <string name="advanced_telemetry_warning_full">القياس المتقدم ميزة تجريبية غير رسمية، تعتمد على الهندسة العكسية لخدمات Android الداخلية للسيارة على نظام DiLink. وهي غير مدعومة أو معتمدة من BYD، وقد تتوقف عن العمل بعد تحديث البرنامج الثابت، وقد يؤثر استخدامها على ضمان السيارة أو شروط الخدمة الخاصة بـ BYD. فعّلها فقط إذا كنت تفهم وتقبل ذلك.\n\nالبيانات المجمَّعة: ضغط الإطارات، جهد الناقل العالي، جهد بطارية 12 فولت، سرعة المحرك، وفولتية خلايا البطارية — للقراءة فقط، ولن تُلمس أنظمة حرجة كالمكابح أو التوجيه أو الوسائد الهوائية.</string>
+    <string name="advanced_telemetry_acknowledge">لقد قرأت التحذير وفهمته وأقبل المخاطر</string>
+    <string name="advanced_telemetry_enable">تفعيل القياس المتقدم</string>
+    <string name="advanced_telemetry_disable">إيقاف القياس المتقدم</string>
+    <string name="advanced_telemetry_must_acknowledge">يجب تأكيد قراءة التحذير أولًا</string>
+    <string name="advanced_telemetry_status_not_shown">حالة الموافقة: لم يُطلب منك بعد</string>
+    <string name="advanced_telemetry_status_granted">حالة الموافقة: مُفعّل منذ %1$s</string>
+    <string name="advanced_telemetry_status_revoked">حالة الموافقة: أوقفته أنت</string>
+    <string name="advanced_telemetry_attribution">يعتمد هذا الإصدار على بحث مرجعي منشور بترخيص MIT من مستودع github.com/wheregoes/byd-apps. انظر ملف NOTICE للتفاصيل.</string>
 </resources>

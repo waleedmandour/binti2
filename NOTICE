@@ -1,0 +1,67 @@
+NOTICE
+======
+
+Binti (BYD Binti) — Egyptian Arabic Voice Assistant for BYD DiLink
+Copyright (c) 2025 Dr. Waleed Mandour
+
+Licensed under the MIT License (see `LICENSE` file for the full text).
+
+This product includes or references software and/or research documentation
+from the following third-party projects. Their licenses (where applicable)
+are reproduced or summarised below.
+
+────────────────────────────────────────────────────────────────────────
+1. wheregoes/byd-apps
+   URL:     https://github.com/wheregoes/byd-apps
+   License: MIT
+   Used:    Reference research for the enumeration pattern of BYD's
+            internal `android.hardware.bydauto.*` Android framework
+            services. The `AdvancedTelemetryProbe` class in this
+            project's `enthusiast` product flavor is modelled on the
+            BYD Probe diagnostic tool published in that repository.
+            No source code is copied verbatim — the probe is implemented
+            independently against the published research reference.
+
+   MIT License (wheregoes/byd-apps):
+
+     Permission is hereby granted, free of charge, to any person obtaining a
+     copy of this software and associated documentation files (the
+     "Software"), to deal in the Software without restriction, including
+     without limitation the rights to use, copy, modify, merge, publish,
+     distribute, sublicense, and/or sell copies of the Software, and to
+     permit persons to whom the Software is furnished to do so, subject to
+     the following conditions:
+
+     The above copyright notice and this permission notice shall be included
+     in all copies or substantial portions of the Software.
+
+     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+
+────────────────────────────────────────────────────────────────────────
+2. angoikon/byd-trip-stats
+   URL:     https://github.com/angoikon/byd-trip-stats
+   License: BUSL-1.1 (personal / non-commercial use only)
+   Used:    Reference reading only. No source code, stub classes, or
+            algorithms from this repository are copied into Binti. The
+            project is consulted only as research material for what
+            vehicle data is available on the DiLink platform.
+
+   Per the BUSL-1.1 terms, distribution / commercial use of derived code
+   is not permitted without written permission from the author. Binti
+   does NOT include any BUSL-1.1-licensed code.
+
+────────────────────────────────────────────────────────────────────────
+
+Trademark notice
+----------------
+"BYD", "DiLink", "Atto 3", "Yuan Plus", "Dolphin", "Seal", "Han", and
+"Tang" are trademarks of BYD Auto Co., Ltd. Binti is an independent,
+unofficial project and is not affiliated with, endorsed by, or sponsored
+by BYD Auto Co., Ltd. or any of its subsidiaries. All trademarks are the
+property of their respective owners.
+
+The "Advanced Telemetry" feature in the enthusiast build is an
+experimental, community-driven reverse-engineering effort. It is not
+supported or endorsed by BYD. Use at your own risk; it may stop working
+after a firmware update and may affect your vehicle warranty or BYD's
+terms of service.
