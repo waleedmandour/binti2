@@ -96,10 +96,10 @@
         android:theme="@style/Theme.Binti"
         android:usesCleartextTraffic="false"
         android:networkSecurityConfig="@xml/network_security_config"
-        <!-- FIX #4 — requestLegacyExternalStorage has no effect on API 30+
-             (ignored by the OS) and triggers lint warnings. Removed. -->
         tools:targetApi="34"
         tools:replace="android:allowBackup,android:supportsRtl,android:fullBackupContent">
+        <!-- FIX #4 — requestLegacyExternalStorage has no effect on API 30+
+             (ignored by the OS) and triggers lint warnings. Removed. -->
 
         <meta-data
             android:name="com.huawei.hms.client.appid"

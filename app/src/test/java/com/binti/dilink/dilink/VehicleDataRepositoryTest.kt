@@ -86,9 +86,12 @@ class VehicleDataRepositoryTest {
 
     @Test fun `mergeAdvanced is a no-op when partial has no advanced fields`() {
         repo.publishAccessibility(VehicleSnapshot(batteryPercent = 80))
+        // mergeAdvanced with a Tier-1-only snapshot is a no-op: the repository
+        // keeps the previously published Tier 1 values unchanged. Tier 1 data
+        // MUST flow through publishAccessibility, never through mergeAdvanced.
         repo.mergeAdvanced(VehicleSnapshot(batteryPercent = 90))   // no advanced fields
         val snap = repo.current()
-        assertEquals(90, snap.batteryPercent)   // Tier 1 publish went through normally
+        assertEquals(80, snap.batteryPercent)   // unchanged — mergeAdvanced was a no-op
         assertFalse(snap.hasAdvancedTelemetry)
         assertEquals(DataSource.ACCESSIBILITY, snap.source)
     }

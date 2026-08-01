@@ -117,12 +117,14 @@ fun String.parsePercent(): Int? =
         .trim()
         .toIntOrNull()
 
-/** "350 km" / "350كم" / "350" → 350. Strips both Latin and Arabic units. */
+/** "350 km" / "350كم" / "350" → 350. Strips both Latin and Arabic units.
+ *  Longer Arabic units must be stripped BEFORE shorter ones, otherwise
+ *  `.replace("كم", "")` would chew up the `كم` inside `كيلومتر`. */
 fun String.parseRange(): Int? =
     replace("km",  "", ignoreCase = true)
-        .replace("كم", "")
-        .replace("كيلو", "")
-        .replace("كيلومتر", "")
+        .replace("كيلومتر", "")   // "kilometre" (Arabic) — must come before كم and كيلو
+        .replace("كيلو", "")      // "kilo" (Arabic)
+        .replace("كم", "")        // "km" (Arabic)
         .trim()
         .toIntOrNull()
 

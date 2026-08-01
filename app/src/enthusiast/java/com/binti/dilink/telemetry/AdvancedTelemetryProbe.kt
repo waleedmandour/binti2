@@ -259,32 +259,34 @@ class AdvancedTelemetryProbe(
      * `ServiceManager.getService(name)` pattern used by the BYD Probe
      * reference tool.
      */
-    private fun acquireServiceProxy(serviceName: String): Any? = try {
-        val smClass   = Class.forName("android.os.ServiceManager")
-        val getMethod = smClass.getMethod("getService", String::class.java)
-        val binder    = getMethod.invoke(null, serviceName) ?: return null
+    private fun acquireServiceProxy(serviceName: String): Any? {
+        return try {
+            val smClass   = Class.forName("android.os.ServiceManager")
+            val getMethod = smClass.getMethod("getService", String::class.java)
+            val binder    = getMethod.invoke(null, serviceName) ?: return null
 
-        // Try a few well-known stub class name patterns. The exact class
-        // hierarchy varies by DiLink firmware version; the reference tool
-        // tries several in turn.
-        val stubCandidates = listOf(
-            "android.hardware.bydauto.IBydAuto${serviceName.removePrefix("bydauto.")
-                .replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }}",
-            "android.hardware.bydauto.IBydAutoService",
-            "android.hardware.bydauto.IBydService"
-        )
-        for (stubClassName in stubCandidates) {
-            try {
-                val stubClass = Class.forName(stubClassName)
-                val asInterface = stubClass.getMethod("asInterface", Class.forName("android.os.IBinder"))
-                val proxy = asInterface.invoke(null, binder)
-                if (proxy != null) return proxy
-            } catch (_: ClassNotFoundException) { /* try next */ }
+            // Try a few well-known stub class name patterns. The exact class
+            // hierarchy varies by DiLink firmware version; the reference tool
+            // tries several in turn.
+            val stubCandidates = listOf(
+                "android.hardware.bydauto.IBydAuto${serviceName.removePrefix("bydauto.")
+                    .replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }}",
+                "android.hardware.bydauto.IBydAutoService",
+                "android.hardware.bydauto.IBydService"
+            )
+            for (stubClassName in stubCandidates) {
+                try {
+                    val stubClass = Class.forName(stubClassName)
+                    val asInterface = stubClass.getMethod("asInterface", Class.forName("android.os.IBinder"))
+                    val proxy = asInterface.invoke(null, binder)
+                    if (proxy != null) return proxy
+                } catch (_: ClassNotFoundException) { /* try next */ }
+            }
+            null
+        } catch (e: Throwable) {
+            Log.v(TAG, "acquireServiceProxy($serviceName) failed: ${e.message}")
+            null
         }
-        null
-    } catch (e: Throwable) {
-        Log.v(TAG, "acquireServiceProxy($serviceName) failed: ${e.message}")
-        null
     }
 }
 

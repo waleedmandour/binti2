@@ -163,7 +163,7 @@ class DiLinkAccessibilityService : AccessibilityService() {
                 // scraping on animated UIs.
                 if (packageName in VEHICLE_DATA_PACKAGES) {
                     val now = System.currentTimeMillis()
-                    if (now - lastContentScrapeMs > CONTENT_SCRAPE_THROTTLE_MS) {
+                    if (now - lastContentScrapeMs > contentScrapeThrottleMs) {
                         lastContentScrapeMs = now
                         try { publishSnapshotFromCurrentScreen() }
                         catch (e: Exception) { Log.w(TAG, "Throttled snapshot publish failed", e) }
@@ -184,9 +184,9 @@ class DiLinkAccessibilityService : AccessibilityService() {
         BYDModels.Packages.CLIMATE
     )
 
-    /** Throttle for TYPE_WINDOW_CONTENT_CHANGED scrapes. */
+    /** Throttle for TYPE_WINDOW_CONTENT_CHANGED scrapes (2 seconds). */
     private var lastContentScrapeMs: Long = 0L
-    private fun CONTENT_SCRAPE_THROTTLE_MS(): Long = 2_000L
+    private val contentScrapeThrottleMs: Long = 2_000L
 
     override fun onInterrupt() {
         Log.w(TAG, "Accessibility service interrupted")

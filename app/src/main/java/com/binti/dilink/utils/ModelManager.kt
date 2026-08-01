@@ -8,6 +8,7 @@ import android.os.Environment
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -230,7 +231,10 @@ class ModelManager(private val context: Context) {
         // FIX #3 — `while(true)` with no coroutine-cooperative exit; if the
         // download is cancelled or the coroutine scope is cancelled, this loop
         // runs forever. Added isActive check.
-        while (isActive) {
+        // FIX — `isActive` is a property of CoroutineScope, not a free function.
+        // Use currentCoroutineContext().isActive so the loop exits promptly on
+        // cancellation without needing a CoroutineScope receiver.
+        while (currentCoroutineContext().isActive) {
             when (val info = queryDownloadInfo(downloadId, modelName)) {
                 is DownloadInfo.Pending  -> { /* keep polling */ }
                 is DownloadInfo.Running  -> {

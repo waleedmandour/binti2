@@ -91,13 +91,24 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    
+
     kotlinOptions {
         jvmTarget = "17"
         freeCompilerArgs += listOf(
             "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
             "-opt-in=kotlinx.coroutines.FlowPreview"
         )
+    }
+
+    // Unit tests: return default values (0 / false / null) for Android
+    // framework calls that aren't explicitly mocked — e.g. android.util.Log.v
+    // is called from VehicleDataRepository.publishAccessibility() during
+    // repository tests. Without this, every Log call throws RuntimeException
+    // "Method v in android.util.Log not mocked".
+    testOptions {
+        unitTests {
+            isReturnDefaultValues = true
+        }
     }
     
     buildFeatures {

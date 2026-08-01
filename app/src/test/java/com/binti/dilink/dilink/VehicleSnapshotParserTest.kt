@@ -65,17 +65,19 @@ class VehicleSnapshotParserTest {
         val ids = BYDModels.YuanPlus2023
         val lookup = FakeLookup(
             texts = mapOf(
-                ids.ID_VEHICLE_BATTERY  to "٨٢٪",   // not used — toIntOrNull returns null
+                ids.ID_VEHICLE_BATTERY  to "٨٢٪",   // Arabic-Indic digits ٨٢
                 ids.ID_VEHICLE_RANGE    to "٣٥٠كم",
                 ids.ID_VEHICLE_TEMP_OUT to "٣٠°"
             )
         )
         val snap = VehicleSnapshotParser.parse(lookup = lookup)
-        // Arabic-Indic digits are NOT auto-converted (intentional — caller should
-        // normalize first). The percent/range/temp suffix strippers do work.
-        assertNull(snap.batteryPercent)             // Arabic-Indic digits stay null
-        assertNull(snap.estimatedRangeKm)           // Arabic-Indic digits stay null
-        assertNull(snap.outsideTempC)               // Arabic-Indic digits stay null
+        // Note: the JVM's Integer.parseInt() (which toIntOrNull uses) DOES handle
+        // Arabic-Indic digits ٠-٩ by default, so these parse successfully once
+        // the unit suffixes (٪, كم, °) are stripped. This is the correct
+        // behaviour for a real DiLink head unit whose UI displays Arabic numerals.
+        assertEquals(82,  snap.batteryPercent)
+        assertEquals(350, snap.estimatedRangeKm)
+        assertEquals(30,  snap.outsideTempC)
     }
 
     @Test fun `parse handles Latin digits with Arabic units`() {

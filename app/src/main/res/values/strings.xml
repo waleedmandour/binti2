@@ -91,6 +91,9 @@
     <string name="update_models">تَحْدِيث المَلَفَّات</string>
     <string name="download_complete">الخِير كِتِير! المَلَفَّات جَاهْزَة ✅</string>
     <string name="download_failed">مَعْلِش يَا غَالِي, حَصَل مُشْكِلَة فِي التَّحْمِيل. مُمْكِن نِجَرِّب تَانِي؟</string>
+    <!-- download_error is referenced by MainActivity.kt:403 for model-download error toasts.
+         Format: %1$s = error message. -->
+    <string name="download_error">خطأ في التحميل: %1$s</string>
     <string name="downloading_file">جاري تحميل %1$s… %2$d%%</string>
     <string name="download_notification_title">جاري تحميل ملفات يا بنتي</string>
     <string name="wifi_required_title">مطلوب واي فاي</string>
@@ -114,6 +117,9 @@
 
     <!-- Service States -->
     <string name="state_ready">جاهز يا غالي ✅</string>
+    <!-- state_off is referenced by MainActivity.updateServiceState() when the
+         Binti foreground service is stopped. -->
+    <string name="state_off">المساعد متوقف</string>
     <string name="state_listening">سَامْعَاك.. اِتْفَضَّل قُول! 🎤</string>
     <string name="state_processing">بَفَكَّر فِي طَلَبَك.. ثَوَانِي 🤔</string>
     <string name="state_error">فِيه حَاجَة غَلَط حَصَلِت.. مَعْلِش ❌</string>

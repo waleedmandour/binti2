@@ -42,7 +42,7 @@ class VehicleDataRepository {
         const val STALE_AFTER_MS: Long = 15_000L
     }
 
-    private val _snapshot = MutableStateFlow(VehicleSnapshot())
+    private val _snapshot = MutableStateFlow(VehicleSnapshot(timestamp = 0L))
     /** The current vehicle snapshot. Always non-null; fields are nullable. */
     val snapshot: StateFlow<VehicleSnapshot> = _snapshot.asStateFlow()
 
@@ -103,6 +103,8 @@ class VehicleDataRepository {
 
     /** Wipe all fields. Used by tests and by the Advanced Telemetry opt-out flow. */
     fun reset() {
-        _snapshot.value = VehicleSnapshot()
+        // timestamp = 0L ensures isStale() returns true after reset, so the
+        // next voice query triggers a fresh Accessibility scrape.
+        _snapshot.value = VehicleSnapshot(timestamp = 0L)
     }
 }

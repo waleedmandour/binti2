@@ -14,16 +14,16 @@ class BootReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        val action = intent.action ?: return
+        val receivedAction = intent.action ?: return
 
-        if (action !in setOf(
+        if (receivedAction !in setOf(
                 Intent.ACTION_BOOT_COMPLETED,
                 Intent.ACTION_LOCKED_BOOT_COMPLETED,
                 "android.intent.action.QUICKBOOT_POWERON"
             )
         ) return
 
-        Log.i(TAG, "Boot action received: $action")
+        Log.i(TAG, "Boot action received: $receivedAction")
 
         // FIX #1 — LOCKED_BOOT_COMPLETED fires before the user has unlocked the
         // device (Direct Boot mode). SharedPreferences (credential-encrypted by
@@ -31,7 +31,7 @@ class BootReceiver : BroadcastReceiver() {
         // throws or silently returns a fresh empty prefs, making autoStart always
         // false. Use device-protected storage for the auto-start flag, which is
         // readable before unlock.
-        val prefs = if (action == Intent.ACTION_LOCKED_BOOT_COMPLETED) {
+        val prefs = if (receivedAction == Intent.ACTION_LOCKED_BOOT_COMPLETED) {
             context.createDeviceProtectedStorageContext()
                 .getSharedPreferences("binti_prefs", Context.MODE_PRIVATE)
         } else {
@@ -48,6 +48,11 @@ class BootReceiver : BroadcastReceiver() {
         Log.i(TAG, "Auto-start enabled, starting BintiService")
 
         try {
+            // FIX #3 — renamed the outer `action` val to `receivedAction` so it
+            // no longer shadows Intent.setAction() inside the apply block.
+            // Previously `action = BintiService.ACTION_START` resolved to the
+            // outer val (which is final) instead of calling setAction(), giving
+            // "val cannot be reassigned" at compile time.
             val serviceIntent = Intent(context, BintiService::class.java).apply {
                 action = BintiService.ACTION_START
             }
