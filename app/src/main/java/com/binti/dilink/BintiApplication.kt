@@ -78,6 +78,17 @@ class BintiApplication : Application() {
             Log.w(TAG, "BrightnessInitializer.init() failed — brightness control unavailable", e)
         }
 
+        // Direct control wiring — flavor-dependent. The enthusiast flavor
+        // registers a DirectControlBridge that uses app_process + reflection
+        // against bydauto.* services as a fallback when accessibility can't
+        // be enabled (common on BYD DiLink 3 head units). The store flavor
+        // is a no-op (accessibility-only mode).
+        try {
+            com.binti.dilink.dilink.control.DirectControlInitializer.init(this)
+        } catch (e: Throwable) {
+            Log.w(TAG, "DirectControlInitializer.init() failed — direct control unavailable", e)
+        }
+
         // Initialize in background to avoid blocking startup
         applicationScope.launch {
             initializeNotificationChannel()
