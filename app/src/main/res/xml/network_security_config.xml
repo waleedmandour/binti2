@@ -6,7 +6,12 @@
             <certificates src="system" />
         </trust-anchors>
     </base-config>
-    
+
+    <!-- Vosk models — official hosting at alphacephei.com -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">alphacephei.com</domain>
+    </domain-config>
+
     <!-- GitHub Releases & Pages domains for model/station data downloads -->
     <domain-config cleartextTrafficPermitted="false">
         <domain includeSubdomains="true">github.com</domain>
@@ -15,7 +20,7 @@
         <domain includeSubdomains="true">objects.githubusercontent.com</domain>
         <domain includeSubdomains="true">github.io</domain>
     </domain-config>
-    
+
     <!-- Huawei HMS services -->
     <domain-config cleartextTrafficPermitted="false">
         <domain includeSubdomains="true">huawei.com</domain>

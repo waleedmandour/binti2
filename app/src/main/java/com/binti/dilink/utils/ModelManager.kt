@@ -22,9 +22,13 @@ class ModelManager(private val context: Context) {
     companion object {
         private const val TAG = "ModelManager"
         private const val PREFS_NAME = "binti_prefs"
-        private const val GITHUB_RELEASES_BASE_URL =
-            "https://github.com/waleedmandour/binti2/releases/download"
-        private const val MODEL_RELEASE_TAG = "v2.2.0-beta"
+        // The Vosk Arabic model is hosted on the official Vosk models page at
+        // alphacephei.com — the canonical source. It was previously pointed at
+        // GitHub Releases but the 318 MB file was never uploaded there, causing
+        // every download to 404. The alphacephei.com URL is always available
+        // and is the recommended source per the Vosk documentation.
+        private const val VOSK_MODEL_URL =
+            "https://alphacephei.com/vosk/models/vosk-model-ar-mgb2-0.4.zip"
         private const val PROGRESS_POLL_INTERVAL_MS = 500L
     }
 
@@ -64,7 +68,7 @@ class ModelManager(private val context: Context) {
         ModelDefinition(
             name        = "Vosk Arabic Model",
             fileName    = "vosk-model-ar-mgb2-0.4.zip",
-            downloadUrl = "$GITHUB_RELEASES_BASE_URL/$MODEL_RELEASE_TAG/vosk-model-ar-mgb2-0.4.zip",
+            downloadUrl = VOSK_MODEL_URL,
             relativePath = "models",
             sizeMB      = 318,
             required    = true,

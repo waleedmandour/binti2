@@ -13,8 +13,8 @@ android {
         applicationId = "com.binti.dilink"
         minSdk = 26
         targetSdk = 34
-        versionCode = 9
-        versionName = "2.3.3-beta"
+        versionCode = 10
+        versionName = "2.4.1-beta"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

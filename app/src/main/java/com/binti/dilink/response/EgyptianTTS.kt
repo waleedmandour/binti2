@@ -128,7 +128,25 @@ class EgyptianTTS(private val context: Context) {
     // ──────────────────────────────────────────────────────────────────────────
 
     suspend fun speak(text: String): Boolean {
-        if (!isInitialized || text.isBlank()) return false
+        if (text.isBlank()) return false
+
+        // FIX: If TTS wasn't initialized (or initialization failed/never completed),
+        // try to initialize now before giving up. This handles the case where the
+        // user taps "sample instruction" before the background init coroutine finishes,
+        // or when the init failed silently on first launch.
+        if (!isInitialized) {
+            Log.w(TAG, "TTS not initialized — attempting lazy init before speak()")
+            try {
+                initialize()
+            } catch (e: Exception) {
+                Log.e(TAG, "Lazy TTS init failed", e)
+            }
+        }
+
+        if (!isInitialized) {
+            Log.e(TAG, "TTS still not ready after lazy init — cannot speak")
+            return false
+        }
 
         val naturalText = applyNaturalVocalization(text)
         Log.d(TAG, "🗣️ Speaking: $naturalText")
@@ -150,6 +168,67 @@ class EgyptianTTS(private val context: Context) {
                     !taskId.isNullOrEmpty()
                 }
                 else -> false
+            }
+        }
+    }
+
+    /**
+     * Non-suspend convenience method for UI click handlers. Creates a temporary
+     * TextToSpeech instance if the main TTS engine isn't ready, speaks the text,
+     * and releases the temporary instance after speaking completes.
+     *
+     * This is the most reliable way to play a short spoken message from a button
+     * click — it doesn't depend on the async initialization having completed.
+     */
+    fun speakNow(text: String, context: Context) {
+        if (text.isBlank()) return
+
+        // Try the existing engine first
+        if (isInitialized) {
+            val naturalText = applyNaturalVocalization(text)
+            when {
+                isMlTtsReady && preferredProvider == HMSUtils.TTSProvider.HUAWEI_ML_KIT -> {
+                    mlTtsEngine?.speak(naturalText, MLTtsEngine.QUEUE_FLUSH)
+                    return
+                }
+                isAndroidTTSReady -> {
+                    val utteranceId = "speakNow_${System.currentTimeMillis()}"
+                    val result = androidTTS?.speak(naturalText, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
+                    if (result == TextToSpeech.SUCCESS) return
+                }
+            }
+        }
+
+        // Fallback: create a temporary TTS instance inline
+        Log.i(TAG, "speakNow() — creating temporary TTS instance for immediate playback")
+        val naturalText = applyNaturalVocalization(text)
+        var tempTts: TextToSpeech? = null
+        tempTts = TextToSpeech(context.applicationContext) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                try {
+                    val tts = tempTts ?: return@TextToSpeech
+                    tts.setLanguage(Locale("ar", "EG"))
+                    tts.setSpeechRate(DEFAULT_SPEECH_RATE)
+                    tts.setPitch(DEFAULT_PITCH)
+                    tts.setOnUtteranceProgressListener(object : android.speech.tts.UtteranceProgressListener() {
+                        override fun onStart(utteranceId: String?) {}
+                        override fun onDone(utteranceId: String?) {
+                            tempTts?.shutdown()
+                            tempTts = null
+                        }
+                        override fun onError(utteranceId: String?) {
+                            tempTts?.shutdown()
+                            tempTts = null
+                        }
+                    })
+                    tts.speak(naturalText, TextToSpeech.QUEUE_FLUSH, null, "speakNow_temp")
+                } catch (e: Exception) {
+                    Log.e(TAG, "speakNow() temp TTS setup failed", e)
+                    tempTts?.shutdown()
+                    tempTts = null
+                }
+            } else {
+                Log.e(TAG, "speakNow() temporary TTS init failed (status $status)")
             }
         }
     }

@@ -8,7 +8,7 @@
       "name": "Arabic ASR (Vosk MGB2)",
       "description": "Modern Standard Arabic speech recognition - REQUIRED model for the app to function. Also used for wake word detection via grammar constraint.",
       "file": "vosk-model-ar-mgb2-0.4.zip",
-      "download_url": "https://github.com/waleedmandour/binti2/releases/download/v2.3.3-beta/vosk-model-ar-mgb2-0.4.zip",
+      "download_url": "https://alphacephei.com/vosk/models/vosk-model-ar-mgb2-0.4.zip",
       "size_mb": 318,
       "sha256": "",
       "required": true,
@@ -97,10 +97,10 @@
     "tts_voice": "Uses Android TTS or Huawei ML Kit TTS as fallback"
   },
   "hosting": {
-    "provider": "GitHub Releases",
-    "notes": "Models are hosted as release assets on GitHub. Downloaded via Android DownloadManager for reliable large-file handling with system-level retry and notification support.",
-    "base_url": "https://github.com/waleedmandour/binti2/releases/download",
-    "release_tag": "v2.3.3-beta"
+    "provider": "alphacephei.com (official Vosk models)",
+    "notes": "The Vosk Arabic model is hosted on the official Vosk models page at alphacephei.com — the canonical source. ~318 MB.",
+    "base_url": "https://alphacephei.com/vosk/models",
+    "release_tag": "vosk-model-ar-mgb2-0.4"
   },
   "download_options": {
     "wifi_only_recommended": true,

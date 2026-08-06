@@ -137,9 +137,13 @@ class MainActivity : AppCompatActivity() {
             }
 
             btnVocalizeGuide.setOnClickListener {
-                lifecycleScope.launch {
-                    egyptianTTS.speak(getString(R.string.usage_instruction_egyptian))
-                }
+                // Use speakNow() which works even if the async TTS init hasn't
+                // completed yet — it creates a temporary TTS instance as fallback.
+                val instruction = getString(R.string.usage_instruction_egyptian)
+                egyptianTTS.speakNow(instruction, this@MainActivity)
+                Toast.makeText(this@MainActivity,
+                    "▶️ جاري تشغيل التعليمات...",
+                    Toast.LENGTH_SHORT).show()
             }
 
             etUserName.addTextChangedListener(object : TextWatcher {
