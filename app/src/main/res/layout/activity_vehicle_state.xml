@@ -73,6 +73,31 @@
             android:background="#11000000"
             android:padding="12dp" />
 
+        <!-- Accessibility Service Diagnostics — helps debug crash-on-enable
+             issues on DiLink 3 and other head units. Shows:
+             - Whether the service is enabled in system settings
+             - Whether the service instance is connected (onServiceConnected fired)
+             - The list of enabled accessibility services (system setting)
+             - The service's own AccessibilityServiceInfo flags -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Accessibility Diagnostics"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="?android:attr/textColorPrimary" />
+
+        <TextView
+            android:id="@+id/tvA11yDiagnostics"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:fontFamily="monospace"
+            android:textSize="11sp"
+            android:background="#11000000"
+            android:padding="12dp" />
+
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

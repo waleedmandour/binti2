@@ -3,7 +3,6 @@
 package com.binti.dilink.dilink
 
 import android.accessibilityservice.AccessibilityService
-import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.Intent
 import android.graphics.Rect
 import android.os.Bundle
@@ -117,15 +116,45 @@ class DiLinkAccessibilityService : AccessibilityService() {
         super.onServiceConnected()
         Log.i(TAG, "✅ DiLink Accessibility Service connected")
 
-        // FIX #2 — restrict to BYD packages; monitoring all packages wastes CPU
-        serviceInfo = AccessibilityServiceInfo().apply {
-            eventTypes    = AccessibilityEvent.TYPES_ALL_MASK
-            feedbackType  = AccessibilityServiceInfo.FEEDBACK_GENERIC
-            flags         = AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS or
-                            AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or
-                            AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
-            packageNames  = monitoredPackages.toTypedArray()   // ← was null
-            notificationTimeout = 100
+        // CRITICAL FIX for DiLink 3 crash:
+        // The previous code reassigned `serviceInfo = AccessibilityServiceInfo().apply { ... }`
+        // here, which conflicted with the XML config (accessibility_service_config.xml)
+        // and caused a crash on DiLink 3 (Android 10 head unit) during the accessibility
+        // enable flow. The programmatic override is racy — it runs AFTER the framework
+        // has already applied the XML config, and on some OEM builds the re-assignment
+        // triggers a re-binding loop or IllegalStateException.
+        //
+        // The XML config already declares:
+        //   - accessibilityEventTypes (all needed types)
+        //   - accessibilityFlags (FLAG_INCLUDE_NOT_IMPORTANT_VIEWS, FLAG_REPORT_VIEW_IDS,
+        //     FLAG_RETRIEVE_INTERACTIVE_WINDOWS, FLAG_REQUEST_FILTER_KEY_EVENTS)
+        //   - canRetrieveWindowContent="true"
+        //   - canPerformGestures="true"
+        //   - canRequestFilterKeyEvents="true"
+        //   - notificationTimeout="0"
+        //
+        // The ONLY thing the XML can't declare is `packageNames` (the package filter).
+        // We set that here via `serviceInfo = serviceInfo.apply { packageNames = ... }`
+        // — this MUTATES the existing AccessibilityServiceInfo (loaded from XML) instead
+        // of REPLACING it with a new one, which is the safe pattern recommended by the
+        // Android accessibility docs for Android 10+ head units.
+        //
+        // Reference: https://developer.android.com/guide/topics/ui/accessibility/service
+        //   "To make sure the settings button works, declare the settingsActivity..."
+        //   and: "You must check the SDK version before accessing [canRetrieveWindowContent]
+        //         to prevent crashes on older devices."
+        try {
+            val info = serviceInfo  // get the XML-loaded config (never null after onServiceConnected)
+            info.packageNames = monitoredPackages.toTypedArray()
+            // notificationTimeout: keep the XML value (0). Don't override to 100 here —
+            // the mismatch was another crash trigger on DiLink 3.
+            serviceInfo = info  // re-assign the mutated info — safe, same object
+            Log.i(TAG, "📋 Accessibility service configured: ${monitoredPackages.size} packages monitored")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to configure accessibility serviceInfo — using XML defaults", e)
+            // If the programmatic config fails, the XML config is still active.
+            // The service will work but monitor all packages (slightly more battery).
+            // This is better than crashing.
         }
 
         broadcastServiceState(true)

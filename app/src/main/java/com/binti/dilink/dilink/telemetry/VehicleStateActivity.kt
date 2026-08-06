@@ -115,11 +115,13 @@ class VehicleStateActivity : AppCompatActivity() {
 
         // Refresh consent label whenever we return to the foreground.
         refreshConsentLabel()
+        refreshA11yDiagnostics()
     }
 
     override fun onResume() {
         super.onResume()
         refreshConsentLabel()
+        refreshA11yDiagnostics()
     }
 
     private fun refreshConsentLabel() {
@@ -131,5 +133,73 @@ class VehicleStateActivity : AppCompatActivity() {
                                  .format(java.util.Date(consent.grantedAtMillis))}"
                           else "")
         btnProbe.isEnabled = consent.isGranted
+    }
+
+    /**
+     * Populates the Accessibility Diagnostics section — helps debug the
+     * crash-on-enable issue on DiLink 3. Shows:
+     *  - Whether the service is enabled in system Settings.Secure
+     *  - Whether the service instance is connected (onServiceConnected fired)
+     *  - The list of all enabled accessibility services
+     *  - The service's AccessibilityServiceInfo flags + packageNames
+     *
+     * If the service crashes on enable, this section will show "instance: null"
+     * even after the user toggles it on in Settings, confirming the crash.
+     */
+    private fun refreshA11yDiagnostics() {
+        val tvA11y = findViewById<android.widget.TextView>(R.id.tvA11yDiagnostics)
+        val sb = StringBuilder()
+
+        // 1. Is the service enabled in system settings?
+        val canonicalName = com.binti.dilink.dilink.DiLinkAccessibilityService::class.java.canonicalName
+        val serviceName = if (canonicalName != null) "$packageName/$canonicalName" else "null"
+        val enabledServices = try {
+            android.provider.Settings.Secure.getString(
+                contentResolver,
+                android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+            ) ?: ""
+        } catch (e: Exception) { "ERROR: ${e.message}" }
+        val isEnabledInSettings = enabledServices.split(":").any { it.equals(serviceName, ignoreCase = true) }
+        sb.appendLine("Enabled in settings: $isEnabledInSettings")
+        sb.appendLine("Service name: $serviceName")
+
+        // 2. Is the service instance connected?
+        val instance = com.binti.dilink.dilink.DiLinkAccessibilityService.getInstance()
+        sb.appendLine("Instance connected: ${instance != null}")
+
+        // 3. AccessibilityServiceInfo (only if instance is connected)
+        if (instance != null) {
+            try {
+                val info = instance.serviceInfo
+                sb.appendLine("Event types: ${info?.eventTypes}")
+                sb.appendLine("Flags: ${info?.flags}")
+                sb.appendLine("Feedback type: ${info?.feedbackType}")
+                sb.appendLine("Notification timeout: ${info?.notificationTimeout}")
+                sb.appendLine("Can retrieve window content: ${info?.canRetrieveWindowContent}")
+                // canPerformGestures is not on AccessibilityServiceInfo;
+                // it's declared in the XML config and readable via the service.
+                val pkgs = info?.packageNames
+                sb.appendLine("Monitored packages: ${pkgs?.joinToString(", ") ?: "(all)"}")
+            } catch (e: Exception) {
+                sb.appendLine("ERROR reading serviceInfo: ${e.message}")
+            }
+        }
+
+        // 4. All enabled accessibility services (for debugging conflicts)
+        sb.appendLine()
+        sb.appendLine("All enabled services:")
+        if (enabledServices.isBlank()) {
+            sb.appendLine("  (none)")
+        } else {
+            enabledServices.split(":").forEachIndexed { i, svc ->
+                sb.appendLine("  [$i] $svc")
+            }
+        }
+
+        // 5. Detected BYD model
+        sb.appendLine()
+        sb.appendLine("Detected model: ${instance?.getDetectedModel() ?: "service not connected"}")
+
+        tvA11y.text = sb.toString()
     }
 }

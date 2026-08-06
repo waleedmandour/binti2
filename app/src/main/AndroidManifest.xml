@@ -151,10 +151,15 @@
         <!-- FIX #6 — label and description are required by Android for the
              Accessibility Settings screen. Without them the service shows a
              blank entry and some OEMs refuse to enable unnamed services. -->
+        <!-- FIX: removed android:directBootAware="true" from the service.
+             DiLink 3's Direct Boot implementation is buggy — the service would
+             try to start before the user unlocks the device, causing a crash
+             because credential-encrypted SharedPreferences isn't available.
+             The service starts after first unlock, which is the correct
+             behavior for an accessibility service that interacts with UI. -->
         <service
             android:name=".dilink.DiLinkAccessibilityService"
             android:exported="false"
-            android:directBootAware="true"
             android:label="@string/accessibility_service_label"
             android:description="@string/accessibility_service_description"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
