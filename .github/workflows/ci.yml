@@ -8,6 +8,9 @@ on:
     branches: [main, master]
   release:
     types: [published]
+  # Allow manual trigger from the GitHub Actions UI — useful when a push
+  # doesn't automatically trigger CI (GitHub Actions occasionally misses pushes).
+  workflow_dispatch:
 
 # Explicit permissions for the GITHUB_TOKEN. The 'contents: write' grant is
 # required by softprops/action-gh-release@v2 to upload APK assets to a GitHub
