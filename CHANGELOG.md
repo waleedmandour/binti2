@@ -7,6 +7,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.3.3-beta] - 2026-08-01
+
+### 🐛 Critical Fix: Accessibility Service Crash on DiLink 3
+
+Fixed the crash that occurred when enabling the accessibility service on BYD
+DiLink 3 (Android 10 head unit). The crash happened during the accessibility
+enable flow and prevented the service from connecting.
+
+#### Root Cause
+The previous `onServiceConnected()` created a **new** `AccessibilityServiceInfo()`
+and assigned it to `serviceInfo`, which conflicted with the XML config
+(`accessibility_service_config.xml`). On DiLink 3's Android 10 build, this
+programmatic override triggered a re-binding loop / `IllegalStateException`
+that crashed the service before it could fully connect.
+
+#### Fixes
+1. **`onServiceConnected()`** now *mutates* the existing `serviceInfo` (loaded
+   from XML) instead of replacing it: `val info = serviceInfo;
+   info.packageNames = ...; serviceInfo = info`. This is the safe pattern
+   recommended by the Android accessibility docs for OEM head units. Wrapped
+   in try/catch so if the programmatic config fails, the XML config remains
+   active (better than crashing).
+2. **Removed `notificationTimeout` override** — XML says `0`, programmatic code
+   said `100`. The mismatch was another crash trigger.
+3. **Removed `directBootAware="true"`** from the accessibility service in
+   `AndroidManifest.xml`. DiLink 3's Direct Boot implementation is buggy —
+   the service tried to start before user unlock, crashing because
+   credential-encrypted `SharedPreferences` wasn't available.
+4. **Removed `flagRequestFilterKeyEvents`** and `canRequestFilterKeyEvents`
+   from `accessibility_service_config.xml`. This flag caused crashes on some
+   Android 10 OEM builds. Media-key interception is handled via
+   `AudioManager.dispatchMediaKeyEvent()` which doesn't need this flag.
+5. **Removed unused `AccessibilityServiceInfo` import**.
+
+#### New: Accessibility Diagnostics Screen
+Added an "Accessibility Diagnostics" section to the Vehicle State debug screen
+(Settings → Developer → Vehicle State). Shows:
+- Whether the service is enabled in system settings
+- Whether the service instance is connected (`onServiceConnected` fired)
+- The service's `AccessibilityServiceInfo` flags, event types, packageNames
+- All enabled accessibility services on the device
+- The detected BYD model
+
+If the service still crashes after these fixes, this screen will show
+"Instance connected: false" even after the user toggles it on — confirming
+the crash and pointing to the next debugging step.
+
+### 📦 Version
+- Bumped to `2.3.3-beta` (versionCode 9)
+- Updated `model_config.json`, `dilink_intent_map.json`, and CI model-manifest
+  URLs to v2.3.3-beta
+
+---
+
 ## [2.3.2-beta] - 2026-08-01
 
 ### 🔒 Security & Architecture Fixes

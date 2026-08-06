@@ -323,7 +323,7 @@ jobs:
                 "required": true,
                 "download": {
                   "provider": "GitHub Releases",
-                  "url": "https://github.com/waleedmandour/binti2/releases/download/v2.3.2-beta/vosk-model-ar-mgb2-0.4.zip"
+                  "url": "https://github.com/waleedmandour/binti2/releases/download/v2.3.3-beta/vosk-model-ar-mgb2-0.4.zip"
                 },
                 "installation": {
                   "extract": true,
