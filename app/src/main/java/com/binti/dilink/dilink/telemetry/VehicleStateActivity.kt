@@ -43,6 +43,7 @@ class VehicleStateActivity : AppCompatActivity() {
     private lateinit var tvFlavor: TextView
     private lateinit var tvConsent: TextView
     private lateinit var btnRefresh: Button
+    private lateinit var btnShareDiagnostics: Button
     private lateinit var btnProbe: Button
     private lateinit var btnTelemetrySettings: Button
 
@@ -54,6 +55,7 @@ class VehicleStateActivity : AppCompatActivity() {
         tvFlavor            = findViewById(R.id.tvFlavor)
         tvConsent           = findViewById(R.id.tvConsent)
         btnRefresh          = findViewById(R.id.btnRefresh)
+        btnShareDiagnostics = findViewById(R.id.btnShareDiagnostics)
         btnProbe            = findViewById(R.id.btnProbe)
         btnTelemetrySettings = findViewById(R.id.btnTelemetrySettings)
 
@@ -86,6 +88,21 @@ class VehicleStateActivity : AppCompatActivity() {
                         android.widget.Toast.LENGTH_SHORT
                     ).show()
                 }
+            }
+        }
+
+        btnShareDiagnostics.setOnClickListener {
+            // Generate the full diagnostics report and share it
+            val report = DiagnosticsReport.generate(this@VehicleStateActivity, null)
+            val shareIntent = DiagnosticsReport.createShareIntent(this@VehicleStateActivity, report)
+            try {
+                startActivity(shareIntent)
+            } catch (e: Exception) {
+                android.widget.Toast.makeText(
+                    this@VehicleStateActivity,
+                    "لا يوجد تطبيق للمشاركة. التقرير: $report",
+                    android.widget.Toast.LENGTH_LONG
+                ).show()
             }
         }
 

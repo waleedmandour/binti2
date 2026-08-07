@@ -12,6 +12,13 @@
         <domain includeSubdomains="true">alphacephei.com</domain>
     </domain-config>
 
+    <!-- Sherpa-ONNX TTS models — hosted on GitHub Releases -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">github.com</domain>
+        <domain includeSubdomains="true">githubusercontent.com</domain>
+        <domain includeSubdomains="true">objects.githubusercontent.com</domain>
+    </domain-config>
+
     <!-- GitHub Releases & Pages domains for model/station data downloads -->
     <domain-config cleartextTrafficPermitted="false">
         <domain includeSubdomains="true">github.com</domain>

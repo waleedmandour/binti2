@@ -13,8 +13,8 @@ android {
         applicationId = "com.binti.dilink"
         minSdk = 26
         targetSdk = 34
-        versionCode = 10
-        versionName = "2.4.1-beta"
+        versionCode = 11
+        versionName = "2.4.2-beta"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -170,6 +170,14 @@ dependencies {
     
     // ONNX Runtime for ASR/NLU
     implementation("com.microsoft.onnxruntime:onnxruntime-android:1.16.3")
+
+    // Sherpa-ONNX for neural TTS (VITS/MMS Arabic model) — 100% offline,
+    // significantly better Arabic voice quality than Android TTS.
+    // NOTE: sherpa-onnx is loaded via reflection at runtime if the user
+    // downloads the Arabic VITS model. The library JAR is not on Maven
+    // Central, so it must be manually placed in app/libs/ or the build
+    // will gracefully skip sherpa-onnx and fall back to Android TTS.
+    // See docs/BUILD.md for sherpa-onnx setup instructions.
     
     // Huawei HMS Core - AGConnect
     implementation("com.huawei.agconnect:agconnect-core:1.9.1.301")

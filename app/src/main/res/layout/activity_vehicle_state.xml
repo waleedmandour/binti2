@@ -5,6 +5,7 @@
   Shows the live Tier 1 + Tier 2 snapshot and exposes Refresh / Probe / Consent controls.
 -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp">
@@ -36,6 +37,16 @@
             android:layout_height="wrap_content"
             android:padding="12dp"
             android:text="@string/vehicle_state_refresh" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnShareDiagnostics"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:padding="12dp"
+            android:text="@string/diagnostics_share"
+            app:icon="@android:drawable/ic_menu_share" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnProbe"

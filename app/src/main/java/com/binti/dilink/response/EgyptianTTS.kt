@@ -22,6 +22,21 @@ class EgyptianTTS(private val context: Context) {
         private const val TAG = "EgyptianTTS"
         private const val DEFAULT_SPEECH_RATE = 0.95f
         private const val DEFAULT_PITCH       = 1.02f
+        private const val PREFS_NAME = "binti_prefs"
+        private const val KEY_TTS_ENGINE = "tts_engine"
+    }
+
+    /**
+     * Available TTS engines. The user can select which one to use in Settings.
+     *  - ANDROID_TTS: Built-in Android TTS (always available, lower quality)
+     *  - HUAWEI_ML_KIT: Huawei ML Kit TTS (if HMS Core installed, good quality)
+     *  - SHERPA_ONNX: Neural TTS via sherpa-onnx VITS/MMS (best quality, requires
+     *    downloading the ~65 MB Arabic model, 100% offline)
+     */
+    enum class TTSEngine {
+        ANDROID_TTS,       // Default — always available
+        HUAWEI_ML_KIT,     // If HMS Core is installed
+        SHERPA_ONNX        // Best quality — requires model download
     }
 
     private var androidTTS: TextToSpeech? = null
@@ -30,6 +45,9 @@ class EgyptianTTS(private val context: Context) {
     private var isMlTtsReady  = false
     private var isInitialized = false
     private var preferredProvider = HMSUtils.TTSProvider.ANDROID_TTS
+    private var selectedEngine: TTSEngine = TTSEngine.ANDROID_TTS
+    private var sherpaTts: Any? = null  // com.k2fsa.sherpa.onnx.OfflineTts — loaded via reflection
+    private var isSherpaReady = false
 
     // ──────────────────────────────────────────────────────────────────────────
     // Initialisation
@@ -37,29 +55,114 @@ class EgyptianTTS(private val context: Context) {
 
     suspend fun initialize() = withContext(Dispatchers.Main) {
         try {
+            // Load user's TTS engine preference
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val engineName = prefs.getString(KEY_TTS_ENGINE, TTSEngine.ANDROID_TTS.name)
+            selectedEngine = try {
+                TTSEngine.valueOf(engineName ?: TTSEngine.ANDROID_TTS.name)
+            } catch (e: IllegalArgumentException) {
+                TTSEngine.ANDROID_TTS
+            }
+            Log.i(TAG, "Selected TTS engine: $selectedEngine")
+
             preferredProvider = HMSUtils.getPreferredTTSProvider(context)
 
             if (preferredProvider == HMSUtils.TTSProvider.HUAWEI_ML_KIT) {
                 initializeHuaweiTTS()
             }
 
-            // FIX #1 — initializeAndroidTTS() is always called as a fallback even
-            // when Huawei is preferred, which is correct. But if it throws (TTS
-            // init failed) the exception was swallowed by the outer try/catch and
-            // isInitialized was still set to true. Now we track whether at least
-            // one engine is ready before setting isInitialized.
+            // Always initialize Android TTS as fallback
             try {
                 initializeAndroidTTS()
             } catch (e: Exception) {
                 Log.w(TAG, "Android TTS init failed: ${e.message}")
             }
 
-            // FIX #1 — only mark ready if at least one engine is usable
-            isInitialized = isAndroidTTSReady || isMlTtsReady
+            // Initialize sherpa-onnx if selected and model is available
+            if (selectedEngine == TTSEngine.SHERPA_ONNX) {
+                try {
+                    initializeSherpaTTS()
+                } catch (e: Exception) {
+                    Log.w(TAG, "Sherpa-ONNX TTS init failed: ${e.message}")
+                    // Fall back to Android TTS
+                    selectedEngine = TTSEngine.ANDROID_TTS
+                }
+            }
+
+            isInitialized = isAndroidTTSReady || isMlTtsReady || isSherpaReady
             if (!isInitialized) Log.e(TAG, "No TTS engine available")
 
         } catch (e: Exception) {
             Log.e(TAG, "TTS Init Error", e)
+        }
+    }
+
+    /**
+     * Set the TTS engine preference. Takes effect on next initialize() call.
+     */
+    fun setTTSEngine(engine: TTSEngine) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putString(KEY_TTS_ENGINE, engine.name).apply()
+        selectedEngine = engine
+        Log.i(TAG, "TTS engine preference set to: $engine")
+    }
+
+    /**
+     * Get the current TTS engine preference.
+     */
+    fun getTTSEngine(): TTSEngine = selectedEngine
+
+    /**
+     * Check if the sherpa-onnx Arabic model is downloaded and available.
+     */
+    fun isSherpaModelAvailable(): Boolean {
+        val modelDir = java.io.File(context.filesDir, "voices/sherpa")
+        val modelFile = java.io.File(modelDir, "model.onnx")
+        return modelFile.exists()
+    }
+
+    private fun initializeSherpaTTS() {
+        try {
+            val modelDir = java.io.File(context.filesDir, "voices/sherpa")
+            val modelFile = java.io.File(modelDir, "model.onnx")
+            val tokensFile = java.io.File(modelDir, "tokens.txt")
+
+            if (!modelFile.exists() || !tokensFile.exists()) {
+                Log.w(TAG, "Sherpa-ONNX model not found at ${modelFile.absolutePath}")
+                isSherpaReady = false
+                return
+            }
+
+            // Load sherpa-onnx via reflection — the library is optional
+            // (not on Maven Central; user must manually add the JAR/AAR to app/libs/)
+            val configClass = Class.forName("com.k2fsa.sherpa.onnx.OfflineTtsConfig")
+            val modelConfigClass = Class.forName("com.k2fsa.sherpa.onnx.OfflineTtsModelConfig")
+            val vitsConfigClass = Class.forName("com.k2fsa.sherpa.onnx.OfflineTtsVitsModelConfig")
+            val ttsClass = Class.forName("com.k2fsa.sherpa.onnx.OfflineTts")
+
+            val vitsConfig = vitsConfigClass.getConstructor().newInstance()
+            vitsConfigClass.getField("model").set(vitsConfig, modelFile.absolutePath)
+            vitsConfigClass.getField("tokens").set(vitsConfig, tokensFile.absolutePath)
+            vitsConfigClass.getField("dataDir").set(vitsConfig, modelDir.absolutePath)
+
+            val modelConfig = modelConfigClass.getConstructor().newInstance()
+            modelConfigClass.getField("vits").set(modelConfig, vitsConfig)
+
+            val config = configClass.getConstructor().newInstance()
+            configClass.getField("model").set(config, modelConfig)
+            configClass.getField("maxNumSentences").set(config, 1)
+            configClass.getField("numThreads").set(config, 2)
+
+            sherpaTts = ttsClass.getConstructor(configClass).newInstance(config)
+            isSherpaReady = true
+            Log.i(TAG, "✅ Sherpa-ONNX TTS initialized — neural Arabic voice ready")
+        } catch (e: ClassNotFoundException) {
+            Log.w(TAG, "Sherpa-ONNX library not found — add the JAR/AAR to app/libs/. " +
+                       "Falling back to Android TTS.")
+            isSherpaReady = false
+        } catch (e: Exception) {
+            Log.w(TAG, "Sherpa-ONNX TTS unavailable: ${e.message}")
+            isSherpaReady = false
         }
     }
 
@@ -152,17 +255,45 @@ class EgyptianTTS(private val context: Context) {
         Log.d(TAG, "🗣️ Speaking: $naturalText")
 
         return withContext(Dispatchers.Main) {
+            // Try engines in priority order based on user selection
             when {
+                // Sherpa-ONNX (best quality, if selected and ready)
+                isSherpaReady && selectedEngine == TTSEngine.SHERPA_ONNX -> {
+                    try {
+                        val generateMethod = sherpaTts?.javaClass?.getMethod("generate", String::class.java)
+                        val audio = generateMethod?.invoke(sherpaTts, naturalText)
+                        if (audio != null) {
+                            // Extract samples and sampleRate via reflection
+                            val samplesField = audio.javaClass.getField("samples")
+                            val samples = samplesField.get(audio) as? FloatArray
+                            val sampleRateField = audio.javaClass.getField("sampleRate")
+                            val sampleRate = sampleRateField.get(audio) as? Int ?: 22050
+                            if (samples != null && samples.isNotEmpty()) {
+                                playSherpaAudio(samples, sampleRate)
+                                true
+                            } else false
+                        } else false
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Sherpa TTS failed, falling back", e)
+                        if (isAndroidTTSReady) {
+                            val utteranceId = System.currentTimeMillis().toString()
+                            androidTTS?.speak(naturalText, TextToSpeech.QUEUE_ADD, null, utteranceId) ==
+                                TextToSpeech.SUCCESS
+                        } else false
+                    }
+                }
+                // Huawei ML Kit
                 isMlTtsReady && preferredProvider == HMSUtils.TTSProvider.HUAWEI_ML_KIT -> {
                     val taskId = mlTtsEngine?.speak(naturalText, MLTtsEngine.QUEUE_APPEND)
                     !taskId.isNullOrEmpty()
                 }
+                // Android TTS (always available fallback)
                 isAndroidTTSReady -> {
                     val utteranceId = System.currentTimeMillis().toString()
                     androidTTS?.speak(naturalText, TextToSpeech.QUEUE_ADD, null, utteranceId) ==
                         TextToSpeech.SUCCESS
                 }
-                // FIX #2 — if preferred engine failed at runtime, try the other one
+                // Try ML Kit as last resort even if not preferred
                 isMlTtsReady -> {
                     val taskId = mlTtsEngine?.speak(naturalText, MLTtsEngine.QUEUE_APPEND)
                     !taskId.isNullOrEmpty()
@@ -304,16 +435,47 @@ class EgyptianTTS(private val context: Context) {
         mlTtsEngine?.stop()
     }
 
-    // FIX #9 — release() set isInitialized = false but left isAndroidTTSReady /
-    // isMlTtsReady true, so a subsequent speak() call after release() would attempt
-    // to use a shut-down engine and crash. Reset all flags.
+    /**
+     * Play audio samples generated by sherpa-onnx via Android AudioTrack.
+     */
+    private fun playSherpaAudio(samples: FloatArray, sampleRate: Int) {
+        try {
+            val audioTrack = android.media.AudioTrack(
+                android.media.AudioManager.STREAM_MUSIC,
+                sampleRate,
+                android.media.AudioFormat.CHANNEL_OUT_MONO,
+                android.media.AudioFormat.ENCODING_PCM_FLOAT,
+                samples.size * 4,
+                android.media.AudioTrack.MODE_STATIC
+            )
+            audioTrack.write(samples, 0, samples.size, android.media.AudioTrack.WRITE_BLOCKING)
+            audioTrack.play()
+            // Release after playback completes
+            audioTrack.setNotificationMarkerPosition(samples.size)
+            audioTrack.setPlaybackPositionUpdateListener(object : android.media.AudioTrack.OnPlaybackPositionUpdateListener {
+                override fun onMarkerReached(track: android.media.AudioTrack?) {
+                    track?.stop()
+                    track?.release()
+                }
+                override fun onPeriodicNotification(track: android.media.AudioTrack?) {}
+            })
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to play sherpa audio", e)
+        }
+    }
+
     fun release() {
         androidTTS?.shutdown()
         androidTTS = null
         mlTtsEngine?.shutdown()
         mlTtsEngine       = null
+        try {
+            sherpaTts?.javaClass?.getMethod("release")?.invoke(sherpaTts)
+        } catch (e: Exception) { /* ignore */ }
+        sherpaTts         = null
         isAndroidTTSReady = false
         isMlTtsReady      = false
+        isSherpaReady     = false
         isInitialized     = false
     }
 }

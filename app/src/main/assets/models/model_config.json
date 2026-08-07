@@ -55,8 +55,8 @@
     },
     {
       "id": "tts_voice",
-      "name": "Egyptian TTS Voice",
-      "description": "Egyptian female voice for text-to-speech (optional - fallback to Android TTS)",
+      "name": "Egyptian TTS Voice (Coqui VITS)",
+      "description": "Egyptian female voice for text-to-speech — Coqui VITS neural model (optional - fallback to Android TTS). Higher quality than Android TTS but larger download.",
       "file": "ar-eg-female.zip",
       "download_url": "",
       "size_mb": 80,
@@ -71,6 +71,27 @@
         "sample_rate": 22050
       },
       "fallback": "Android TTS or Huawei ML Kit TTS is used if this model is unavailable"
+    },
+    {
+      "id": "tts_sherpa_arabic",
+      "name": "Neural Arabic TTS (Sherpa-ONNX VITS)",
+      "description": "High-quality neural Arabic text-to-speech using sherpa-onnx with VITS/MMS model. 100% offline, significantly better voice quality than Android TTS. ~65 MB download. Recommended for best Egyptian Arabic voice experience.",
+      "file": "vits-mms-ara.zip",
+      "download_url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-mms-ara.tar.bz2",
+      "size_mb": 65,
+      "sha256": "",
+      "required": false,
+      "extract": true,
+      "relative_path": "voices/sherpa",
+      "training_info": {
+        "framework": "sherpa-onnx (VITS/MMS)",
+        "voice_type": "female",
+        "dialect": "Modern Standard Arabic (works well for Egyptian)",
+        "sample_rate": 22050,
+        "engine": "sherpa-onnx"
+      },
+      "fallback": "Android TTS or Huawei ML Kit TTS is used if this model is unavailable",
+      "notes": "Sherpa-ONNX is a next-generation Kaldi project providing 100% offline neural TTS. The MMS (Massively Multilingual Speech) Arabic model produces natural-sounding Arabic speech. Download and select in Settings → TTS Engine."
     },
     {
       "id": "intent_map",

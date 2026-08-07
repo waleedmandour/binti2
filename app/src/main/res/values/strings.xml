@@ -184,6 +184,7 @@
          ──────────────────────────────────────────────────────────────── -->
     <string name="vehicle_state_title">حالة العربية (للمطوّرين)</string>
     <string name="vehicle_state_refresh">إعادة قراءة البيانات الآن</string>
+    <string name="diagnostics_share">مشاركة تقرير التشخيص الكامل</string>
     <string name="vehicle_state_probe">قراءة بيانات تجريبية متقدمة</string>
     <string name="vehicle_state_telemetry_settings">إعدادات القياس المتقدم</string>
     <string name="vehicle_state_disclaimer">شاشة فحص للمطوّرين. البيانات تُقرأ من واجهة DiLink عبر Accessibility Service فقط في إصدار المتجر، أو بالإضافة إلى القياس المتقدم في الإصدار التجريبي.</string>
