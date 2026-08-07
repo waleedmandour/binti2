@@ -12,14 +12,10 @@
         <domain includeSubdomains="true">alphacephei.com</domain>
     </domain-config>
 
-    <!-- Sherpa-ONNX TTS models — hosted on GitHub Releases -->
-    <domain-config cleartextTrafficPermitted="false">
-        <domain includeSubdomains="true">github.com</domain>
-        <domain includeSubdomains="true">githubusercontent.com</domain>
-        <domain includeSubdomains="true">objects.githubusercontent.com</domain>
-    </domain-config>
-
-    <!-- GitHub Releases & Pages domains for model/station data downloads -->
+    <!-- GitHub domains — model downloads, station data, sherpa-onnx TTS models.
+         All GitHub-related domains in ONE domain-config to avoid duplicate
+         domain entries which crash the app at startup on some Android versions
+         (including DiLink 3 / Android 10). -->
     <domain-config cleartextTrafficPermitted="false">
         <domain includeSubdomains="true">github.com</domain>
         <domain includeSubdomains="true">githubusercontent.com</domain>

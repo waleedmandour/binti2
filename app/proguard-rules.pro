@@ -43,6 +43,17 @@
 # Keep accessibility service
 -keep class com.binti.dilink.dilink.DiLinkAccessibilityService { *; }
 
+# Keep control/settings bridges and initializers (loaded via reflection
+# and flavor-specific class names — R8 would strip these without keep rules)
+-keep class com.binti.dilink.dilink.control.** { *; }
+-keep class com.binti.dilink.dilink.settings.** { *; }
+-keep class com.binti.dilink.telemetry.** { *; }
+-keep class com.binti.dilink.dilink.telemetry.** { *; }
+
+# Keep all Binti application classes from being stripped by R8
+-keep class com.binti.dilink.** { *; }
+-keepclassmembers class com.binti.dilink.** { *; }
+
 # Keep all parcelable classes
 -keepclassmembers class * implements android.os.Parcelable {
     static ** CREATOR;

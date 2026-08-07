@@ -440,14 +440,25 @@ class EgyptianTTS(private val context: Context) {
      */
     private fun playSherpaAudio(samples: FloatArray, sampleRate: Int) {
         try {
-            val audioTrack = android.media.AudioTrack(
-                android.media.AudioManager.STREAM_MUSIC,
-                sampleRate,
-                android.media.AudioFormat.CHANNEL_OUT_MONO,
-                android.media.AudioFormat.ENCODING_PCM_FLOAT,
-                samples.size * 4,
-                android.media.AudioTrack.MODE_STATIC
-            )
+            // Use AudioTrack.Builder (API 21+) instead of the deprecated
+            // constructor to avoid crashes on newer Android versions.
+            val audioTrack = android.media.AudioTrack.Builder()
+                .setAudioAttributes(
+                    android.media.AudioAttributes.Builder()
+                        .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
+                        .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build()
+                )
+                .setAudioFormat(
+                    android.media.AudioFormat.Builder()
+                        .setEncoding(android.media.AudioFormat.ENCODING_PCM_FLOAT)
+                        .setSampleRate(sampleRate)
+                        .setChannelMask(android.media.AudioFormat.CHANNEL_OUT_MONO)
+                        .build()
+                )
+                .setBufferSizeInBytes(samples.size * 4)
+                .setTransferMode(android.media.AudioTrack.MODE_STATIC)
+                .build()
             audioTrack.write(samples, 0, samples.size, android.media.AudioTrack.WRITE_BLOCKING)
             audioTrack.play()
             // Release after playback completes
