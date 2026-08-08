@@ -185,16 +185,13 @@ class MainActivity : AppCompatActivity() {
                     .setTitle(R.string.accessibility_guide_title)
                     .setMessage(R.string.accessibility_guide_message)
                     .setPositiveButton(R.string.grant_permission) { _, _ ->
-                        startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                        openAccessibilitySettingsSafely()
                     }
                     .show()
             }
 
             layoutOverlayPermission.btnGrantOverlay.setOnClickListener {
-                startActivity(Intent(
-                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package:$packageName")
-                ))
+                openOverlaySettingsSafely()
             }
 
             setupPermissionClick(layoutLocationPermission, R.string.location_permission_title, R.string.location_permission_desc) {
@@ -225,6 +222,130 @@ class MainActivity : AppCompatActivity() {
             tvMicPermissionDesc.text  = getString(descRes)
             btnGrantMic.setOnClickListener { action() }
         }
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Defensive intent launchers — never crash on DiLink 3's custom Settings
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Attempts to open [intent]; returns true if it launched. Never throws.
+     * On BYD DiLink 3 (Android 10), the OEM Settings app may not implement
+     * all standard Android intent actions (e.g. ACCESSIBILITY_SETTINGS),
+     * causing ActivityNotFoundException. This helper catches that and falls
+     * back gracefully.
+     */
+    private fun tryStartActivity(intent: Intent): Boolean {
+        return try {
+            if (intent.resolveActivity(packageManager) != null) {
+                startActivity(intent)
+                true
+            } else {
+                Log.w(TAG, "No activity found for ${intent.action}")
+                false
+            }
+        } catch (e: android.content.ActivityNotFoundException) {
+            Log.w(TAG, "ActivityNotFoundException for ${intent.action}", e)
+            false
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to launch ${intent.action}", e)
+            false
+        }
+    }
+
+    /**
+     * Open Accessibility Settings with a multi-step fallback chain:
+     * 1. Android 13+ deep link to this service's own detail page (nicer UX)
+     * 2. Standard ACCESSIBILITY_SETTINGS (works on most devices)
+     * 3. Generic ACTION_SETTINGS (last resort)
+     * 4. If all fail: show manual instructions with ADB commands
+     */
+    private fun openAccessibilitySettingsSafely() {
+        // Step 1: Android 13+ deep link to this service's detail page
+        // ACTION_ACCESSIBILITY_DETAILS_SETTINGS was added in API 33 (Tiramisu).
+        // Use the string constant directly to avoid compile issues with
+        // targetSdk 33 — the constant exists at runtime on API 33+ devices.
+        val detailIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Intent("android.settings.ACCESSIBILITY_DETAILS_SETTINGS").apply {
+                val componentName = android.content.ComponentName(
+                    this@MainActivity,
+                    com.binti.dilink.dilink.DiLinkAccessibilityService::class.java
+                ).flattenToString()
+                putExtra("android.intent.extra.ACCESSIBILITY_COMPONENT_NAME", componentName)
+            }
+        } else null
+
+        // Step 2: Standard accessibility settings
+        val standardIntent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+
+        // Step 3: Generic settings (last resort before manual)
+        val genericIntent = Intent(Settings.ACTION_SETTINGS)
+
+        val opened = (detailIntent?.let { tryStartActivity(it) } ?: false) ||
+                     tryStartActivity(standardIntent) ||
+                     tryStartActivity(genericIntent)
+
+        if (!opened) {
+            showManualAccessibilityInstructions()
+        }
+    }
+
+    /**
+     * Open Overlay Permission Settings with fallback.
+     */
+    private fun openOverlaySettingsSafely() {
+        val overlayIntent = Intent(
+            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+            Uri.parse("package:$packageName")
+        )
+        if (!tryStartActivity(overlayIntent)) {
+            // Fallback to generic settings
+            tryStartActivity(Intent(Settings.ACTION_SETTINGS))
+        }
+    }
+
+    /**
+     * Show a dialog with manual ADB instructions when the head unit's
+     * Settings app doesn't expose the Accessibility Settings screen.
+     * This is common on BYD DiLink 3 where the OEM settings app is
+     * heavily customized and may omit the standard accessibility page.
+     */
+    private fun showManualAccessibilityInstructions() {
+        val serviceName = "$packageName/com.binti.dilink.dilink.DiLinkAccessibilityService"
+        val instructions = """
+            هذا النظام (DiLink 3) لا يعرض شاشة إعدادات الوصول القياسية.
+
+            لإ تفعيل خدمة الوصول، استخدم أوامر ADB التالية من جهاز كمبيوتر متصل بنفس شبكة WiFi:
+
+            1️⃣ adb connect 192.168.10.10:5555
+
+            2️⃣ adb shell settings put secure accessibility_enabled 1
+
+            3️⃣ adb shell settings put secure enabled_accessibility_services $serviceName
+
+            ثم أعد فتح تطبيق "يا بنتي" وتحقق من حالة الخدمة.
+
+            ―――――――――――――――――――――――――――――――――――
+
+            This DiLink 3 head unit does not expose the standard Accessibility Settings screen.
+
+            To enable the accessibility service, run these ADB commands from a computer on the same WiFi:
+
+            1️⃣ adb connect 192.168.10.10:5555
+
+            2️⃣ adb shell settings put secure accessibility_enabled 1
+
+            3️⃣ adb shell settings put secure enabled_accessibility_services $serviceName
+
+            Then reopen Binti and check the service status.
+        """.trimIndent()
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("إعدادات الوصول غير متاحة")
+            .setMessage(instructions)
+            .setPositiveButton("فهمت") { _, _ -> }
+            .setCancelable(true)
+            .show()
     }
 
     private fun loadSettings() {
