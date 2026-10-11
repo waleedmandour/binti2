@@ -21,3 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "binti2"
 include(":app")
+include(":contract")

@@ -7,6 +7,137 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.0.0-alpha] - 2026-10-11
+
+### 🏗️ Phase 2 — Modernize the Foundation
+
+This release adds the foundational infrastructure for the modernized
+architecture: Hilt DI, Jetpack Compose, Room database, a multi-module
+split (the `:contract` module), and a public automation API
+(`BintiAutomationActivity` + `binti://` deep links).
+
+**This is an alpha release** — the new infrastructure is additive and
+coexists with the existing code. No existing behavior changes. The
+actual migration (moving files to modules, converting singletons to
+@Inject, migrating screens to Compose, migrating StationManager to Room)
+will be done incrementally in subsequent phases.
+
+#### Added — Multi-Module Split (`:contract` module)
+- Created the `:contract` module — a tiny Android library containing
+  the public intent API for external automation.
+- `BintiIntent.kt` defines:
+  - Deep-link constants (`binti://start-voice`, `binti://stop`,
+    `binti://toggle-ac`, `binti://navigate-home`, `binti://media-play`,
+    `binti://next-track`, `binti://find-station`)
+  - Broadcast action constants (for PendingIntent-based triggers)
+  - Intent builders (`StartVoice.create(context)`, `ToggleAc.create(context)`,
+    etc.)
+  - The `PERMISSION` constant (`com.binti.dilink.permission.WIDGET_ACTION`)
+    so external apps know what permission to request
+- `:app` now depends on `:contract` — future external automation apps
+  (Tasker plugins, MacroDroid tasks) can depend on `:contract` alone
+  without pulling in the full app.
+
+#### Added — Hilt Dependency Injection
+- Annotated `BintiApplication` with `@HiltAndroidApp`.
+- Created `di/AppModule.kt` — provides:
+  - `SharedPreferences` ("binti_prefs")
+  - `BintiDatabase` (Room)
+  - `StationDao`
+  - `StationRepository`
+  - `VehicleDataRepository` (existing singleton, now also Hilt-provided)
+  - `StationManager` (existing class, now also Hilt-provided)
+- Created `di/DispatcherModule.kt` — provides qualified coroutine
+  dispatchers (`@IoDispatcher`, `@DefaultDispatcher`, `@MainDispatcher`)
+  and an `@ApplicationScope` `CoroutineScope`.
+- **Existing singletons continue to work** via their `getInstance()` pattern.
+  No existing code is modified. New code can use `@Inject` from the start.
+
+#### Added — Jetpack Compose
+- Enabled Compose in `app/build.gradle.kts` (`buildFeatures.compose = true`).
+- Added the Kotlin Compose compiler plugin (`org.jetbrains.kotlin.plugin.compose`).
+- Created `ui/theme/Color.kt` — brand colors matching `colors.xml`:
+  - Binti Dark Blue (#001C35), Binti Light Blue (#0082C8), Binti Gold (#D4AF37)
+  - Light and dark color variants for DayNight support
+- Created `ui/theme/Type.kt` — Material 3 typography.
+- Created `ui/theme/Theme.kt` — `BintiTheme` composable with:
+  - Material 3 color scheme (light + dark)
+  - Dynamic color support (Android 12+, BYD DiLink 5)
+  - System dark mode detection
+  - Status bar appearance sync
+- **Existing XML views continue to work** — Compose is additive. New screens
+  will use Compose; existing screens migrate incrementally.
+
+#### Added — Room Database
+- Created `data/local/entity/StationEntity.kt` — Room entity for charging
+  stations (mirrors `StationManager.ChargingStation` with Room annotations).
+  Indexed on (latitude, longitude), city, and status for efficient queries.
+- Created `data/local/dao/StationDao.kt` — DAO with:
+  - `insertAll()` — bulk insert with REPLACE conflict strategy
+  - `getActiveStations()` — reactive `Flow<List<StationEntity>>`
+  - `searchStations()` — full-text search across name/city/address/operator
+  - `getActiveStationCount()` — quick count for population check
+  - `getCities()` — distinct cities for filter dropdown
+  - `deleteAll()` — for refresh/re-import
+- Created `data/local/BintiDatabase.kt` — Room database with schema export
+  (to `app/schemas/` for migration testing).
+- Created `data/repository/StationRepository.kt` — wraps Room with asset
+  fallback. On first access, populates the DB from the bundled
+  `stations.json` asset via the legacy `StationManager`. Subsequent reads
+  come from Room. The existing `StationManager` continues to serve the
+  voice pipeline — `StationRepository` serves new UI screens.
+- Schema version 1 with `fallbackToDestructiveMigration` (Phase 3 will
+  add proper Migration objects when the schema evolves).
+
+#### Added — BintiAutomationActivity
+- Created `BintiAutomationActivity.kt` — a transparent, no-history
+  activity that receives `binti://` deep links and translates them to
+  `BintiService` foreground service starts.
+- Manifest declaration:
+  - `exported="true"` — external apps can target it
+  - `excludeFromRecents="true"` — doesn't appear in recent apps
+  - `noHistory="true"` — finishes before appearing in back stack
+  - `taskAffinity=""` — runs in its own task
+  - `Theme.Translucent.NoTitleBar` — invisible to the user
+- **ADB usage:** `adb shell am start -a android.intent.action.VIEW -d "binti://start-voice"`
+- **Tasker usage:** Create an "Intent" action with `binti://toggle-ac`
+  as the data URI.
+
+#### Changed — Build Configuration
+- Updated `gradle/libs.versions.toml` with all new dependencies:
+  Hilt 2.52, Room 2.6.1, Compose BOM 2024.12.01, KSP 2.0.21-1.0.28,
+  Activity Compose 1.9.3, Navigation Compose 2.8.5, Hilt Navigation
+  Compose 1.2.0.
+- Updated root `build.gradle.kts` with new plugin aliases:
+  `kotlin-compose`, `ksp`, `hilt`, `android-library`.
+- Updated `app/build.gradle.kts`:
+  - Added `kotlin-compose`, `ksp`, `hilt` plugins
+  - Enabled `buildFeatures.compose = true`
+  - Added KSP args for Room schema export
+  - Added all Compose, Hilt, Room dependencies
+- Updated `settings.gradle.kts` to include `:contract` module.
+- Updated `app/proguard-rules.pro`:
+  - Removed TFLite, ONNX, OkHttp keep rules (dependencies removed in Phase 0)
+  - Added Hilt keep rules (Hilt-generated classes, @HiltViewModel)
+  - Added Room keep rules (@Entity, @Dao, RoomDatabase subclasses)
+  - Added Compose keep rules
+  - Added `:contract` module keep rules
+
+#### Version Bump
+- `versionCode` 15 → 16
+- `versionName` "2.7.0-beta" → "3.0.0-alpha"
+
+#### What's Next (Phase 3 — DiLink Integration Tier)
+- Port DiPlay's ADB substrate (`LocalAdb.kt`, `AdbKeys.kt`, `BydAdbShell.kt`)
+  into a new `:dilink:src/enthusiast/` source set.
+- Port vehicle-data readers (`BydBattery.kt`, `BydWheelSpeed.kt`,
+  `BydTyres.kt`) for Tier 2 vehicle data without Accessibility scraping.
+- Port the `app_process` bridge pattern for privileged BYD SDK access.
+- Add recovery journals for every vendor side-effect.
+- Add firmware-fingerprint + signing-cert-hash gating.
+
+---
+
 ## [2.7.0-beta] - 2026-10-11
 
 ### 🔌 Phase 1 — Wire Up Half-Built Features

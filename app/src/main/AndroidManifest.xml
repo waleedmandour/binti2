@@ -135,6 +135,42 @@
             </intent-filter>
         </activity>
 
+        <!-- Binti Automation Activity (Phase 2)
+             ──────────────────────────────────────────────────────────────────
+             Transparent no-history trampoline for external automation triggers
+             (Tasker, MacroDroid, ADB shell scripts). Receives binti:// deep
+             links and translates them to BintiService foreground service starts.
+
+             - exported="true"          — external apps can target it
+             - excludeFromRecents      — doesn't appear in recent apps
+             - noHistory                — finishes before appearing in back stack
+             - taskAffinity=""          — runs in its own task
+             - Theme.Translucent       — invisible to the user
+
+             Supported deep links:
+               binti://start-voice      — start voice listening
+               binti://stop             — stop the voice service
+               binti://toggle-ac        — toggle AC power
+               binti://navigate-home    — navigate to saved home
+               binti://media-play       — play/pause media
+               binti://next-track       — skip to next track
+               binti://find-station     — find nearest EV charging station
+             ────────────────────────────────────────────────────────────────── -->
+        <activity
+            android:name=".BintiAutomationActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="binti" />
+            </intent-filter>
+        </activity>
+
         <!-- Developer Debug Screen — Vehicle State.
              Settings → Developer → Vehicle State.
              Shows live Tier 1 + Tier 2 snapshot for QA across BYD models.

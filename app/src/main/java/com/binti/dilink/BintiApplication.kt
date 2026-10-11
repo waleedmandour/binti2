@@ -8,6 +8,7 @@ import android.app.NotificationManager
 import android.os.Build
 import android.util.Log
 import com.binti.dilink.utils.ModelManager
+import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -20,6 +21,14 @@ import kotlinx.coroutines.launch
  * - Notification channels for foreground service
  * - Model download manager
  * - Advanced Telemetry bridge (flavor-dependent — see below)
+ * - Hilt dependency injection graph (Phase 2)
+ *
+ * **Phase 2 — Hilt:** Annotated with [@HiltAndroidApp] to trigger Hilt's
+ * code generation. Existing singletons (VehicleDataRepository,
+ * StationManager, EgyptianTTS, etc.) continue to use their `getInstance()`
+ * pattern — they will be migrated to @Inject constructors incrementally
+ * in subsequent phases. The Hilt graph is set up now so new code can use
+ * @Inject from the start.
  *
  * **Tier 2 wiring:** At startup we call `TelemetryInitializer.init(this)`.
  * The `TelemetryInitializer` class is provided by each product flavor:
@@ -36,6 +45,7 @@ import kotlinx.coroutines.launch
  *
  * @author Dr. Waleed Mandour
  */
+@HiltAndroidApp
 class BintiApplication : Application() {
 
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)

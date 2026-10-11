@@ -2,6 +2,9 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt)
     alias(libs.plugins.detekt)
     id("com.huawei.agconnect")
 }
@@ -14,8 +17,8 @@ android {
         applicationId = "com.binti.dilink"
         minSdk = 26
         targetSdk = 33
-        versionCode = 15
-        versionName = "2.7.0-beta"
+        versionCode = 16
+        versionName = "3.0.0-alpha"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -25,6 +28,14 @@ android {
 
         vectorDrawables {
             useSupportLibrary = true
+        }
+
+        // Room schema export — saves the DB schema as JSON for migration testing.
+        // Output: app/schemas/com.binti.dilink.data.local.BintiDatabase/<version>/*.json
+        ksp {
+            arg("room.schemaLocation", "$projectDir/schemas")
+            arg("room.incremental", "true")
+            arg("room.generateKotlin", "true")
         }
     }
 
@@ -134,6 +145,10 @@ android {
     buildFeatures {
         viewBinding = true
         buildConfig = true
+        // Phase 2: Enable Jetpack Compose. Existing XML views continue to work
+        // alongside Compose — new screens (Settings, Diagnostics, Vehicle State)
+        // will be built in Compose; existing screens migrate incrementally.
+        compose = true
     }
 
     packaging {
@@ -146,9 +161,6 @@ android {
         abortOnError = false
         warningsAsErrors = false
         checkReleaseBuilds = true
-        // Phase 0: we don't want lint to block CI yet — detekt handles code
-        // style. Lint warnings are addressed incrementally in later phases.
-        // Set to true in Phase 4 once the lint backlog is cleared.
         xmlReport = true
         htmlReport = true
     }
@@ -159,13 +171,14 @@ detekt {
     allRules = false
     config.setFrom("$rootDir/detekt.yml")
     parallel = true
-    // Don't fail the build on Phase 0 — we're introducing detekt and the
-    // existing codebase has style issues that will be cleaned up in
-    // subsequent phases. Set to true in Phase 4.
     ignoreFailures = true
 }
 
 dependencies {
+    // ── Module dependencies ──────────────────────────────────────────────
+    // :contract — public intent API for external automation (Tasker, ADB)
+    implementation(project(":contract"))
+
     // AndroidX Core
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
@@ -177,6 +190,31 @@ dependencies {
 
     // Material Design
     implementation(libs.material)
+
+    // Jetpack Compose (Phase 2) — BOM-managed, incremental adoption.
+    // Existing XML views + ViewBinding continue to work; new screens use Compose.
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.graphics)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.material.icons.extended)
+    debugImplementation(libs.androidx.compose.ui.tooling)
+
+    // Hilt (Phase 2) — dependency injection. Existing singletons continue
+    // to work via their getInstance() pattern; new code uses @Inject.
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.hilt.navigation.compose)
+
+    // Room (Phase 2) — database for charging stations and diagnostics.
+    // Existing StationManager (asset-based) continues to work; the new
+    // StationRepository wraps Room and will gradually replace it.
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.room.compiler)
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
@@ -209,6 +247,9 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.espresso.core)
+    // Compose UI testing
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.compose.ui.tooling)
 
     // Detekt formatting rules
     detektPlugins(libs.detekt.formatting)

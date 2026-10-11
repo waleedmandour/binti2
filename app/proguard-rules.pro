@@ -1,16 +1,22 @@
 # Add project specific ProGuard rules here.
 
-# Keep Kotlin metadata
+# ====================================
+# Kotlin metadata
+# ====================================
 -keep class kotlin.Metadata { *; }
 
-# Keep coroutines
+# ====================================
+# Coroutines
+# ====================================
 -keepclassmembers class kotlinx.coroutines.** {
     volatile <fields>;
 }
 -keepnames class kotlinx.coroutines.internal.MainDispatcherFactory {}
 -keepnames class kotlinx.coroutines.CoroutineExceptionHandler {}
 
-# Keep serialization
+# ====================================
+# Serialization (kotlinx-serialization)
+# ====================================
 -keepattributes RuntimeVisibleAnnotations,AnnotationDefault
 -keepclassmembers class kotlinx.serialization.json.** {
     *** Companion;
@@ -21,25 +27,52 @@
 -keepattributes *Annotation*, InnerClasses
 -dontnote kotlinx.serialization.AnnotationsKt
 
-# TensorFlow Lite
--keep class org.tensorflow.lite.** { *; }
--keepclassmembers class org.tensorflow.lite.** { *; }
--dontwarn com.google.auto.value.**
--dontwarn org.tensorflow.lite.gpu.**
-
-# ONNX Runtime
--keep class ai.onnxruntime.** { *; }
--keepclassmembers class ai.onnxruntime.** { *; }
-
-# Vosk
+# ====================================
+# Vosk (offline ASR)
+# ====================================
 -keep class org.vosk.** { *; }
 -keepclassmembers class org.vosk.** { *; }
 
-# Huawei HMS
+# ====================================
+# Huawei HMS Core
+# ====================================
 -keep class com.huawei.** { *; }
 -keepclassmembers class com.huawei.** { *; }
 -dontwarn com.huawei.**
 
+# ====================================
+# Hilt (DI) — Phase 2
+# ====================================
+-keep class dagger.hilt.** { *; }
+-keep class javax.inject.** { *; }
+-keep class * extends dagger.hilt.android.HiltAndroidApp { *; }
+-keepclassmembers class * { @dagger.hilt.android.lifecycle.HiltViewModel <init>(...); }
+# Hilt-generated classes (Hilt_$ClassName)
+-keep class **_HiltModules { *; }
+-keep class **_HiltModules$** { *; }
+-keep class * extends dagger.hilt.android.internal.lifecycle.HiltViewModelFactory$ViewModelComponentBuilderEntryPoint { *; }
+
+# ====================================
+# Room (database) — Phase 2
+# ====================================
+-keep class androidx.room.** { *; }
+-keep class * extends androidx.room.RoomDatabase { *; }
+-keep @androidx.room.Entity class * { *; }
+-keepclassmembers @androidx.room.Entity class * { <fields>; }
+-keep class * extends androidx.room.Dao { *; }
+-keepclassmembers class * {
+    @androidx.room.* <methods>;
+}
+
+# ====================================
+# Compose (Phase 2) — keep Compose runtime and lambda classes
+# ====================================
+-dontwarn androidx.compose.**
+-keep class androidx.compose.** { *; }
+
+# ====================================
+# Binti application classes
+# ====================================
 # Keep accessibility service
 -keep class com.binti.dilink.dilink.DiLinkAccessibilityService { *; }
 
@@ -54,21 +87,23 @@
 -keep class com.binti.dilink.** { *; }
 -keepclassmembers class com.binti.dilink.** { *; }
 
-# Keep all parcelable classes
+# Keep :contract module (public API — must not be stripped)
+-keep class com.binti.dilink.contract.** { *; }
+
+# ====================================
+# Parcelables & enums
+# ====================================
 -keepclassmembers class * implements android.os.Parcelable {
     static ** CREATOR;
 }
-
-# Keep enum classes
 -keepclassmembers enum * {
     public static **[] values();
     public static ** valueOf(java.lang.String);
 }
 
 # ====================================
-# Binti-specific ProGuard rules
+# Binti-specific keeps
 # ====================================
-
 # Keep model asset paths and model manager
 -keep class com.binti.dilink.utils.ModelManager { *; }
 -keepclassmembers class com.binti.dilink.utils.ModelManager { *; }
@@ -89,16 +124,10 @@
     java.lang.Object readResolve();
 }
 
-# Keep ONNX/TFLite native method signatures
+# Keep native method signatures (Vosk, sherpa-onnx via reflection)
 -keepclasseswithmembernames class * {
     native <methods>;
 }
-
-# Keep OkHttp and Okio for model downloads
--dontwarn okhttp3.**
--dontwarn okio.**
--keep class okhttp3.** { *; }
--keep interface okhttp3.** { *; }
 
 # Keep Gson serialization
 -keepattributes Signature
