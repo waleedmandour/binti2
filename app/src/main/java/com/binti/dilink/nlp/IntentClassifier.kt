@@ -7,21 +7,15 @@ import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
-import org.tensorflow.lite.Interpreter
-import java.io.FileInputStream
-import java.nio.MappedByteBuffer
-import java.nio.channels.FileChannel
 
 class IntentClassifier(private val context: Context) {
 
     companion object {
         private const val TAG = "IntentClassifier"
-        private const val MODEL_PATH      = "nlu/egybert_tiny_int8.tflite"
         private const val INTENT_MAP_PATH = "commands/dilink_intent_map.json"
         private const val CONFIDENCE_THRESHOLD = 0.7f
     }
 
-    private var interpreter: Interpreter? = null
     private val intentPatterns   = mutableMapOf<String, MutableList<IntentPattern>>()
     private val entityExtractors = mutableMapOf<String, EntityExtractor>()
     private var isInitialized    = false
@@ -29,15 +23,9 @@ class IntentClassifier(private val context: Context) {
     suspend fun initialize() = withContext(Dispatchers.IO) {
         try {
             loadIntentPatterns()
-            try {
-                interpreter = Interpreter(loadModelFile())
-                Log.d(TAG, "ML model loaded")
-            } catch (e: Exception) {
-                Log.w(TAG, "ML model unavailable, rule-based only: ${e.message}")
-            }
             setupEntityExtractors()
             isInitialized = true
-            Log.i(TAG, "✅ Intent classifier initialized")
+            Log.i(TAG, "✅ Intent classifier initialized (rule-based)")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to initialize intent classifier", e)
             throw e
@@ -57,17 +45,6 @@ class IntentClassifier(private val context: Context) {
         matchByRules(normalizedText)
             ?.takeIf { it.confidence >= CONFIDENCE_THRESHOLD }
             ?.also { Log.i(TAG, "✅ Rule match: ${it.action} (${it.confidence})") }
-
-        // FIX #2 — original called classifyWithML() using `interpreter?.let { mlResult -> ... }`
-        // but named the lambda parameter `mlResult` instead of the interpreter, then called
-        // classifyWithML() ignoring the interpreter entirely. The let block was dead code.
-        // Corrected to call classifyWithML only when interpreter is non-null.
-            ?: interpreter?.let { classifyWithML(normalizedText) }
-                ?.takeIf { it.confidence >= CONFIDENCE_THRESHOLD }
-                ?.also { Log.i(TAG, "✅ ML match: ${it.action} (${it.confidence})") }
-
-            ?: matchByFuzzy(normalizedText)
-                ?.also { Log.i(TAG, "⚠️ Fuzzy match: ${it.action} (${it.confidence})") }
 
             ?: IntentResult(
                 action       = "UNKNOWN",
@@ -191,13 +168,6 @@ class IntentClassifier(private val context: Context) {
     }
 
     // ──────────────────────────────────────────────────────────────────────────
-    // ML / fuzzy stubs
-    // ──────────────────────────────────────────────────────────────────────────
-
-    private fun classifyWithML(text: String): IntentResult? = null   // TODO: implement
-    private fun matchByFuzzy(text: String):   IntentResult? = null   // TODO: implement
-
-    // ──────────────────────────────────────────────────────────────────────────
     // Asset loading
     // ──────────────────────────────────────────────────────────────────────────
 
@@ -283,16 +253,6 @@ class IntentClassifier(private val context: Context) {
 
         entityExtractors["number"] = EntityExtractor { text, _ ->
             Regex("\\d+").find(text)?.value
-        }
-    }
-
-    // FIX #6 — loadModelFile() opened a FileInputStream but never closed it,
-    // leaking the file descriptor. The MappedByteBuffer holds the mapping so
-    // we can safely close the stream after map() returns.
-    private fun loadModelFile(): MappedByteBuffer {
-        val afd = context.assets.openFd("models/$MODEL_PATH")
-        return FileInputStream(afd.fileDescriptor).use { fis ->
-            fis.channel.map(FileChannel.MapMode.READ_ONLY, afd.startOffset, afd.declaredLength)
         }
     }
 

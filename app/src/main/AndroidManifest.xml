@@ -54,6 +54,21 @@
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
         android:usesPermissionFlags="neverForLocation" />
 
+    <!-- ──────────────────────────────────────────────────────────────────────
+         Custom signature-level permission to guard QuickActionsWidget.
+         Only apps signed with the same key as Binti can send broadcasts
+         to the widget receiver. This prevents a malicious app on the head
+         unit from triggering voice listening / AC toggle / navigation
+         via an implicit broadcast to com.binti.dilink.action.*.
+
+         The app declares and uses its own permission — signature protection
+         means it's automatically granted to itself at install time.
+         ────────────────────────────────────────────────────────────────────── -->
+    <permission
+        android:name="com.binti.dilink.permission.WIDGET_ACTION"
+        android:protectionLevel="signature" />
+    <uses-permission android:name="com.binti.dilink.permission.WIDGET_ACTION" />
+
     <!-- Hardware features — all optional for car head unit compatibility -->
     <uses-feature android:name="android.hardware.microphone"      android:required="false" />
     <uses-feature android:name="android.hardware.location.gps"    android:required="false" />
@@ -189,19 +204,26 @@
             </intent-filter>
         </receiver>
 
-        <!-- Quick Actions Widget -->
+        <!-- Quick Actions Widget
+             ──────────────────────────────────────────────────────────────────
+             Guarded with com.binti.dilink.permission.WIDGET_ACTION (signature-
+             level). The system AppWidgetService holds all permissions and can
+             still deliver APPWIDGET_UPDATE. Widget button taps go through
+             PendingIntent.getBroadcast() which fires with the creating app's
+             identity (binti itself, which holds its own signature permission).
+
+             The custom com.binti.dilink.action.* actions are NOT in the
+             intent-filter — this prevents malicious apps from triggering
+             widget actions via implicit broadcast. PendingIntents use explicit
+             component targeting (Intent(context, QuickActionsWidget::class.java))
+             so they reach onReceive without needing a manifest filter entry. -->
         <receiver
             android:name=".ui.QuickActionsWidget"
             android:exported="true"
+            android:permission="com.binti.dilink.permission.WIDGET_ACTION"
             android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="com.binti.dilink.action.START_VOICE" />
-                <action android:name="com.binti.dilink.action.TOGGLE_AC" />
-                <action android:name="com.binti.dilink.action.NAVIGATE_HOME" />
-                <action android:name="com.binti.dilink.action.MEDIA_PLAY" />
-                <action android:name="com.binti.dilink.action.NEXT_TRACK" />
-                <action android:name="com.binti.dilink.action.TOGGLE_FAVORITE" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"

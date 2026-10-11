@@ -33,7 +33,15 @@ class QuickActionsWidget : AppWidgetProvider() {
     companion object {
         private const val TAG = "QuickActionsWidget"
 
-        // Action constants
+        // Action constants — these are sent via PendingIntent.getBroadcast()
+        // with explicit component targeting (Intent(context, QuickActionsWidget
+        // ::class.java)). They are NOT declared in the manifest intent-filter,
+        // so a malicious app cannot trigger them via implicit broadcast.
+        //
+        // The receiver is guarded by com.binti.dilink.permission.WIDGET_ACTION
+        // (signature-level) — only apps signed with the same key as Binti can
+        // send broadcasts to this receiver. The system AppWidgetService holds
+        // all permissions and can still deliver APPWIDGET_UPDATE.
         const val ACTION_START_VOICE = "com.binti.dilink.action.START_VOICE"
         const val ACTION_TOGGLE_AC = "com.binti.dilink.action.TOGGLE_AC"
         const val ACTION_NAVIGATE_HOME = "com.binti.dilink.action.NAVIGATE_HOME"

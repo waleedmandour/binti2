@@ -1,10 +1,17 @@
 # License analysis for Binti
 
+> **Update (v2.3.1-beta):** The migration to Apache License 2.0 is
+> **complete**. The `LICENSE` file now contains the Apache 2.0 text, the
+> `NOTICE` file preserves MIT-licensed attributions, and source files carry
+> `SPDX-License-Identifier: Apache-2.0` headers. The analysis below is
+> retained for historical context and for anyone considering future license
+> changes.
+
 ## Current state
 
-Binti is currently licensed under the **MIT License** (see [`LICENSE`](LICENSE)).
-This document analyzes whether MIT is the best choice or whether another
-license would be more suitable given the project's characteristics.
+Binti is licensed under the **Apache License 2.0** (see [`LICENSE`](LICENSE)).
+The migration from MIT was completed in v2.3.1-beta. This document analyzes
+why Apache 2.0 was chosen and retains the comparison for future reference.
 
 ## Project characteristics that matter for licensing
 
@@ -177,7 +184,7 @@ If you decide to switch, the steps are:
 
 ## Summary
 
-| Criterion | MIT (current) | Apache 2.0 (recommended) |
+| Criterion | MIT (pre-v2.3.1) | Apache 2.0 (current) |
 |-----------|:---:|:---:|
 | Patent protection | ❌ | ✅ |
 | Android ecosystem norm | ⚠️ | ✅ |
@@ -185,10 +192,8 @@ If you decide to switch, the steps are:
 | AppGallery-compatible | ✅ | ✅ |
 | MIT dep compatible | ✅ | ✅ |
 | Trademark exclusion explicit | ❌ | ✅ |
-| Effort to switch | — | Small (1-2 hours) |
+| Effort to switch | — | ✅ Completed in v2.3.1-beta |
 
-**Recommendation: Switch to Apache License 2.0.** The patent grant and
-stronger attribution protection are worth the small switching cost for a
-project operating in the vehicle technology space. If you prefer to stay
-with MIT, that's also a defensible choice — but Apache 2.0 is the better
-long-term fit.
+**Status: Apache License 2.0 — migration completed in v2.3.1-beta.** The
+patent grant and stronger attribution protection are the primary benefits
+for a project operating in the vehicle technology space.

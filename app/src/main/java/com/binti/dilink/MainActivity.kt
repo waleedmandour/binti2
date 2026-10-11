@@ -15,13 +15,17 @@ import android.content.res.ColorStateList
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.Uri
+import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.text.Editable
+import android.text.InputType
 import android.text.TextWatcher
 import android.util.Log
 import android.view.View
+import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -309,43 +313,173 @@ class MainActivity : AppCompatActivity() {
      * Settings app doesn't expose the Accessibility Settings screen.
      * This is common on BYD DiLink 3 where the OEM settings app is
      * heavily customized and may omit the standard accessibility page.
+     *
+     * The ADB target IP is auto-detected from the WiFi gateway (DhcpInfo)
+     * and displayed in an editable EditText so the user can override it
+     * if the detected address is wrong. This replaces the previous
+     * hardcoded `192.168.10.10:5555` which only worked on one specific
+     * network configuration.
      */
     private fun showManualAccessibilityInstructions() {
         val serviceName = "$packageName/com.binti.dilink.dilink.DiLinkAccessibilityService"
-        val instructions = """
-            هذا النظام (DiLink 3) لا يعرض شاشة إعدادات الوصول القياسية.
+        val detectedIp = detectAdbTargetIp()
 
-            لإ تفعيل خدمة الوصول، استخدم أوامر ADB التالية من جهاز كمبيوتر متصل بنفس شبكة WiFi:
+        // Editable IP field — defaults to the detected gateway IP, user can override
+        val ipInput = EditText(this).apply {
+            inputType = InputType.TYPE_CLASS_TEXT
+            setText(detectedIp)
+            hint = "IP:PORT (e.g. 192.168.1.100:5555)"
+            setSingleLine(true)
+            val pad = (16 * resources.displayMetrics.density).toInt()
+            setPadding(pad, pad, pad, pad)
+        }
+        val inputContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            val pad = (16 * resources.displayMetrics.density).toInt()
+            setPadding(pad, 0, pad, 0)
+            addView(ipInput)
+        }
 
-            1️⃣ adb connect 192.168.10.10:5555
+        // Build the instructions with a placeholder that gets substituted on "Got it"
+        fun buildInstructions(ip: String): String {
+            val safeIp = if (ip.isBlank()) "<HEAD_UNIT_IP>:5555" else ip
+            return """
+                هذا النظام (DiLink 3) لا يعرض شاشة إعدادات الوصول القياسية.
 
-            2️⃣ adb shell settings put secure accessibility_enabled 1
+                لتفعيل خدمة الوصول، استخدم أوامر ADB التالية من جهاز كمبيوتر متصل بنفس شبكة WiFi:
 
-            3️⃣ adb shell settings put secure enabled_accessibility_services $serviceName
+                1️⃣ adb connect $safeIp
 
-            ثم أعد فتح تطبيق "يا بنتي" وتحقق من حالة الخدمة.
+                2️⃣ adb shell settings put secure accessibility_enabled 1
 
-            ―――――――――――――――――――――――――――――――――――
+                3️⃣ adb shell settings put secure enabled_accessibility_services $serviceName
 
-            This DiLink 3 head unit does not expose the standard Accessibility Settings screen.
+                ثم أعد فتح تطبيق "يا بنتي" وتحقق من حالة الخدمة.
 
-            To enable the accessibility service, run these ADB commands from a computer on the same WiFi:
+                ―――――――――――――――――――――――――――――――――――
 
-            1️⃣ adb connect 192.168.10.10:5555
+                This DiLink 3 head unit does not expose the standard Accessibility Settings screen.
 
-            2️⃣ adb shell settings put secure accessibility_enabled 1
+                To enable the accessibility service, run these ADB commands from a computer on the same WiFi:
 
-            3️⃣ adb shell settings put secure enabled_accessibility_services $serviceName
+                1️⃣ adb connect $safeIp
 
-            Then reopen Binti and check the service status.
-        """.trimIndent()
+                2️⃣ adb shell settings put secure accessibility_enabled 1
+
+                3️⃣ adb shell settings put secure enabled_accessibility_services $serviceName
+
+                Then reopen Binti and check the service status.
+
+                💡 The IP above was auto-detected from your WiFi gateway. If it's wrong, edit it and copy the command with your correct IP.
+            """.trimIndent()
+        }
+
+        // We use a TextView-like approach: show the instructions in the dialog body,
+        // with the editable IP above it. On "Copy commands" we regenerate with the
+        // user's edited IP and copy to clipboard.
+        val messageView = android.widget.TextView(this).apply {
+            text = buildInstructions(detectedIp)
+            setTextIsSelectable(true)
+            val pad = (16 * resources.displayMetrics.density).toInt()
+            setPadding(pad, pad, pad, pad)
+            textSize = 13f
+        }
+
+        val dialogContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(inputContainer)
+            addView(messageView)
+        }
 
         MaterialAlertDialogBuilder(this)
             .setTitle("إعدادات الوصول غير متاحة")
-            .setMessage(instructions)
-            .setPositiveButton("فهمت") { _, _ -> }
+            .setView(dialogContainer)
+            .setPositiveButton("فهمت") { _, _ ->
+                // Optionally copy the final commands to clipboard with the user's IP
+                val finalIp = ipInput.text.toString().trim()
+                if (finalIp.isNotBlank() && finalIp != detectedIp) {
+                    copyAdbCommandsToClipboard(finalIp, serviceName)
+                }
+            }
+            .setNeutralButton("نسخ الأوامر") { _, _ ->
+                val finalIp = ipInput.text.toString().trim().ifBlank { detectedIp }
+                copyAdbCommandsToClipboard(finalIp, serviceName)
+            }
             .setCancelable(true)
             .show()
+    }
+
+    /**
+     * Auto-detect the most likely ADB target IP for the head unit.
+     *
+     * Strategy:
+     * 1. Read the WiFi gateway from [WifiManager.DhcpInfo] — on a BYD head
+     *    unit, the head unit itself is typically the gateway or sits at
+     *    gateway+1 on the same /24 subnet.
+     * 2. If DhcpInfo is unavailable (no WiFi), fall back to the loopback
+     *    `127.0.0.1:5555` — this works when ADB is enabled over USB and
+     *    the user connects the head unit to a laptop via USB.
+     *
+     * The returned string is a best-effort default; the user can always
+     * edit it in the dialog.
+     */
+    @Suppress("DEPRECATION") // DhcpInfo is deprecated but still the only way to get the gateway on API 26+
+    private fun detectAdbTargetIp(): String {
+        return try {
+            val wifiManager = applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager
+            val dhcpInfo = wifiManager?.dhcpInfo
+            if (dhcpInfo != null && dhcpInfo.gateway != 0) {
+                val gatewayIp = intToIpAddress(dhcpInfo.gateway)
+                // The head unit is usually at the gateway IP or gateway+1.
+                // We default to the gateway IP since on BYD head units acting
+                // as WiFi hosts, the head unit IS the gateway. If the user is
+                // on a phone hotspot, the head unit is a client and the user
+                // will need to find its IP in the head unit's WiFi settings.
+                "$gatewayIp:5555"
+            } else {
+                // No WiFi gateway — fall back to loopback (USB ADB)
+                "127.0.0.1:5555"
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not detect WiFi gateway IP: ${e.message}")
+            "127.0.0.1:5555"
+        }
+    }
+
+    /**
+     * Convert an integer IP address (as returned by [WifiManager.DhcpInfo])
+     * to a dotted-quad string.
+     */
+    private fun intToIpAddress(ip: Int): String {
+        return String.format(
+            "%d.%d.%d.%d",
+            ip and 0xff,
+            (ip shr 8) and 0xff,
+            (ip shr 16) and 0xff,
+            (ip shr 24) and 0xff
+        )
+    }
+
+    /**
+     * Copy the three ADB commands to the system clipboard so the user can
+     * paste them into a terminal on their computer.
+     */
+    @Suppress("DEPRECATION") // ClipboardManager#setText is deprecated but simplest for plain text
+    private fun copyAdbCommandsToClipboard(ip: String, serviceName: String) {
+        val safeIp = if (ip.isBlank()) "127.0.0.1:5555" else ip
+        val commands = """
+            adb connect $safeIp
+            adb shell settings put secure accessibility_enabled 1
+            adb shell settings put secure enabled_accessibility_services $serviceName
+        """.trimIndent()
+
+        try {
+            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+            clipboard.setPrimaryClip(android.content.ClipData.newPlainText("ADB Commands", commands))
+            Toast.makeText(this, "تم نسخ الأوامر ✅", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not copy to clipboard: ${e.message}")
+        }
     }
 
     private fun loadSettings() {

@@ -620,18 +620,27 @@ class DiLinkAccessibilityService : AccessibilityService() {
         val partial = if (root == null) {
             VehicleSnapshot(source = DataSource.ACCESSIBILITY)
         } else {
+            // FIX: Use the detected model's ID set instead of always defaulting
+            // to Yuan Plus / Atto 3. This unlocks Dolphin / Seal / Han / Tang
+            // support (their IDs differ from Yuan Plus). If the model is unknown,
+            // forModel() falls back to YuanPlus2023 with isConfirmed=false.
+            val modelConfig = BYDModels.forModel(detectedModel)
+            if (!modelConfig.isConfirmed) {
+                Log.w(TAG, "⚠️ Using unconfirmed ID set for model '${modelConfig.modelName}' " +
+                    "(detected: '$detectedModel') — some fields may not parse correctly on this vehicle")
+            }
             val lookup = VehicleSnapshotParser.AccessibilityLookup(root)
             val fallbacks = mapOf(
-                BYDModels.YuanPlus2023.ID_AC_POWER to BYDModels.FallbackIDs.AC_POWER
+                modelConfig.ids.ID_AC_POWER to BYDModels.FallbackIDs.AC_POWER
             )
             VehicleSnapshotParser.parse(
-                ids         = BYDModels.YuanPlus2023,
+                ids         = modelConfig.ids,
                 lookup      = lookup,
                 fallbackIds = fallbacks
             )
         }
         vehicleDataRepository.publishAccessibility(partial)
-        Log.d(TAG, "📊 Published Tier 1 snapshot: battery=${partial.batteryPercent} range=${partial.estimatedRangeKm} acOn=${partial.acOn}")
+        Log.d(TAG, "📊 Published Tier 1 snapshot (model=$detectedModel): battery=${partial.batteryPercent} range=${partial.estimatedRangeKm} acOn=${partial.acOn}")
     }
 
     /**

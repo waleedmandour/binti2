@@ -1,12 +1,12 @@
 {
-  "version": "2.3.3-beta",
-  "last_updated": "2026-08-01",
-  "min_app_version": "2.3.3-beta",
+  "version": "2.6.0-beta",
+  "last_updated": "2026-10-11",
+  "min_app_version": "2.6.0-beta",
   "models": [
     {
       "id": "asr_arabic",
       "name": "Arabic ASR (Vosk MGB2)",
-      "description": "Modern Standard Arabic speech recognition - REQUIRED model for the app to function. Also used for wake word detection via grammar constraint.",
+      "description": "Egyptian Arabic speech recognition — REQUIRED model for the app to function. Also used for wake word detection via grammar constraint.",
       "file": "vosk-model-ar-mgb2-0.4.zip",
       "download_url": "https://alphacephei.com/vosk/models/vosk-model-ar-mgb2-0.4.zip",
       "size_mb": 318,
@@ -14,7 +14,7 @@
       "required": true,
       "extract": true,
       "relative_path": "models",
-      "notes": "Downloaded via Android DownloadManager from GitHub Releases. Recommend WiFi for download. Used for both ASR and wake word detection.",
+      "notes": "Downloaded via Android DownloadManager from alphacephei.com. Recommend WiFi for download. Used for both ASR and wake word detection.",
       "source": "https://alphacephei.com/vosk/models",
       "wake_word_support": {
         "method": "vosk_grammar",
@@ -23,60 +23,10 @@
       }
     },
     {
-      "id": "wake_word",
-      "name": "Wake Word Detector",
-      "description": "Detects 'يا بنتي' wake word using TensorFlow Lite model (optional - Vosk grammar-based detection is used by default)",
-      "file": "ya_binti_detector.tflite",
-      "download_url": "",
-      "size_mb": 5,
-      "sha256": "",
-      "required": false,
-      "extract": false,
-      "relative_path": "models/wake",
-      "fallback": "Vosk grammar-based wake word detection is used if this model is unavailable"
-    },
-    {
-      "id": "nlu_classifier",
-      "name": "Intent Classifier (EgyBERT)",
-      "description": "Egyptian Arabic intent classification (optional - fallback to rule-based matching)",
-      "file": "egybert_tiny_int8.onnx",
-      "download_url": "",
-      "size_mb": 25,
-      "sha256": "",
-      "required": false,
-      "extract": false,
-      "relative_path": "models/nlu",
-      "training_info": {
-        "base_model": "aubmindlab/bert-base-arabertv02",
-        "quantization": "int8",
-        "labels": ["AC_CONTROL", "NAVIGATION", "MEDIA", "PHONE", "INFO", "SYSTEM", "STATION"]
-      },
-      "fallback": "Rule-based intent matching is used if this model is unavailable"
-    },
-    {
-      "id": "tts_voice",
-      "name": "Egyptian TTS Voice (Coqui VITS)",
-      "description": "Egyptian female voice for text-to-speech — Coqui VITS neural model (optional - fallback to Android TTS). Higher quality than Android TTS but larger download.",
-      "file": "ar-eg-female.zip",
-      "download_url": "",
-      "size_mb": 80,
-      "sha256": "",
-      "required": false,
-      "extract": true,
-      "relative_path": "voices",
-      "training_info": {
-        "framework": "Coqui TTS",
-        "voice_type": "female",
-        "dialect": "Egyptian Arabic",
-        "sample_rate": 22050
-      },
-      "fallback": "Android TTS or Huawei ML Kit TTS is used if this model is unavailable"
-    },
-    {
       "id": "tts_sherpa_arabic",
       "name": "Neural Arabic TTS (Sherpa-ONNX VITS)",
       "description": "High-quality neural Arabic text-to-speech using sherpa-onnx with VITS/MMS model. 100% offline, significantly better voice quality than Android TTS. ~65 MB download. Recommended for best Egyptian Arabic voice experience.",
-      "file": "vits-mms-ara.zip",
+      "file": "vits-mms-ara.tar.bz2",
       "download_url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-mms-ara.tar.bz2",
       "size_mb": 65,
       "sha256": "",
@@ -91,7 +41,7 @@
         "engine": "sherpa-onnx"
       },
       "fallback": "Android TTS or Huawei ML Kit TTS is used if this model is unavailable",
-      "notes": "Sherpa-ONNX is a next-generation Kaldi project providing 100% offline neural TTS. The MMS (Massively Multilingual Speech) Arabic model produces natural-sounding Arabic speech. Download and select in Settings → TTS Engine."
+      "notes": "Sherpa-ONNX is a next-generation Kaldi project providing 100% offline neural TTS. The MMS (Massively Multilingual Speech) Arabic model produces natural-sounding Arabic speech. Download and select in Settings → TTS Engine. NOTE: The sherpa-onnx library JAR must be manually placed in app/libs/ — see docs/MODEL_SETUP_GUIDE.md."
     },
     {
       "id": "intent_map",
@@ -104,18 +54,20 @@
       "required": true,
       "extract": false,
       "relative_path": "assets/commands",
-      "notes": "Included in app assets, no download needed"
+      "notes": "Included in app assets, no download needed. The rule-based intent classifier uses this file for weighted keyword matching."
     }
   ],
   "total_size_mb": 318,
   "required_models": {
-    "asr_arabic": "Speech recognition - the core functionality",
-    "intent_map": "Command patterns - bundled with app"
+    "asr_arabic": "Speech recognition — the core functionality",
+    "intent_map": "Command patterns — bundled with app"
   },
   "optional_models": {
-    "wake_word": "Uses Vosk grammar-based detection as fallback",
-    "nlu_classifier": "Uses rule-based intent matching as fallback",
-    "tts_voice": "Uses Android TTS or Huawei ML Kit TTS as fallback"
+    "tts_sherpa_arabic": "Neural Arabic TTS via Sherpa-ONNX (requires manual library setup)"
+  },
+  "removed_models": {
+    "wake_word_tflite": "Removed in v2.6.0-beta — wake word detection now uses Vosk grammar exclusively (WakeWordDetectorVosk). The TFLite-based WakeWordDetector.kt was deleted as dead code.",
+    "nlu_classifier_onnx": "Removed in v2.6.0-beta — intent classification is now purely rule-based (IntentClassifier.kt). The classifyWithML() and matchByFuzzy() stubs were removed; the ONNX Runtime Maven dependency was removed."
   },
   "hosting": {
     "provider": "alphacephei.com (official Vosk models)",

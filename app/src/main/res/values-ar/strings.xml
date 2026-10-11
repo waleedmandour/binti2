@@ -192,4 +192,40 @@
     <string name="advanced_telemetry_status_granted">حالة الموافقة: مُفعّل منذ %1$s</string>
     <string name="advanced_telemetry_status_revoked">حالة الموافقة: أوقفته أنت</string>
     <string name="advanced_telemetry_attribution">يعتمد هذا الإصدار على بحث مرجعي منشور بترخيص MIT من مستودع github.com/wheregoes/byd-apps. انظر ملف NOTICE للتفاصيل.</string>
+
+    <!-- ────────────────────────────────────────────────────────────────────
+         Strings that were previously missing from values-ar/ — they fell
+         back to the vocalized Egyptian Arabic default (values/). Added
+         plain MSA/Egyptian equivalents here for locale correctness.
+         ──────────────────────────────────────────────────────────────────── -->
+
+    <!-- Accessibility service label (shown in Android Accessibility Settings) -->
+    <string name="accessibility_service_label">يا بنتي — مساعد BYD</string>
+
+    <!-- UI Headers -->
+    <string name="header_status">حالة المساعد الحالية</string>
+    <string name="header_permissions">صلاحيات النظام المطلوبة</string>
+    <string name="header_settings">الإعدادات الشخصية</string>
+    <string name="header_actions">أدوات التحكم السريع</string>
+
+    <!-- Service States — state_off is used when the foreground service is stopped -->
+    <string name="state_off">المساعد متوقف</string>
+
+    <!-- Model Download — update_models is the button label for re-downloading -->
+    <string name="update_models">تحديث الملفات</string>
+
+    <!-- Model Download — download_error is the toast format for download failures.
+         %1$s = error message. Note: values-ar already has download_failed (a
+         different string used in a different context); download_error is a
+         separate key referenced by MainActivity.kt for error toasts. -->
+    <string name="download_error">خطأ في التحميل: %1$s</string>
+
+    <!-- Usage Instructions — Egyptian colloquial guide shown in the usage menu.
+         This is intentionally Egyptian Arabic even in the values-ar locale
+         because the app's voice assistant is Egyptian-dialect by design. -->
+    <string name="usage_instruction_egyptian">بص يا فندم، الموضوع سهل خالص.. نادي عليا أول "يا بنتي"، وبعدين اطلب اللي يجي على بالك.. زي مثلًا "سقّعي العربية شوية"، "روّحيني البيت"، أو حتى "كلّمي الحاجة". أنا هنا عشان أسهّلك السكة، توكّل على الله وانت مطمّن!</string>
+
+    <!-- Diagnostics — share button on the Vehicle State debug screen -->
+    <string name="diagnostics_share">مشاركة تقرير التشخيص الكامل</string>
+
 </resources>

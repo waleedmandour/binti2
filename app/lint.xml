@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Binti — Android Lint configuration
+
+    Phase 0: lint runs but does NOT abort the build (abortOnError = false in
+    app/build.gradle.kts). The goal is to surface issues without blocking
+    development. Phase 4 will tighten the most important severities to error.
+
+    Run: ./gradlew :app:lintStoreDebug :app:lintEnthusiastDebug
+-->
+<lint>
+
+    <!-- ────────────────────────────────────────────────────────────────────
+         Severity overrides
+         ──────────────────────────────────────────────────────────────────── -->
+
+    <!-- Translations: the project ships vocalized Egyptian Arabic (default)
+         and plain Arabic (values-ar). Missing translations fall back to the
+         default, so MissingTranslation is a warning, not an error. -->
+    <issue id="MissingTranslation" severity="warning" />
+
+    <!-- Duplicate strings across locales are intentional (some keys are
+         identical in vocalized and plain Arabic). -->
+    <issue id="DuplicateStrings" severity="informational" />
+
+    <!-- ────────────────────────────────────────────────────────────────────
+         Disabled checks (not applicable to this project)
+         ──────────────────────────────────────────────────────────────────── -->
+
+    <!-- The app targets BYD DiLink head units which run Android 8-13 and are
+         landscape-only. We don't need tablet/xlarge layout variants. -->
+    <issue id="MissingDefaultResource" severity="informational" />
+
+    <!-- The app intentionally uses a foreground service for voice assistant
+         functionality. The GradleConfig for foregroundServiceType is set
+         correctly in the manifest. -->
+    <issue id="ForegroundServiceType" severity="informational" />
+
+    <!-- The app communicates with BYD system packages via explicit intents.
+         The <queries> block in the manifest declares all needed package
+         visibility. -->
+    <issue id="ProtectedPermissions" severity="informational" />
+
+    <!-- ────────────────────────────────────────────────────────────────────
+         AppGallery / BYD head unit compatibility
+         ──────────────────────────────────────────────────────────────────── -->
+
+    <!-- targetSdk is intentionally 33 (not 34/35) for DiLink 3 compatibility.
+         This is a deliberate decision documented in the v2.5.0-beta changelog. -->
+    <issue id="OldTargetApi" severity="informational" />
+
+    <!-- The app uses hardcoded IP 127.0.0.1 for local ADB (enthusiast flavor,
+         not yet implemented) and the gateway IP for DiLink 3 ADB instructions.
+         Hardcoded IPs are intentional for the local ADB loopback. -->
+    <issue id="HardcodedText" severity="warning" />
+
+    <!-- ────────────────────────────────────────────────────────────────────
+         Security — keep these at warning so they surface in reports but
+         don't block the build. Phase 4 will promote the critical ones.
+         ──────────────────────────────────────────────────────────────────── -->
+
+    <issue id="ExportedReceiver" severity="warning" />
+    <issue id="ExportedService" severity="warning" />
+    <issue id="SetJavaScriptEnabled" severity="warning" />
+    <issue id="AllowBackup" severity="warning" />
+
+</lint>

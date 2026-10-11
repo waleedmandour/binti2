@@ -7,7 +7,125 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [2.3.3-beta] - 2026-08-01
+## [2.6.0-beta] - 2026-10-11
+
+### 🧹 Phase 0 — Stabilize & Cleanup
+
+This release is the first step of the comprehensive refactor plan. It deletes
+~2,440 lines of dead code, removes unused dependencies (~10 MB APK size
+reduction), hardens the widget security, fixes the hardcoded ADB IP, wires
+`BYDModels.forModel()` into the runtime snapshot parser, and adds engineering
+fundamentals (version catalog, detekt, lint, editorconfig).
+
+#### Deleted — Dead Code (~2,440 lines)
+- **`voice/WakeWordDetector.kt`** (328 lines) — TFLite-based wake-word
+  detector; never instantiated. `BintiService` uses `WakeWordDetectorVosk`.
+- **`utils/OfflineFallbackManager.kt`** (516 lines) — never instantiated.
+- **`utils/VoiceProfileManager.kt`** + data classes (636 lines) — never
+  instantiated; orphan `dialog_user_profile.xml` also deleted.
+- **`res/layout/card_permission_notifications.xml`** (54 lines) — orphan
+  layout, never inflated.
+- **`scripts/train_wake_word.py`** (350 lines) — targeted the deleted
+  TFLite detector.
+- **`README_UPDATE.md`** (417 lines) — stale, referred to v2.0.0 URLs.
+
+#### Removed — Unused Dependencies (~10 MB APK savings)
+- `com.squareup.okhttp3:okhttp:4.12.0` — declared but never used in any
+  source file (verified by grep). `StationManager` uses `HttpURLConnection`.
+- `org.tensorflow:tensorflow-lite:2.14.0` + `tensorflow-lite-support:0.4.4`
+  + `tensorflow-lite-gpu:2.14.0` — only used by the deleted
+  `WakeWordDetector.kt` and the stubbed `IntentClassifier.classifyWithML()`.
+- `com.microsoft.onnxruntime:onnxruntime-android:1.16.3` — only referenced
+  in dead code (`OfflineFallbackManager`) and `model_config.json` config
+  text. Sherpa-ONNX TTS loads via reflection from a manually-placed JAR,
+  not this Maven dependency.
+
+#### Changed — IntentClassifier Cleanup
+- Removed `classifyWithML()` and `matchByFuzzy()` stub methods (always
+  returned `null` with `// TODO: implement`).
+- Removed the `Interpreter` field, `loadModelFile()` function, and
+  `org.tensorflow.lite.Interpreter` import.
+- The classifier is now **purely rule-based**, which is sufficient for the
+  Egyptian-Arabic intent vocabulary. The README's "EgyBERT-tiny (optional)"
+  claim is removed — the ML classifier was aspirational and never trained.
+
+#### Security — QuickActionsWidget Hardening
+- Declared custom signature-level permission
+  `com.binti.dilink.permission.WIDGET_ACTION` in `AndroidManifest.xml`.
+- Guarded the `QuickActionsWidget` receiver with the permission — only
+  apps signed with the same key as Binti can send broadcasts to it.
+- Removed `com.binti.dilink.action.*` actions from the manifest
+  intent-filter. PendingIntents use explicit component targeting
+  (`Intent(context, QuickActionsWidget::class.java)`), so they reach
+  `onReceive` without needing a manifest filter entry. This prevents
+  malicious apps from triggering widget actions via implicit broadcast.
+
+#### Fixed — Hardcoded ADB IP
+- Replaced the hardcoded `192.168.10.10:5555` in the DiLink 3 ADB
+  instructions dialog with auto-detection of the WiFi gateway IP
+  (`WifiManager.DhcpInfo`).
+- The dialog now shows an **editable EditText** pre-filled with the
+  detected IP, so the user can override it if the detection is wrong.
+- Added a "نسخ الأوامر" (Copy Commands) button that copies the three
+  ADB commands with the user's IP to the clipboard.
+- Falls back to `127.0.0.1:5555` (loopback for USB ADB) when WiFi is
+  unavailable.
+
+#### Fixed — BYDModels.forModel() Wiring
+- `DiLinkAccessibilityService.publishSnapshotFromCurrentScreen()` now calls
+  `BYDModels.forModel(detectedModel)` instead of always passing
+  `BYDModels.YuanPlus2023`. This **unlocks Dolphin / Seal / Han / Tang
+  support** — their resource IDs differ from Yuan Plus, and were previously
+  never used at runtime despite being defined in `BYDModels.kt`.
+- Logs a warning when using an unconfirmed ID set (`isConfirmed = false`)
+  so developers know which models need hardware verification.
+
+#### Added — Engineering Fundamentals
+- **`gradle/libs.versions.toml`** — Gradle version catalog. All dependency
+  coordinates now live in one place instead of being hardcoded in
+  `app/build.gradle.kts`. Migrated `app/build.gradle.kts` and root
+  `build.gradle.kts` to use `libs.*` accessors.
+- **`.editorconfig`** — consistent coding style (4-space indent, 140-char
+  max line, UTF-8, LF line endings).
+- **`detekt.yml`** + detekt Gradle plugin — static analysis. Runs with
+  `ignoreFailures = true` in Phase 0 (surfaces issues without blocking
+  the build). Phase 4 will tighten this to `false`.
+- **`app/lint.xml`** — Android lint configuration with project-specific
+  severity overrides (MissingTranslation as warning, OldTargetApi
+  informational since `targetSdk=33` is intentional for DiLink 3).
+- **`ForbiddenImport` detekt rule** — rejects `org.tensorflow.*`,
+  `com.microsoft.onnxruntime.*`, and `okhttp3.*` imports to prevent
+  the removed dependencies from being re-introduced.
+
+#### Changed — Dependency Version Bumps
+- `androidx.core:core-ktx` 1.12.0 → 1.15.0
+- `androidx.appcompat:appcompat` 1.6.1 → 1.7.0
+- `androidx.lifecycle:lifecycle-*` 2.7.0 → 2.8.7
+- `androidx.constraintlayout` 2.1.4 → 2.2.0
+- `com.google.android.material:material` 1.11.0 → 1.12.0
+- `org.jetbrains.kotlinx:kotlinx-coroutines-*` 1.7.3 → 1.9.0
+- `org.jetbrains.kotlinx:kotlinx-serialization-json` 1.6.2 → 1.7.3
+- `com.google.code.gson:gson` 2.10.1 → 2.11.0
+- `targetSdk` remains **33** (intentional, for DiLink 3 compatibility).
+- `compileSdk` remains **34** (will bump to 35 in Phase 2).
+- Kotlin remains **2.0.21**, AGP remains **8.7.3** (will bump in Phase 2
+  after multi-module split is stable).
+
+#### Updated — Documentation
+- **`docs/MODEL_SETUP_GUIDE.md`** — rewritten to describe alphacephei.com
+  hosting and the correct ~318 MB total (was: Google Drive hosting and
+  ~1.3 GB). Removed references to the deleted `egybert_tiny_int8.onnx`
+  and `ya_binti_detector.tflite` models.
+- **`docs/LICENSE-ANALYSIS.md`** — updated to reflect that the Apache 2.0
+  migration is complete (was: "Binti is currently licensed under MIT").
+
+#### Version Bump
+- `versionCode` 13 → 14
+- `versionName` "2.5.0-beta" → "2.6.0-beta"
+
+---
+
+## [2.5.0-beta] - 2026-08-08
 
 ### 🐛 Critical Fix: Accessibility Service Crash on DiLink 3
 

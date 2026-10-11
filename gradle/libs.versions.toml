@@ -1,0 +1,90 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Binti — Gradle version catalog
+#
+# Centralized dependency versions. Add new dependencies here, not in
+# build.gradle.kts. Keep versions pinned for reproducible builds.
+# ──────────────────────────────────────────────────────────────────────────────
+
+[versions]
+# Build tooling
+agp = "8.7.3"
+kotlin = "2.0.21"
+detekt = "1.23.7"
+
+# AndroidX
+coreKtx = "1.15.0"
+appcompat = "1.7.0"
+lifecycle = "2.8.7"
+constraintlayout = "2.2.0"
+preference = "1.2.1"
+gridlayout = "1.0.0"
+
+# Material Design
+material = "1.12.0"
+
+# Coroutines
+coroutines = "1.9.0"
+
+# Serialization
+kotlinxSerialization = "1.7.3"
+
+# Huawei HMS Core
+agconnect = "1.9.1.301"
+hmsMlAsr = "3.11.0.301"
+hmsMlTts = "3.11.0.301"
+
+# Vosk (offline ASR)
+vosk = "0.3.47"
+
+# JSON
+gson = "2.11.0"
+
+# Testing
+junit = "4.13.2"
+androidxJunit = "1.1.5"
+espresso = "3.5.1"
+
+[libraries]
+# AndroidX
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
+androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
+androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+androidx-preference-ktx = { group = "androidx.preference", name = "preference-ktx", version.ref = "preference" }
+androidx-gridlayout = { group = "androidx.gridlayout", name = "gridlayout", version.ref = "gridlayout" }
+
+# Material Design
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+
+# Coroutines
+kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
+
+# Serialization
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+
+# Huawei HMS Core
+huawei-agconnect-core = { group = "com.huawei.agconnect", name = "agconnect-core", version.ref = "agconnect" }
+huawei-hms-ml-asr = { group = "com.huawei.hms", name = "ml-computer-voice-asr", version.ref = "hmsMlAsr" }
+huawei-hms-ml-tts = { group = "com.huawei.hms", name = "ml-computer-voice-tts", version.ref = "hmsMlTts" }
+
+# Vosk (offline ASR)
+vosk-android = { group = "com.alphacephei", name = "vosk-android", version.ref = "vosk" }
+
+# JSON
+gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+
+# Testing
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-test-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxJunit" }
+androidx-test-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso" }
+
+# Detekt plugins (for detekt formatting rules)
+detekt-formatting = { group = "io.gitlab.arturbosch.detekt", name = "detekt-formatting", version.ref = "detekt" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }

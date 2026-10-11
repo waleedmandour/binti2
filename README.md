@@ -34,7 +34,7 @@ What *is* real and available today is a body of community reverse-engineering of
 |---------|-------------|------------|
 | 🎤 **Wake Word Detection** | Optimized for "يا بنتي" with high noise immunity | Vosk Local Grammars |
 | 🗣️ **Egyptian Arabic ASR** | Robust offline speech-to-text for Egyptian dialect | Vosk MGB2 / Huawei ML Kit |
-| 🧠 **Intent Classification** | Local NLU processing for Egyptian colloquialisms | Rule Engine + EgyBERT-tiny (optional) |
+| 🧠 **Intent Classification** | Local NLU processing for Egyptian colloquialisms | Rule Engine (weighted keyword matching) |
 | 🔊 **Egyptian TTS** | Natural female voice with Sukoon-vocalized Egyptian tone | Huawei ML Kit / Android TTS |
 | 👤 **User Profile** | Personalized interaction with Formal/Informal tone modes | SharedPreferences / Context-Aware |
 | 🚙 **DiLink Control** | Control AC, Navigation, Media, and Phone via Accessibility | **Accessibility Service UI Automation** |
@@ -226,7 +226,7 @@ Wake Word ("يا بنتي")  →  ASR (Vosk MGB2)  →  NLU (Intent Classifier) 
 
 1. **Wake Word Engine**: Always-on listener using Vosk grammar-based detection for "يا بنتي" — no dedicated ML model required.
 2. **Voice Processing (ASR)**: Vosk MGB2 model provides high-accuracy Arabic speech recognition entirely offline. Model downloaded via **GitHub Releases** (~318 MB) using Android DownloadManager.
-3. **NLP Pipeline**: A rule-based intent matcher processes the transcription against the `dilink_intent_map.json` pattern database. An optional EgyBERT-tiny ML classifier can supplement the rule engine for complex or ambiguous commands.
+3. **NLP Pipeline**: A rule-based intent matcher processes the transcription against the `dilink_intent_map.json` pattern database. The matcher uses weighted keyword scoring with alias support and normalizes Arabic diacritics (Tashkeel) before matching, so vocalized and unvocalized commands both work.
 4. **Command Executor**: `DiLinkCommandExecutor` translates classified intents into Accessibility Service actions — finding UI nodes by resource ID, performing clicks, reading state, and launching apps. For EV station queries, it uses `StationManager` to find the nearest station and auto-navigate via geo intent. No shell commands or root access involved.
 5. **Response Engine**: `EgyptianTTS` produces spoken responses in natural Egyptian Arabic. All responses in the intent map are fully vocalized with Tashkeel (diacritics), and Sukoon (ْ) is preserved at word endings to ensure natural cadence. The engine also applies dialect normalization, converting any MSA artifacts to Egyptian colloquial equivalents.
 
