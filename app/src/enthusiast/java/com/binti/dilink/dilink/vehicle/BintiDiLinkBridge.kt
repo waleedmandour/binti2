@@ -5,6 +5,7 @@ package com.binti.dilink.dilink.vehicle
 
 import android.content.Context
 import android.util.Log
+import com.binti.dilink.dilink.DataSource
 import com.binti.dilink.dilink.VehicleSnapshot
 import com.binti.dilink.dilink.VehicleDataRepository
 /**
@@ -108,7 +109,7 @@ class BintiDiLinkBridge(private val context: Context) {
             batteryPercent = batteryPercent?.toInt(),
             estimatedRangeKm = rangeKm,
             // Tier 2 fields would go here when VehicleSnapshot is extended
-            source = VehicleSnapshot.DataSource.ADVANCED_TELEMETRY
+            source = DataSource.ADVANCED_TELEMETRY
         )
 
         vehicleDataRepository.mergeAdvanced(partial)
