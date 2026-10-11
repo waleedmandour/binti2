@@ -251,6 +251,9 @@ dependencies {
     // Testing
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+    // Real org.json implementation for JVM tests — Android's org.json is a stub
+    // that returns null/0 for everything, causing JSON parsing tests to fail.
+    testImplementation(libs.org.json)
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.espresso.core)
     // Compose UI testing — add ui-test-junit4 when we write Compose tests
