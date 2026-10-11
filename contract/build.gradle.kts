@@ -5,7 +5,9 @@ plugins {
 
 android {
     namespace = "com.binti.dilink.contract"
-    compileSdk = 34
+    // Must match :app's compileSdk (35) because androidx.core:core-ktx:1.15.0
+    // requires compileSdk 35. AAR metadata check enforces this across modules.
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 26

@@ -11,7 +11,12 @@ plugins {
 
 android {
     namespace = "com.binti.dilink"
-    compileSdk = 34
+    // Phase 2 fix: compileSdk must be 35 because androidx.core:core-ktx:1.15.0
+    // (and other AndroidX 1.15+ libraries) require compileSdk 35. This does
+    // NOT change runtime behavior — targetSdk stays at 33 for BYD DiLink 3
+    // compatibility. compileSdk only affects which APIs are visible at
+    // compile time; targetSdk opts the app into new runtime behaviors.
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.binti.dilink"
