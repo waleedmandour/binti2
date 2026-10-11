@@ -30,6 +30,52 @@ class StationManager(private val context: Context) {
         const val CACHE_MAX_AGE_MS     = 24 * 60 * 60 * 1000L
         const val DEFAULT_SEARCH_RADIUS_KM = 50.0
         const val EARTH_RADIUS_KM      = 6371.0
+
+        // ──────────────────────────────────────────────────────────────────────
+        // JSON parsing — companion object methods (pure functions, no instance
+        // state). Moved here so they can be unit-tested without constructing a
+        // StationManager (which requires a Context unavailable in pure JVM tests).
+        // ──────────────────────────────────────────────────────────────────────
+
+        /**
+         * Parse a stations JSON string into a list of [ChargingStation] objects.
+         * Returns an empty list on any parsing error (never throws).
+         */
+        fun parseStationJson(json: String): List<ChargingStation> {
+            return try {
+                val root           = JSONObject(json)
+                val stationsArray  = root.getJSONArray("stations")
+                (0 until stationsArray.length()).map { parseSingleStation(stationsArray.getJSONObject(it)) }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to parse station JSON", e)
+                emptyList()
+            }
+        }
+
+        private fun parseSingleStation(obj: JSONObject): ChargingStation {
+            fun JSONObject.strings(key: String) =
+                optJSONArray(key)?.let { arr -> (0 until arr.length()).map { arr.getString(it) } } ?: emptyList()
+
+            return ChargingStation(
+                id         = obj.getString("id"),
+                name       = obj.getString("name"),
+                // FIX #5 — getString() throws if key is missing; use optString() with
+                // a fallback for non-mandatory fields so one bad record doesn't abort
+                // parsing the entire array.
+                nameEn     = obj.optString("name_en", ""),
+                address    = obj.optString("address", ""),
+                city       = obj.optString("city", ""),
+                latitude   = obj.getDouble("latitude"),
+                longitude  = obj.getDouble("longitude"),
+                operator   = obj.optString("operator", ""),
+                connectors = obj.strings("connectors"),
+                powerKw    = obj.optInt("power_kw", 50),
+                status     = obj.optString("status", "active"),
+                amenities  = obj.strings("amenities"),
+                hours      = obj.optString("hours", "N/A"),
+                costPerKwh = obj.optDouble("cost_per_kwh", 0.0)
+            )
+        }
     }
 
     // FIX #1 — was a mutable var backed by mutableListOf(); concurrent reads
@@ -204,44 +250,17 @@ class StationManager(private val context: Context) {
     }
 
     // ──────────────────────────────────────────────────────────────────────────
-    // Parsing
+    // Parsing — companion object methods so they can be called without an
+    // instance (pure functions, no instance state needed). Also makes them
+    // testable without constructing a StationManager (which requires a
+    // Context that isn't available in pure JVM unit tests).
     // ──────────────────────────────────────────────────────────────────────────
 
-    private fun parseStationJson(json: String): List<ChargingStation> {
-        return try {
-            val root           = JSONObject(json)
-            val stationsArray  = root.getJSONArray("stations")
-            (0 until stationsArray.length()).map { parseSingleStation(stationsArray.getJSONObject(it)) }
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to parse station JSON", e)
-            emptyList()
-        }
-    }
+    private fun parseStationJson(json: String): List<ChargingStation> =
+        Companion.parseStationJson(json)
 
-    private fun parseSingleStation(obj: JSONObject): ChargingStation {
-        fun JSONObject.strings(key: String) =
-            optJSONArray(key)?.let { arr -> (0 until arr.length()).map { arr.getString(it) } } ?: emptyList()
-
-        return ChargingStation(
-            id         = obj.getString("id"),
-            name       = obj.getString("name"),
-            // FIX #5 — getString() throws if key is missing; use optString() with
-            // a fallback for non-mandatory fields so one bad record doesn't abort
-            // parsing the entire array.
-            nameEn     = obj.optString("name_en", ""),
-            address    = obj.optString("address", ""),
-            city       = obj.optString("city", ""),
-            latitude   = obj.getDouble("latitude"),
-            longitude  = obj.getDouble("longitude"),
-            operator   = obj.optString("operator", ""),
-            connectors = obj.strings("connectors"),
-            powerKw    = obj.optInt("power_kw", 50),
-            status     = obj.optString("status", "active"),
-            amenities  = obj.strings("amenities"),
-            hours      = obj.optString("hours", "N/A"),
-            costPerKwh = obj.optDouble("cost_per_kwh", 0.0)
-        )
-    }
+    private fun parseSingleStation(obj: JSONObject): ChargingStation =
+        Companion.parseSingleStation(obj)
 
     // ──────────────────────────────────────────────────────────────────────────
     // Local storage

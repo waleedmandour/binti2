@@ -197,16 +197,10 @@ class StationManagerTest {
     }
 
     // ──────────────────────────────────────────────────────────────────────────
-    // Helper: invoke the private parseStationJson via reflection
+    // Helper: call the companion-object parseStationJson directly (no reflection
+    // needed — it's now a public companion method).
     // ──────────────────────────────────────────────────────────────────────────
 
-    private fun invokeParseStationJson(json: String): List<StationManager.ChargingStation> {
-        val manager = StationManager(android.app.Application())
-        val method = StationManager::class.java.getDeclaredMethod(
-            "parseStationJson", String::class.java
-        )
-        method.isAccessible = true
-        @Suppress("UNCHECKED_CAST")
-        return method.invoke(manager, json) as List<StationManager.ChargingStation>
-    }
+    private fun invokeParseStationJson(json: String): List<StationManager.ChargingStation> =
+        StationManager.parseStationJson(json)
 }
