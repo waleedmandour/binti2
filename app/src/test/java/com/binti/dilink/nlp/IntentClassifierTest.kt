@@ -1,5 +1,6 @@
 package com.binti.dilink.nlp
 
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -13,11 +14,14 @@ import org.junit.Test
  * always returns a non-null IntentResult. The actual STATION/GREETINGS/
  * SOCIAL/HELP pattern matching is tested via instrumentation tests
  * on-device where the intent map asset is available.
+ *
+ * Note: `classifyIntent` is a suspend function (it uses withContext
+ * internally), so tests run inside [runTest] to provide a coroutine scope.
  */
 class IntentClassifierTest {
 
     @Test
-    fun `classifyIntent returns UNKNOWN for unrecognized input without crashing`() {
+    fun `classifyIntent returns UNKNOWN for unrecognized input without crashing`() = runTest {
         val classifier = IntentClassifier(android.app.Application())
         // Without initialize(), isInitialized=false. classifyIntent logs a
         // warning but still runs matchByRules() which returns null (no
@@ -28,7 +32,7 @@ class IntentClassifierTest {
     }
 
     @Test
-    fun `classifyIntent returns UNKNOWN for empty input`() {
+    fun `classifyIntent returns UNKNOWN for empty input`() = runTest {
         val classifier = IntentClassifier(android.app.Application())
         val result = classifier.classifyIntent("")
         assertNotNull(result)
@@ -37,7 +41,7 @@ class IntentClassifierTest {
     }
 
     @Test
-    fun `classifyIntent returns UNKNOWN for gibberish`() {
+    fun `classifyIntent returns UNKNOWN for gibberish`() = runTest {
         val classifier = IntentClassifier(android.app.Application())
         val result = classifier.classifyIntent("xyz qwerty 12345")
         assertNotNull(result)
