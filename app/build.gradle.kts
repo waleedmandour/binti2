@@ -29,14 +29,6 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
-
-        // Room schema export — saves the DB schema as JSON for migration testing.
-        // Output: app/schemas/com.binti.dilink.data.local.BintiDatabase/<version>/*.json
-        ksp {
-            arg("room.schemaLocation", "$projectDir/schemas")
-            arg("room.incremental", "true")
-            arg("room.generateKotlin", "true")
-        }
     }
 
     // ──────────────────────────────────────────────────────────────────────
@@ -174,6 +166,14 @@ detekt {
     ignoreFailures = true
 }
 
+// KSP (Kotlin Symbol Processing) — used by Hilt and Room for code generation.
+// Args are configured at the top level (NOT inside android { defaultConfig { } }).
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+    arg("room.incremental", "true")
+    arg("room.generateKotlin", "true")
+}
+
 dependencies {
     // ── Module dependencies ──────────────────────────────────────────────
     // :contract — public intent API for external automation (Tasker, ADB)
@@ -247,9 +247,8 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.espresso.core)
-    // Compose UI testing
+    // Compose UI testing — add ui-test-junit4 when we write Compose tests
     androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.compose.ui.tooling)
 
     // Detekt formatting rules
     detektPlugins(libs.detekt.formatting)
