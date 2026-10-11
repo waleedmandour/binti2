@@ -9,7 +9,9 @@ import android.net.Uri
 import android.provider.Settings
 import android.util.Log
 import android.view.accessibility.AccessibilityNodeInfo
+import com.binti.dilink.R
 import com.binti.dilink.nlp.IntentResult
+import com.binti.dilink.utils.StationManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
@@ -80,6 +82,13 @@ class DiLinkCommandExecutor(private val context: Context) {
         context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     }
 
+    // StationManager for EV charging station discovery. Lazily initialized
+    // and shared across all STATION intent invocations. The manager loads
+    // stations from cache/asset/remote on first use.
+    private val stationManager: StationManager by lazy {
+        StationManager(context)
+    }
+
     // ──────────────────────────────────────────────────────────────────────────
     // Public API
     // ──────────────────────────────────────────────────────────────────────────
@@ -103,9 +112,13 @@ class DiLinkCommandExecutor(private val context: Context) {
                     "PHONE"       -> executePhoneCommand(intent)
                     "INFO"        -> executeInfoCommand(intent)
                     "SYSTEM"      -> executeSystemCommand(intent)
+                    "STATION"     -> executeStationCommand(intent)
+                    "GREETINGS"   -> executeGreetingCommand(intent)
+                    "SOCIAL"      -> executeSocialCommand(intent)
+                    "HELP"        -> executeHelpCommand(intent)
                     else          -> {
                         Log.w(TAG, "Unknown action: ${intent.action}")
-                        CommandResult(false, "أمر غير معروف: ${intent.action}")
+                        CommandResult(false, context.getString(R.string.cmd_unknown_action, intent.action))
                     }
                 }
 
@@ -114,7 +127,7 @@ class DiLinkCommandExecutor(private val context: Context) {
 
             } catch (e: Exception) {
                 Log.e(TAG, "❌ Command execution failed", e)
-                CommandResult(false, "خطأ: ${e.message}")
+                CommandResult(false, context.getString(R.string.cmd_error, e.message ?: "unknown"))
             }
         }
     }
@@ -986,6 +999,177 @@ class DiLinkCommandExecutor(private val context: Context) {
         } else {
             clickNode(node.parent, depth + 1)
         }
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // EV Charging Station Discovery (STATION intent)
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Execute the STATION intent — find the nearest EV charging station
+     * and auto-navigate to it via a `geo:` intent targeting the BYD
+     * navigation app.
+     *
+     * This handler was missing from the original executor, causing the
+     * README-advertised "أقرب محطة شحن" command to return
+     * "أمر غير معروف: STATION". The [StationManager] class was fully
+     * implemented but never instantiated. This method wires it in.
+     *
+     * Flow:
+     * 1. Load stations (from cache/asset/remote, 24h cache).
+     * 2. Read the current device location (requires ACCESS_FINE_LOCATION).
+     * 3. Find the nearest station within 50 km.
+     * 4. Launch the BYD navigation app with a `geo:` intent.
+     * 5. Return an Egyptian-Arabic response with the station name + distance.
+     */
+    private suspend fun executeStationCommand(intent: IntentResult): CommandResult {
+        Log.i(TAG, "🔌 STATION command — finding nearest charging station")
+
+        // Step 1: Load stations
+        val loaded = stationManager.loadStations()
+        if (!loaded || stationManager.getActiveStationCount() == 0) {
+            Log.w(TAG, "No station data available")
+            return CommandResult(false, context.getString(R.string.cmd_station_no_data))
+        }
+
+        // Step 2: Get current location
+        val location = getLastKnownLocation()
+        if (location == null) {
+            Log.w(TAG, "Could not determine current location for station search")
+            return CommandResult(false, context.getString(R.string.cmd_station_no_location))
+        }
+
+        // Step 3: Find nearest station
+        val nearest = stationManager.findNearestStation(
+            lat = location.first,
+            lon = location.second,
+            maxKm = StationManager.DEFAULT_SEARCH_RADIUS_KM
+        )
+
+        if (nearest == null) {
+            Log.w(TAG, "No charging station found within ${StationManager.DEFAULT_SEARCH_RADIUS_KM} km")
+            return CommandResult(
+                success = false,
+                message = context.getString(
+                    R.string.cmd_station_none_nearby,
+                    StationManager.DEFAULT_SEARCH_RADIUS_KM.toInt()
+                )
+            )
+        }
+
+        // Step 4: Launch BYD navigation with geo: intent
+        val station = nearest.station
+        val geoUri = Uri.parse("geo:${station.latitude},${station.longitude}?q=${station.latitude},${station.longitude}(${station.name})")
+        val navIntent = Intent(Intent.ACTION_VIEW, geoUri).apply {
+            setPackage(DILINK_NAV_PACKAGE)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+
+        val launched = try {
+            context.startActivity(navIntent)
+            true
+        } catch (e: Exception) {
+            // Fallback: try without the package restriction (generic geo handler)
+            Log.w(TAG, "BYD navigation app not available, trying generic geo handler", e)
+            try {
+                val fallbackIntent = Intent(Intent.ACTION_VIEW, geoUri).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(fallbackIntent)
+                true
+            } catch (e2: Exception) {
+                Log.e(TAG, "Could not launch navigation for station", e2)
+                false
+            }
+        }
+
+        // Step 5: Build Egyptian-Arabic response
+        val distanceStr = String.format(Locale("ar", "EG"), "%.1f", nearest.distanceKm)
+        val message = if (launched) {
+            context.getString(
+                R.string.cmd_station_found_navigating,
+                station.name,
+                distanceStr,
+                nearest.distanceKm.toInt()
+            )
+        } else {
+            context.getString(
+                R.string.cmd_station_found_no_nav,
+                station.name,
+                distanceStr,
+                nearest.distanceKm.toInt()
+            )
+        }
+
+        Log.i(TAG, "✅ Nearest station: ${station.name} at ${nearest.distanceKm} km")
+        return CommandResult(success = true, message = message, isInfo = true)
+    }
+
+    /**
+     * Get the last known device location as a (lat, lon) pair.
+     * Uses the LocationManager's last known location from GPS or network.
+     * Returns null if no location is available (permissions denied or
+     * location services off).
+     */
+    private fun getLastKnownLocation(): Pair<Double, Double>? {
+        return try {
+            val locationManager = context.getSystemService(Context.LOCATION_SERVICE)
+                as android.location.LocationManager
+
+            val location = locationManager.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
+                ?: locationManager.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
+                ?: return null
+
+            Pair(location.latitude, location.longitude)
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Location permission not granted: ${e.message}")
+            null
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not read location: ${e.message}")
+            null
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // GREETINGS, SOCIAL, HELP intents — TTS-only responses (no vehicle action)
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /**
+     * GREETINGS intent — respond to greetings like "صباح الخير" or
+     * "إزيك" with a friendly Egyptian-Arabic greeting. No vehicle action.
+     */
+    private fun executeGreetingCommand(intent: IntentResult): CommandResult {
+        Log.i(TAG, "👋 GREETINGS command")
+        // Use the response from the matched intent pattern if available,
+        // otherwise fall back to a default greeting.
+        val response = intent.matchedPatternResponse.ifBlank {
+            context.getString(R.string.cmd_greeting_default)
+        }
+        return CommandResult(success = true, message = response, isInfo = true)
+    }
+
+    /**
+     * SOCIAL intent — respond to social cues like "شكرا" with a polite
+     * Egyptian-Arabic acknowledgment. No vehicle action.
+     */
+    private fun executeSocialCommand(intent: IntentResult): CommandResult {
+        Log.i(TAG, "🙏 SOCIAL command")
+        val response = intent.matchedPatternResponse.ifBlank {
+            context.getString(R.string.cmd_social_default)
+        }
+        return CommandResult(success = true, message = response, isInfo = true)
+    }
+
+    /**
+     * HELP intent — respond to "بتعملي إيه" with a summary of Binti's
+     * capabilities. No vehicle action.
+     */
+    private fun executeHelpCommand(intent: IntentResult): CommandResult {
+        Log.i(TAG, "❓ HELP command")
+        val response = intent.matchedPatternResponse.ifBlank {
+            context.getString(R.string.cmd_help_default)
+        }
+        return CommandResult(success = true, message = response, isInfo = true)
     }
 }
 

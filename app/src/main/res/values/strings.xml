@@ -153,6 +153,32 @@
     <string name="info_time">السَّاعَة دِلْوَقْتِي %1$s يَا ذُوق</string>
     <string name="info_battery">البَطَّارِيَّة فِيهَا %1$d فِي المِيَّة.. زَي الفُل ومَفِيش قَلَق</string>
 
+    <!-- ────────────────────────────────────────────────────────────────────────
+         Phase 1 — Command response strings
+         Previously hardcoded in DiLinkCommandExecutor.kt; extracted to
+         strings.xml for locale correctness and future translation.
+         ──────────────────────────────────────────────────────────────────────── -->
+
+    <!-- Generic command responses -->
+    <string name="cmd_unknown_action">أَمْر غَيْر مَعْرُوف: %1$s</string>
+    <string name="cmd_error">خَطَأ: %1$s</string>
+
+    <!-- STATION intent responses -->
+    <string name="cmd_station_no_data">مَعْلِش يَا غَالِي، مِش قَادِر أَلْقِي بَيَانَات المَحَطَّات. اِتَّصِل بِالْإِنْتِرنِت وَحَاوِل تَانِي.</string>
+    <string name="cmd_station_no_location">مِش قَادِر أَعْرِف مَكَانَك، فَعِّل المُحَدِّد لِلْمَوْقِع (Location) عَشَان أَدُور عَلَى أَقْرَب مَحَطَّة شُحْن.</string>
+    <string name="cmd_station_none_nearby">مَفِيش مَحَطَّات شُحْن قَرِيبَة مِنَّك فِي دَائِرَة %1$d كِيلُو. جَرِّب تِكْبِر نِطَاق الْبَحْث أَو تِتْحَرَّك شِوَيَّة.</string>
+    <string name="cmd_station_found_navigating">لَقِيت لَك %1$s عَلَى بُعْد %2$s كِيلُو (%3$d كم).. بَدَأْت الْمِلَاحَة لِهُنَا خَلَّاص! 🔌🗺️</string>
+    <string name="cmd_station_found_no_nav">أَقْرَب مَحَطَّة شُحْن هِيَ %1$s عَلَى بُعْد %2$s كِيلُو (%3$d كم). مِش قَادِر أَفْتَح الْمِلَاحَة، اِفْتَحْهَا بِإِيدِك مِن تَطْبِيق الْخَرَائِط.</string>
+
+    <!-- GREETINGS intent responses (fallback when intent map has no response) -->
+    <string name="cmd_greeting_default">أَهْلًا بِيِك! أَنَا فِي خِدْمَتَك، تُؤْمُرْنِي بِإِيه؟</string>
+
+    <!-- SOCIAL intent responses (fallback when intent map has no response) -->
+    <string name="cmd_social_default">الشُّكْر لِلّٰه، أَنَا فِي الْخِدْمَة دَايْمًا 🌹</string>
+
+    <!-- HELP intent responses (fallback when intent map has no response) -->
+    <string name="cmd_help_default">أَنَا أَقْدِر أَتْحَكَّم فِي التَّكْيِيف، وِالْمُزِيكَا، وِأُوصِّلَك لِأَيّ مَكَان، وِأَطْلُبْلَك أَيّ حَدّ.. قُولِّي بَس أَنْتَ مِحْتَاج إِيه؟</string>
+
     <!-- About -->
     <string name="about">عن المساعد</string>
     <string name="version">الإصدار 1.2.0</string>

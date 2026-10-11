@@ -7,6 +7,81 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.7.0-beta] - 2026-10-11
+
+### 🔌 Phase 1 — Wire Up Half-Built Features
+
+This release delivers the features the README already promised but the
+code did not implement. The STATION, GREETINGS, SOCIAL, and HELP intents
+are now routed in `DiLinkCommandExecutor` and produce correct Egyptian
+Arabic responses. The `StationManager` class — fully implemented but
+never instantiated — is now wired into the executor and launches the BYD
+navigation app with a `geo:` intent to the nearest EV charging station.
+
+#### Added — STATION Intent (EV Charging Station Discovery)
+- **`DiLinkCommandExecutor.executeStationCommand()`** — new handler that:
+  1. Loads stations from `StationManager` (cache/asset/remote, 24h cache).
+  2. Reads the current device location via `LocationManager`.
+  3. Finds the nearest station within 50 km using Haversine distance.
+  4. Launches the BYD navigation app (`com.byd.auto.navigation`) with a
+     `geo:` intent containing the station's coordinates and name.
+  5. Falls back to a generic `geo:` handler if the BYD navigation app
+     is unavailable.
+  6. Returns an Egyptian-Arabic response with the station name + distance.
+- The `StationManager` class (281 lines) is now instantiated via `by lazy`
+  and shared across all STATION invocations.
+- The 486-line `stations.json` asset (30 stations across 22 Egyptian
+  cities) is now actually read at runtime — previously it was bundled
+  but never loaded.
+- User-facing response strings are in `strings.xml`:
+  - `cmd_station_no_data` — when no station data is available
+  - `cmd_station_no_location` — when location permission is denied
+  - `cmd_station_none_nearby` — when no station is within 50 km
+  - `cmd_station_found_navigating` — success with auto-navigation
+  - `cmd_station_found_no_nav` — station found but navigation app missing
+
+#### Added — GREETINGS, SOCIAL, HELP Intents
+- **`executeGreetingCommand()`** — responds to "صباح الخير" / "إزيك"
+  with a friendly Egyptian-Arabic greeting. Uses the matched pattern's
+  response from `dilink_intent_map.json`, falling back to
+  `cmd_greeting_default` if no pattern matched.
+- **`executeSocialCommand()`** — responds to "شكرا" with a polite
+  acknowledgment. Falls back to `cmd_social_default`.
+- **`executeHelpCommand()`** — responds to "بتعملي إيه" with a summary
+  of Binti's capabilities. Falls back to `cmd_help_default`.
+- All three are TTS-only — no vehicle interaction.
+
+#### Changed — Command Response Localization
+- Extracted hardcoded Arabic strings from `DiLinkCommandExecutor.kt`:
+  - `"أمر غير معروف: ${intent.action}"` → `R.string.cmd_unknown_action`
+  - `"خطأ: ${e.message}"` → `R.string.cmd_error`
+- Added plain Arabic equivalents in `values-ar/strings.xml` for all
+  new command response strings.
+- Note: keyword-matching literals (e.g., `"شغل" in pattern`) remain in
+  code — they are matching logic, not user-facing strings. Full
+  extraction of all 169 Arabic literals is deferred to Phase 2/3
+  (god-class refactor).
+
+#### Added — Unit Tests
+- **`IntentClassifierTest`** (5 tests) — verifies the classifier
+  gracefully handles unrecognized input, empty input, and gibberish
+  without crashing. Confirms `IntentResult` data class holds all
+  expected fields with correct defaults.
+- **`StationManagerTest`** (10 tests) — verifies:
+  - Haversine distance calculation (Cairo→Alexandria ~180 km,
+    Cairo→Riyadh ~1600 km, antipodal points ~20015 km)
+  - Station JSON parsing (valid, minimal, malformed, empty, missing
+    required fields)
+  - `findStationsNearby` invalid-coordinate guards
+  - Reflection-based access to the private `parseStationJson` method
+- Total test count: 37 (existing) + 15 (new) = 52 tests.
+
+#### Version Bump
+- `versionCode` 14 → 15
+- `versionName` "2.6.0-beta" → "2.7.0-beta"
+
+---
+
 ## [2.6.0-beta] - 2026-10-11
 
 ### 🧹 Phase 0 — Stabilize & Cleanup

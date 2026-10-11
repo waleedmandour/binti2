@@ -137,6 +137,30 @@
     <string name="info_time">الساعة الآن هي %1$s</string>
     <string name="info_battery">حالة البطارية %1$d%%</string>
 
+    <!-- ────────────────────────────────────────────────────────────────────────
+         Phase 1 — Command response strings (plain Arabic equivalents)
+         ──────────────────────────────────────────────────────────────────────── -->
+
+    <!-- Generic command responses -->
+    <string name="cmd_unknown_action">أمر غير معروف: %1$s</string>
+    <string name="cmd_error">خطأ: %1$s</string>
+
+    <!-- STATION intent responses -->
+    <string name="cmd_station_no_data">عذرًا، لا أستطيع العثور على بيانات المحطات. اتصل بالإنترنت وحاول مرة أخرى.</string>
+    <string name="cmd_station_no_location">لا أستطيع تحديد موقعك، فعّل محدد الموقع (Location) حتى أبحث عن أقرب محطة شحن.</string>
+    <string name="cmd_station_none_nearby">لا توجد محطات شحن قريبة منك ضمن دائرة %1$d كيلو. جرّب توسيع نطاق البحث أو التحرك قليلًا.</string>
+    <string name="cmd_station_found_navigating">وجدت لك %1$s على بعد %2$s كيلو (%3$d كم).. بدأت الملاحة إلى هناك! 🔌🗺️</string>
+    <string name="cmd_station_found_no_nav">أقرب محطة شحن هي %1$s على بعد %2$s كيلو (%3$d كم). لا أستطيع فتح الملاحة، افتحها يدويًا من تطبيق الخرائط.</string>
+
+    <!-- GREETINGS intent responses (fallback) -->
+    <string name="cmd_greeting_default">أهلًا بك! أنا في خدمتك، تؤمرني بماذا؟</string>
+
+    <!-- SOCIAL intent responses (fallback) -->
+    <string name="cmd_social_default">الشكر لله، أنا في الخدمة دائمًا 🌹</string>
+
+    <!-- HELP intent responses (fallback) -->
+    <string name="cmd_help_default">أستطيع التحكم في التكييف، والموسيقى، وتوصيلك لأي مكان، والاتصال بأي شخص.. قل لي فقط ما تحتاجه؟</string>
+
     <!-- About -->
     <string name="about">حول التطبيق</string>
     <string name="version">الإصدار %1$s</string>
