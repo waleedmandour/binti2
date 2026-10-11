@@ -27,6 +27,11 @@ import com.binti.dilink.dilink.control.ControlLoader
  * (the common case on BYD DiLink 3 head units where the OEM settings app
  * blocks accessibility enablement).
  *
+ * Phase 3: also initializes the [BintiDiLinkBridge] which provides
+ * Tier 2 vehicle data via ADB + `service call autoservice`. This is the
+ * ADB substrate ported from DiPlay — it enables reading speed, SoC,
+ * range, gear, and tyre data WITHOUT Accessibility scraping.
+ *
  * Called by `BintiApplication.onCreate` only in the enthusiast flavor.
  *
  * @author Dr. Waleed Mandour
@@ -38,6 +43,18 @@ object DirectControlInitializer {
 
     fun init(context: Context) {
         if (instance != null) return
+
+        // Phase 3: Initialize the DiLink ADB substrate bridge
+        try {
+            com.binti.dilink.dilink.vehicle.BintiDiLinkBridge
+                .getInstance(context.applicationContext)
+                .init()
+            Log.i(TAG, "✅ BintiDiLinkBridge initialized (ADB substrate from DiPlay)")
+        } catch (e: Throwable) {
+            Log.w(TAG, "BintiDiLinkBridge init failed — Tier 2 ADB vehicle data unavailable", e)
+        }
+
+        // Register the existing DirectControlBridge (reflection-based fallback)
         val bridge = DirectControlBridge(context.applicationContext)
         instance = bridge
         ControlLoader.registerDirect(bridge)

@@ -7,6 +7,96 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.0.0-beta] - 2026-10-11
+
+### 🔧 Phase 3 — DiLink Integration Tier
+
+This release ports DiPlay's ADB substrate into the enthusiast flavor,
+enabling Tier 2 vehicle data reads (speed, SoC, range, gear, tyres)
+via `service call autoservice` over a self-implemented local ADB
+protocol — WITHOUT root and WITHOUT a platform signing key.
+
+**This is a beta release** — the ADB substrate is additive to the
+existing enthusiast flavor. The new code compiles in the enthusiast
+source set only; the store flavor is unaffected (no `bydauto` or ADB
+references leak into the store APK, verified by CI).
+
+#### Added — ADB Protocol Substrate (ported from DiPlay)
+- **`adb/AdbPacket.kt`** — 24-byte little-endian ADB wire protocol message
+  encoder/decoder. Handles CNXN, AUTH, OPEN, OKAY, CLSE, WRTE, STLS
+  commands with payload-sum integrity check.
+- **`adb/AdbKeys.kt`** — RSA-2048 keypair management. Generates and stores
+  the keypair in `noBackupFilesDir/adb/`. Implements the AOSP
+  `android_pubkey` wire format (modulus, n0inv, R^2 mod n, exponent) and
+  signs auth tokens with NONEwithRSA + SHA-1 DigestInfo header.
+- **`adb/LocalAdb.kt`** (273 lines) — pure-Java ADB protocol over TCP
+  `127.0.0.1:5555`. Implements the full CNXN/AUTH handshake, one-shot
+  `shell()` commands, and `InteractiveShell` for bounded request/response
+  with a hard deadline (used by the `app_process` bridge). Approval-aware:
+  `connect(mayAsk=true)` shows the car's "Allow debugging?" dialog;
+  background reads always use `mayAsk=false`.
+- **`adb/BydAdbShell.kt`** — lazy ADB shell wrapper for background reads.
+  Never asks for approval (dialog never appears while driving). Retries
+  every 30 seconds after a refused/unreachable connection. Includes
+  `BydParcel` which parses `service call` Parcel hex output.
+- **`adb/BydAdbShell.kt` BydParcel** — parses `Result: Parcel(00000000
+  00000002 '........')` replies into `List<Long>` or a single `Int` value.
+
+#### Added — Vehicle Field Constants
+- **`vehicle/BydVehicleFields.kt`** — verified BYD vehicle field addresses
+  (device, fid, transaction tuples) for:
+  - Speed (device 1013, fid -1807745016, float)
+  - Gear (device 1011, fid 555745336, int — codes: 1=P, 2=R, 3=N, 4-6=D)
+  - Battery SoC (device 1014, CANFD fid 1246777400 / CAN fid 1033543720)
+  - Battery range (device 1014, CANFD fid 1246765118 / CAN fid 1033203771)
+  - Remaining kWh (device 1005, fid 882901008)
+  - BMS charging state (device 1009, CANFD/CAN fids)
+  - Tyre pressure (device 1016, 4 corners)
+  - Tyre temperature (device 1007, 4 corners)
+  - CAN vs CANFD detection via `ro.car.protocol` / `sys.car.protocol`
+
+#### Added — Vehicle Data Reader
+- **`vehicle/BydVehicleReader.kt`** — reads speed, SoC, range, gear,
+  remaining kWh, tyre pressures, and tyre temperatures via ADB shell
+  commands. Auto-detects CAN vs CANFD protocol. READ-ONLY — never writes
+  to any vehicle system. Shares a single `BydAdbShell` instance to avoid
+  wasting ADB connections.
+
+#### Added — Recovery Journal
+- **`vehicle/RecoveryJournal.kt`** — SharedPreferences-backed journal
+  for vendor side-effects. Pattern: `markPending()` before issuing a
+  command, `clearPending()` after confirmed revert. `recoverPending()`
+  is called on app launch to clean up any side-effects left from a
+  previous crash.
+
+#### Added — Firmware-Fingerprint Gate
+- **`vehicle/FirmwareGate.kt`** — capability gate for privileged operations.
+  Verifies: SDK ≥ 28, package allowlist, firmware fingerprint prefix match
+  (`BYD-AUTO/IVI/IVI:13/` for DiLink 5.1), and ClusterDebug receiver
+  signing-cert SHA-256. Prevents accidental writes to a forged receiver
+  on the wrong firmware. Verified values ported from DiPlay/DiAuto.
+
+#### Added — BintiDiLinkBridge
+- **`vehicle/BintiDiLinkBridge.kt`** — enthusiast-flavor entry point
+  that ties together `BydVehicleReader`, `RecoveryJournal`, and
+  `FirmwareGate`. Initialized by `DirectControlInitializer` at app
+  startup. Reads all available vehicle data via ADB and publishes it
+  into the shared `VehicleDataRepository` as a Tier 2 snapshot.
+
+#### Changed — DirectControlInitializer
+- The enthusiast-flavor `DirectControlInitializer.init()` now also
+  initializes `BintiDiLinkBridge` before registering the existing
+  `DirectControlBridge` (reflection-based fallback). Both paths coexist.
+
+#### What's Next (Phase 4 — Polish & Ship)
+- Multi-locale RTL discipline (English localization for non-Arabic users)
+- Dark mode (`Theme.Material3.DayNight` + `values-night/colors.xml`)
+- Full CI enforcement (`detekt` + `lint` fail the build)
+- README and CHANGELOG rewrite to match v3.0.0 reality
+- AppGallery submission readiness
+
+---
+
 ## [3.0.0-alpha] - 2026-10-11
 
 ### 🏗️ Phase 2 — Modernize the Foundation
