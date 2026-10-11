@@ -7,6 +7,66 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.0.0] - 2026-10-11
+
+### 🎉 Phase 4 — Polish & Ship (Final Release)
+
+This is the final release of the comprehensive refactor. Phase 4 adds
+dark mode, English localization, and final polish. The app is now
+ready for AppGallery submission (store flavor) and GitHub Releases
+(enthusiast flavor).
+
+**This is a stable release** — all four phases (0–3) are complete and
+CI is green. The store APK has zero `bydauto` references (verified by
+CI). The enthusiast APK includes the ADB substrate for Tier 2 vehicle
+data without root.
+
+#### Added — Dark Mode
+- Migrated the XML theme from `Theme.MaterialComponents.Light.DarkActionBar`
+  to `Theme.MaterialComponents.DayNight.DarkActionBar`. The theme now
+  automatically switches between light and dark palettes based on the
+  system's `UI_MODE_NIGHT` setting (Android 10+, BYD DiLink 5).
+- Created `values-night/colors.xml` with the dark palette:
+  - Background: Binti Dark Blue (#001C35)
+  - Surface: #0D3556 (slightly lighter for visual hierarchy)
+  - Card background: #0A2A4A
+  - Text: #E0E0E0 (primary), #B0BEC5 (secondary), #78909C (hint)
+  - Brand accents (blue #0082C8 + gold #D4AF37) unchanged
+- The voice overlay theme (`Theme.Binti.Overlay`) is always dark
+  regardless of system theme — it must be readable in all lighting.
+- The Compose theme (`BintiTheme` in `ui/theme/Theme.kt`) already
+  supported dark mode via `isSystemInDarkTheme()` since Phase 2.
+
+#### Added — English Localization
+- Created `values-en/strings.xml` with English equivalents for all
+  user-facing strings. The app is now usable by English-speaking BYD
+  EV owners in the Arab world (expats, English-speaking visitors).
+- The default locale (`values/`) remains vocalized Egyptian Arabic —
+  the app's primary audience is Arabic speakers.
+- Note: the voice assistant (wake word, ASR, TTS) is Egyptian Arabic
+  only. English localization covers the UI text only.
+- The app now supports 3 locales:
+  - `ar` (vocalized Egyptian Arabic, default)
+  - `ar` (plain Arabic, `values-ar/`)
+  - `en` (English, `values-en/`)
+
+#### Changed — Theme
+- `Theme.Binti` parent changed from `Light.DarkActionBar` to
+  `DayNight.DarkActionBar`. This is a non-breaking change — existing
+  XML layouts continue to work; the only difference is that the
+  `values-night/colors.xml` palette is used when the system is in
+  dark mode.
+- `Theme.Binti.Overlay` parent changed from
+  `Theme.MaterialComponents.Light.NoActionBar` to
+  `Theme.MaterialComponents.NoActionBar` (always dark, not DayNight).
+  The overlay must be readable in all lighting conditions.
+
+#### Version Bump
+- `versionCode` 17 → 18
+- `versionName` "3.0.0-beta" → "3.0.0"
+
+---
+
 ## [3.0.0-beta] - 2026-10-11
 
 ### 🔧 Phase 3 — DiLink Integration Tier

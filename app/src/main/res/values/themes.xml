@@ -1,40 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Base application theme -->
-    <style name="Theme.Binti" parent="Theme.MaterialComponents.Light.DarkActionBar">
+    <!-- ──────────────────────────────────────────────────────────────────────
+         Base application theme (Phase 4: DayNight)
+         ──────────────────────────────────────────────────────────────────────
+         Migrated from Theme.MaterialComponents.Light.DarkActionBar to
+         Theme.MaterialComponents.DayNight.DarkActionBar. This automatically
+         switches between light and dark palettes based on the system's
+         UI_MODE_NIGHT setting (Android 10+) or the app's override.
+
+         The dark palette is defined in values-night/colors.xml.
+         The Compose theme (BintiTheme in ui/theme/Theme.kt) already
+         supports dark mode via isSystemInDarkTheme().
+         ────────────────────────────────────────────────────────────────────── -->
+    <style name="Theme.Binti" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
         <!-- Primary brand color -->
         <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryDark">@color/primary_dark</item>
         <item name="colorPrimaryVariant">@color/primary_light</item>
         <item name="colorOnPrimary">@android:color/white</item>
-        
+
         <!-- Secondary brand color -->
         <item name="colorSecondary">@color/accent</item>
         <item name="colorSecondaryVariant">@color/accent</item>
         <item name="colorOnSecondary">@android:color/white</item>
-        
+
         <!-- Background colors -->
         <item name="android:colorBackground">@color/background</item>
         <item name="colorSurface">@color/surface</item>
         <item name="colorOnBackground">@color/text_primary</item>
         <item name="colorOnSurface">@color/text_primary</item>
-        
+
         <!-- Status bar -->
         <item name="android:statusBarColor">@color/primary_dark</item>
         <item name="android:navigationBarColor">@color/primary_dark</item>
-        
+
         <!-- Text colors -->
         <item name="android:textColorPrimary">@color/text_primary</item>
         <item name="android:textColorSecondary">@color/text_secondary</item>
         <item name="android:textColorHint">@color/text_hint</item>
-        
+
         <!-- Action bar -->
         <item name="windowActionBar">true</item>
         <item name="windowNoTitle">false</item>
     </style>
-    
-    <!-- Overlay theme (transparent) -->
-    <style name="Theme.Binti.Overlay" parent="Theme.MaterialComponents.Light.NoActionBar">
+
+    <!-- Overlay theme (transparent) — for the voice assistant overlay.
+         Always dark regardless of system theme, because the overlay sits
+         on top of any app and needs to be readable in all lighting conditions. -->
+    <style name="Theme.Binti.Overlay" parent="Theme.MaterialComponents.NoActionBar">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowNoTitle">true</item>

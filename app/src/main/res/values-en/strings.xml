@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ──────────────────────────────────────────────────────────────────────
+         English localization (Phase 4)
+         ──────────────────────────────────────────────────────────────────────
+         For non-Arabic-speaking BYD EV owners in the Arab world (expats,
+         English-speaking visitors). The default locale (values/) remains
+         vocalized Egyptian Arabic — the app's primary audience is Arabic
+         speakers. This file provides English equivalents so the app is
+         usable by English speakers too.
+
+         Note: The voice assistant (wake word, ASR, TTS) is Egyptian Arabic
+         only. English localization covers the UI text only — voice commands
+         remain in Arabic.
+         ────────────────────────────────────────────────────────────────────── -->
+
+    <!-- App Info -->
+    <string name="app_name">Ya Binti</string>
+    <string name="app_description">Egyptian Arabic Voice Assistant for BYD DiLink</string>
+    <string name="ui_header_title">Smart Driving Assistant — Ya Binti</string>
+
+    <string name="accessibility_service_label">Ya Binti — BYD Assistant</string>
+    <string name="accessibility_service_description">Controls the DiLink system via voice commands</string>
+
+    <!-- User Profile & Settings -->
+    <string name="header_settings">Personal Settings</string>
+    <string name="user_name_label">What should I call you?</string>
+    <string name="user_name_hint">Enter your name here...</string>
+    <string name="user_profile_desc">So I can address you by name when we chat</string>
+    <string name="user_name_et_hint">Enter your name here</string>
+    <string name="assistant_tone_label">Speaking Style</string>
+    <string name="tone_formal">Formal</string>
+    <string name="tone_informal">Casual</string>
+    <string name="proactive_suggestions">Smart Suggestions</string>
+    <string name="save">Save Changes</string>
+
+    <!-- UI Headers -->
+    <string name="header_status">Current Assistant Status</string>
+    <string name="header_permissions">Required System Permissions</string>
+    <string name="header_actions">Quick Control Tools</string>
+
+    <!-- Usage Guide -->
+    <string name="user_menu_title">How to Use</string>
+    <string name="usage_instruction_egyptian">Just say \"Ya Binti\" followed by your command — for example, \"speed up the car a bit\", \"take me home\", or even \"call someone\". I\'m here to make your drive easier!</string>
+    <string name="user_menu_content">You can control the AC, navigation, calls, and media via voice commands.</string>
+
+    <!-- Wake Word & Responses -->
+    <string name="wake_word">Ya Binti</string>
+    <string name="wake_word_arabic">يا بنتي</string>
+    <string name="wake_response">Yes, I\'m listening! 😊</string>
+    <string name="wake_response_formal">At your service. What can I do for you?</string>
+
+    <!-- Demo Voice Message -->
+    <string name="demo_voice_message">Welcome! I\'m \"Ya Binti\", your voice assistant for BYD DiLink vehicles. Say \"Ya Binti\" and I\'ll help you with AC, navigation, music, and everything. Here to serve you!</string>
+
+    <!-- Main Activity -->
+    <string name="welcome_message">Welcome! I\'m your voice assistant. I\'ll be your second pair of eyes on the road so you can drive with peace of mind.</string>
+    <string name="listening_hint">I\'m listening now.. go ahead 🎧</string>
+    <string name="start_service">Start Assistant</string>
+    <string name="stop_service">Stop Assistant</string>
+    <string name="service_started">Assistant is running</string>
+    <string name="service_stopped">Assistant is on standby</string>
+
+    <!-- Permissions -->
+    <string name="permissions_required_title">Your Permission Needed</string>
+    <string name="permissions_required_message">To serve you properly, I need access to the microphone, location, and a few other things.</string>
+    <string name="grant_permission">Grant Permission</string>
+    <string name="permission_granted">All set ✅</string>
+
+    <string name="mic_permission_title">Microphone</string>
+    <string name="mic_permission_desc">To hear your commands clearly</string>
+    <string name="storage_permission_title">Storage</string>
+    <string name="storage_permission_desc">Required to download and use AI model files</string>
+    <string name="location_permission_title">Location</string>
+    <string name="location_permission_desc">To navigate you safely to any place you like</string>
+    <string name="phone_permission_title">Phone Calls</string>
+    <string name="phone_permission_desc">To answer phone calls</string>
+    <string name="overlay_permission_title">Display Over Other Apps</string>
+    <string name="overlay_permission_desc">To appear when you need me while I respond to you</string>
+    <string name="accessibility_permission_title">Accessibility Service</string>
+    <string name="accessibility_permission_desc">Required to control the DiLink interface</string>
+    <string name="notification_permission_title">Notifications</string>
+    <string name="notification_permission_desc">Required to show service status</string>
+
+    <string name="ok">OK</string>
+    <string name="got_it">Got it</string>
+    <string name="allow">Allow</string>
+    <string name="skip">Skip</string>
+
+    <!-- Accessibility Guide -->
+    <string name="accessibility_guide_title">Enable Accessibility Service</string>
+    <string name="accessibility_guide_message">Please enable the accessibility service to control the vehicle.</string>
+
+    <!-- Battery Optimization -->
+    <string name="battery_optimization_title">Battery Optimization</string>
+    <string name="battery_optimization_message">Please exclude the app from battery optimization.</string>
+
+    <!-- Model Download -->
+    <string name="download_models_title">Download AI Model</string>
+    <string name="download_models_message">To understand you even offline, we need to download some files (~318 MB). Shall we start?</string>
+    <string name="download_now">Let\'s go</string>
+    <string name="update_models">Update Files</string>
+    <string name="download_complete">All done! Files are ready ✅</string>
+    <string name="download_failed">Sorry, the download failed. Want to try again?</string>
+    <string name="download_error">Download error: %1$s</string>
+    <string name="downloading_file">Downloading %1$s… %2$d%%</string>
+    <string name="download_notification_title">Downloading Ya Binti files</string>
+    <string name="wifi_required_title">Wi-Fi Recommended</string>
+    <string name="wifi_required_message">Wi-Fi is recommended for downloading large files.</string>
+    <string name="use_cloud_only">Use cloud only</string>
+
+    <!-- Model Errors -->
+    <string name="error_download_network">Network problem</string>
+    <string name="error_download_storage">Insufficient storage</string>
+    <string name="error_download_timeout">Timed out</string>
+    <string name="error_download_corrupted">File corrupted</string>
+    <string name="error_download_google_drive">Download server error</string>
+    <string name="error_download_permission">Permission error</string>
+    <string name="error_model_missing">Model files missing</string>
+    <string name="error_model_init">Model initialization failed</string>
+
+    <!-- Notifications -->
+    <string name="notification_title">Ya Binti</string>
+    <string name="notification_listening">I\'m listening... 🎤</string>
+    <string name="notification_channel_description">Ya Binti voice assistant notifications</string>
+
+    <!-- Service States -->
+    <string name="state_ready">Ready ✅</string>
+    <string name="state_off">Assistant stopped</string>
+    <string name="state_listening">Listening... go ahead! 🎤</string>
+    <string name="state_processing">Thinking about your request... 🤔</string>
+    <string name="state_error">Something went wrong ❌</string>
+    <string name="state_unknown">Unknown state</string>
+
+    <!-- Commands - General -->
+    <string name="command_confirmed">On it: %1$s ✅</string>
+    <string name="command_success">Done! Anything else?</string>
+    <string name="command_failed">Command execution failed</string>
+    <string name="fallback_message">Sorry, I didn\'t catch that. Could you repeat? 🤔</string>
+
+    <!-- AC Commands -->
+    <string name="ac_turned_on">AC is on — stay cool! ❄️</string>
+    <string name="ac_turned_off">AC turned off</string>
+    <string name="ac_temp_set">Temperature set to %1$d° — how\'s that?</string>
+
+    <!-- Navigation Commands -->
+    <string name="nav_started">Route set to %1$s — safe travels! 🗺️</string>
+    <string name="nav_home">Heading home! 🏠</string>
+    <string name="nav_work">Navigating to work</string>
+
+    <!-- Media Commands -->
+    <string name="media_playing">Enjoy the ride — music is playing ▶️</string>
+    <string name="media_paused">Music paused ⏸️</string>
+
+    <!-- Phone Commands -->
+    <string name="phone_calling">Calling %1$s</string>
+    <string name="phone_answered">Call answered</string>
+
+    <!-- Info Commands -->
+    <string name="info_time">The time is %1$s</string>
+    <string name="info_battery">Battery is at %1$d%% — looking good</string>
+
+    <!-- Phase 1 — Command response strings -->
+    <string name="cmd_unknown_action">Unknown command: %1$s</string>
+    <string name="cmd_error">Error: %1$s</string>
+    <string name="cmd_station_no_data">Sorry, I couldn\'t find station data. Connect to the internet and try again.</string>
+    <string name="cmd_station_no_location">I can\'t determine your location. Please enable Location so I can find the nearest charging station.</string>
+    <string name="cmd_station_none_nearby">No charging stations within %1$d km. Try expanding your search or moving a bit.</string>
+    <string name="cmd_station_found_navigating">Found %1$s at %2$s km (%3$d km) — navigation started! 🔌🗺️</string>
+    <string name="cmd_station_found_no_nav">Nearest station is %1$s at %2$s km (%3$d km). I can\'t open navigation — please open it manually from your maps app.</string>
+    <string name="cmd_greeting_default">Welcome! I\'m at your service — what can I do for you?</string>
+    <string name="cmd_social_default">You\'re welcome — always here to help 🌹</string>
+    <string name="cmd_help_default">I can control the AC, music, navigate you anywhere, and call anyone. Just tell me what you need!</string>
+
+    <!-- About -->
+    <string name="about">About</string>
+    <string name="version">Version %1$s</string>
+    <string name="developer">Developed by: Dr. Waleed Mandour</string>
+    <string name="developer_credentials">w.abumandour@squ.edu.om</string>
+
+    <!-- Sample Commands -->
+    <string-array name="sample_commands">
+        <item>Ya Binti, speed up the car a bit</item>
+        <item>Ya Binti, take me home</item>
+        <item>Ya Binti, play some music</item>
+        <item>Ya Binti, what time is it?</item>
+    </string-array>
+
+    <!-- Widget Strings -->
+    <string name="widget_status_ready">Ready</string>
+    <string name="widget_status_listening">Listening...</string>
+    <string name="widget_status_ac">Adjusting AC...</string>
+    <string name="widget_status_navigating">Navigating...</string>
+    <string name="widget_status_media">Controlling media...</string>
+    <string name="widget_voice_desc">Speak now</string>
+    <string name="widget_ac_desc">AC control</string>
+    <string name="widget_nav_desc">Navigate home</string>
+    <string name="widget_media_desc">Play/Pause</string>
+    <string name="widget_next_desc">Next track</string>
+
+    <!-- Developer Debug Screen -->
+    <string name="vehicle_state_title">Vehicle State (Developer)</string>
+    <string name="vehicle_state_refresh">Refresh data now</string>
+    <string name="vehicle_state_probe">Read advanced telemetry</string>
+    <string name="vehicle_state_telemetry_settings">Advanced telemetry settings</string>
+    <string name="vehicle_state_disclaimer">Developer debug screen. Data is read from the DiLink interface via Accessibility Service only in the store build, or with advanced telemetry in the enthusiast build.</string>
+    <string name="diagnostics_share">Share full diagnostics report</string>
+
+    <!-- Advanced Telemetry (enthusiast flavor only) -->
+    <string name="advanced_telemetry_title">Advanced Telemetry (Experimental)</string>
+    <string name="advanced_telemetry_warning_full">Advanced Telemetry is an unofficial experimental feature based on reverse-engineering of the car\'s internal Android services on the DiLink system. It is not supported or endorsed by BYD, may stop working after firmware updates, and may affect your vehicle warranty or BYD terms of service. Enable only if you understand and accept this.\n\nData collected: tyre pressure, HV bus voltage, 12V battery voltage, motor RPM, and battery cell voltage — read-only, and will not touch safety-critical systems like brakes, steering, or airbags.</string>
+    <string name="advanced_telemetry_acknowledge">I have read and understand the warning and accept the risks</string>
+    <string name="advanced_telemetry_enable">Enable Advanced Telemetry</string>
+    <string name="advanced_telemetry_disable">Disable Advanced Telemetry</string>
+    <string name="advanced_telemetry_must_acknowledge">You must acknowledge the warning first</string>
+    <string name="advanced_telemetry_status_not_shown">Consent status: not yet asked</string>
+    <string name="advanced_telemetry_status_granted">Consent status: enabled since %1$s</string>
+    <string name="advanced_telemetry_status_revoked">Consent status: you disabled it</string>
+    <string name="advanced_telemetry_attribution">This build uses MIT-licensed reference research from github.com/wheregoes/byd-apps. See NOTICE file for details.</string>
+</resources>
