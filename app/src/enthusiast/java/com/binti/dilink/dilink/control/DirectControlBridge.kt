@@ -21,6 +21,7 @@ import com.binti.dilink.dilink.DataSource
 import com.binti.dilink.dilink.VehicleSnapshot
 import com.binti.dilink.dilink.telemetry.AdvancedTelemetryLoader
 import com.binti.dilink.dilink.telemetry.TelemetryConsentManager
+import com.binti.dilink.dilink.vehicle.BintiDiLinkBridge
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

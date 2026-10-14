@@ -10,20 +10,22 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Verifies that the resource-ID constants defined in [BYDModels] match the
- * expected patterns for each supported BYD model, and that the fallback ID
- * lists cover every primary ID referenced by the executor.
+ * Verifies that the resource-ID constants defined in [BYDModels] stay stable
+ * for each supported BYD model, and that the fallback ID lists cover every
+ * primary ID referenced by the executor.
  *
- * These tests guard against regressions when IDs are added or renamed — the
- * runtime AccessibilityNodeInfo API itself is mocked at the integration-test
- * level (out of scope for this unit test module).
+ * IMPORTANT (P0 honesty fix): no ID set in [BYDModels] has been verified on
+ * real hardware yet — every model is `isConfirmed = false` until the on-car
+ * verification checklist in docs/REBUILD_PLAN.md has been executed. These
+ * tests therefore assert the CANDIDATE values so accidental edits are caught,
+ * and assert `isConfirmed == false` so the honesty flag can't silently flip.
  *
  * @author Dr. Waleed Mandour
  */
 class BYDModelsTest {
 
     // ──────────────────────────────────────────────────────────────────────
-    // Yuan Plus / Atto 3 (PRIMARY — IDs verified on real hardware)
+    // Yuan Plus / Atto 3 (PRIMARY — candidate IDs, pending on-car verification)
     // ──────────────────────────────────────────────────────────────────────
 
     @Test fun `Yuan Plus vehicle info IDs follow expected package and prefix`() {
@@ -56,13 +58,13 @@ class BYDModelsTest {
     // forModel() factory
     // ──────────────────────────────────────────────────────────────────────
 
-    @Test fun `forModel resolves Yuan and Atto variants to the verified Yuan Plus ID set`() {
+    @Test fun `forModel resolves Yuan and Atto variants to the Yuan Plus candidate ID set`() {
         val cases = listOf("Yuan Plus", "Atto 3", "YuanPlus", "ATTO3")
         cases.forEach { model ->
             val cfg = BYDModels.forModel(model)
-            assertTrue("'$model' should be confirmed", cfg.isConfirmed)
+            assertFalse("'$model' must stay unconfirmed until IDs are verified on real hardware", cfg.isConfirmed)
             assertEquals("Yuan Plus / Atto 3", cfg.modelName)
-            // Verified IDs come from the YuanPlus2023 object
+            // Candidate IDs come from the YuanPlus2023 object
             assertEquals(BYDModels.YuanPlus2023.ID_VEHICLE_BATTERY, cfg.ids.ID_VEHICLE_BATTERY)
         }
     }
@@ -76,6 +78,15 @@ class BYDModelsTest {
             assertEquals(expected, cfg.modelName)
             assertTrue("'$input' should be unconfirmed", !cfg.isConfirmed)
         }
+    }
+
+    @Test fun `no model ships as confirmed until hardware verification passes`() {
+        // P0 honesty guard — flips red if anyone marks a model confirmed
+        // without executing docs/REBUILD_PLAN.md's on-car checklist first.
+        listOf("Yuan Plus", "Dolphin", "Seal", "Han", "Tang", "SomeUnknownModel XYZ")
+            .forEach { model ->
+                assertFalse("'$model' must not be confirmed", BYDModels.forModel(model).isConfirmed)
+            }
     }
 
     @Test fun `forModel falls back to Yuan Plus for unknown model strings`() {
@@ -125,7 +136,11 @@ class BYDModelsTest {
     // Packages object
     // ──────────────────────────────────────────────────────────────────────
 
-    @Test fun `Packages constants match the DiLink package names`() {
+    @Test fun `Packages constants stay stable until real DiLink packages are confirmed`() {
+        // NOTE: these com.byd.auto.* names are the historical candidate set.
+        // The external review could not confirm them on any DiLink firmware;
+        // the real set (com.byd.airconditioning, com.byd.carsettings, ...) is
+        // to be captured during on-car verification — see REBUILD_PLAN.md.
         assertEquals("com.byd.auto.ac",          BYDModels.Packages.AC)
         assertEquals("com.byd.auto.navigation",  BYDModels.Packages.NAV)
         assertEquals("com.byd.auto.media",       BYDModels.Packages.MEDIA)

@@ -5,9 +5,9 @@ package com.binti.dilink.dilink.vehicle
 
 import android.content.Context
 import android.util.Log
-import com.binti.dilink.dilink.BydParcel
 import com.binti.dilink.dilink.BydSpeedDecoder
 import com.binti.dilink.dilink.adb.BydAdbShell
+import com.binti.dilink.dilink.adb.BydParcel
 
 /**
  * Reads BYD vehicle data via `service call autoservice` over ADB.

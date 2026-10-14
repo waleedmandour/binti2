@@ -77,7 +77,12 @@ object LaunchGreeting {
         }
 
         return try {
-            mediaPlayer = MediaPlayer.create(appContext, com.binti.dilink.R.raw.launch_greeting)?.also { player ->
+            val player = MediaPlayer.create(appContext, com.binti.dilink.R.raw.launch_greeting)
+            if (player == null) {
+                Log.e(TAG, "Could not create MediaPlayer for launch_greeting.wav")
+                runCatching { audioManager.abandonAudioFocusRequest(focusRequest!!) }
+                false
+            } else {
                 player.setOnCompletionListener { mp ->
                     runCatching { audioManager.abandonAudioFocusRequest(focusRequest!!) }
                     runCatching { mp.release() }
@@ -90,14 +95,11 @@ object LaunchGreeting {
                     if (mediaPlayer === mp) mediaPlayer = null
                     true
                 }
+                mediaPlayer = player
                 player.start()
                 hasGreetedThisProcess = true
-                Log.i(TAG, "👋 Launch greeting playing: أهلا بيك")
+                Log.i(TAG, "Launch greeting playing: أهلا بيك")
                 true
-            } ?: run {
-                Log.e(TAG, "Could not create MediaPlayer for launch_greeting.wav")
-                runCatching { audioManager.abandonAudioFocusRequest(focusRequest!!) }
-                false
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to play launch greeting", e)
