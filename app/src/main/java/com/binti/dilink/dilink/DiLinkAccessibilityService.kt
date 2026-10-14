@@ -77,9 +77,13 @@ class DiLinkAccessibilityService : AccessibilityService() {
          *
          * Tier 2 (Advanced Telemetry, enthusiast flavor only) also publishes
          * into this same singleton — see `AdvancedTelemetryManager`.
+         *
+         * P0 FIX (repository split): now backed by VehicleDataRepository.getShared()
+         * so Tier 2 publishers (BintiDiLinkBridge) and this consumer share ONE
+         * instance instead of two disconnected ones.
          */
         @JvmStatic
-        val vehicleDataRepository: VehicleDataRepository = VehicleDataRepository()
+        val vehicleDataRepository: VehicleDataRepository = VehicleDataRepository.getShared()
     }
 
     // FIX #2 — explicit package list instead of null (monitor all)

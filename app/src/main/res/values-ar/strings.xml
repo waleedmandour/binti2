@@ -252,4 +252,8 @@
     <!-- Diagnostics — share button on the Vehicle State debug screen -->
     <string name="diagnostics_share">مشاركة تقرير التشخيص الكامل</string>
 
+    <!-- Launch greeting (spoken + shown). Bundled female-voice clip: res/raw/launch_greeting.wav -->
+    <string name="launch_greeting">أهلا بيك</string>
+    <string name="section_system_maintenance">صيانة النظام</string>
+    <string name="section_accessibility_diagnostics">تشخيص خاصية إمكانية الوصول</string>
 </resources>

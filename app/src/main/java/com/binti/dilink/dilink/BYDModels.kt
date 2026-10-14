@@ -132,7 +132,11 @@ object BYDModels {
     }
 
     // ──────────────────────────────────────────────────────────────────────────
-    // Yuan Plus 2023 / Atto 3  — PRIMARY (IDs verified)
+    // Yuan Plus 2023 / Atto 3  — PRIMARY
+    // ⚠ P0 HONESTY FIX: these IDs and package names were GUESSES, not values
+    // read off a real DiLink 3 head unit — the previous "IDs verified" header
+    // was false (see docs/REBUILD_PLAN.md §1). Package discovery on the car
+    // (`pm list packages | grep byd`) must confirm these before release.
     // ──────────────────────────────────────────────────────────────────────────
     object YuanPlus2023 : ModelIDs {
         override val PACKAGE_AC       = Packages.AC
@@ -300,7 +304,9 @@ object BYDModels {
     fun forModel(detectedModel: String): ModelConfig = when {
         detectedModel.contains("Yuan",    ignoreCase = true) ||
         detectedModel.contains("Atto",    ignoreCase = true) ->
-            ModelConfig("Yuan Plus / Atto 3", YuanPlus2023, isConfirmed = true)
+            // P0 HONESTY FIX: was isConfirmed = true with no hardware behind
+            // it. False until IDs are confirmed on a real unit.
+            ModelConfig("Yuan Plus / Atto 3", YuanPlus2023, isConfirmed = false)
 
         detectedModel.contains("Dolphin", ignoreCase = true) ->
             ModelConfig("Dolphin",            Dolphin,     isConfirmed = false)

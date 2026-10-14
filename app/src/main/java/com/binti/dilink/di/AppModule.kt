@@ -74,20 +74,15 @@ object AppModule {
     /**
      * Provides the [VehicleDataRepository] singleton.
      *
-     * Phase 2: the existing [DiLinkAccessibilityService] creates its own
-     * instance (`val vehicleDataRepository = VehicleDataRepository()`).
-     * Phase 3 will refactor the service to receive this Hilt-provided
-     * instance via @Inject. For now, this provider creates a shared
-     * singleton that new @Inject-annotated classes can receive — the
-     * existing service instance continues to work independently.
-     *
-     * When the service is migrated to Hilt, it will receive this same
-     * singleton, unifying the two instances.
+     * P0 FIX (repository split): all production code now resolves the
+     * repository through [VehicleDataRepository.getShared] — the
+     * accessibility service, BintiDiLinkBridge and this provider all return
+     * the SAME instance, so Tier 2 data reaches voice answers.
      */
     @Provides
     @Singleton
     fun provideVehicleDataRepository(): VehicleDataRepository =
-        VehicleDataRepository()
+        VehicleDataRepository.getShared()
 
     /**
      * Provides the existing [StationManager] for legacy code paths.

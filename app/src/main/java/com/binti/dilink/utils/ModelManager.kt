@@ -156,6 +156,20 @@ class ModelManager(private val context: Context) {
                 val file = pollDownloadProgress(downloadId, model.name, index, missingModels.size, onProgress)
 
                 if (file != null) {
+                    // P1 FIX (integrity): verify the download against the
+                    // declared sha256 BEFORE extracting/keeping it. The hash in
+                    // model_config.json was empty; once it is filled in (see
+                    // docs/REBUILD_PLAN.md), a corrupted or MITM'd model zip is
+                    // rejected instead of silently extracted.
+                    if (model.sha256.isNotBlank() && !verifySha256(file, model.sha256)) {
+                        file.delete()
+                        val msg = "مفيش التطبيق يقدر يستخدم الموديل ${model.name} — الملف مش مطابق للبصمة (sha256). " +
+                                  "حاول تحمل تاني."
+                        Log.e(TAG, "sha256 mismatch for ${model.fileName} — download rejected")
+                        if (model.required) { onError(msg); return@withContext }
+                        continue
+                    }
+
                     if (model.extract) {
                         Log.d(TAG, "Extracting ${model.fileName}…")
                         extractModel(model, file)
@@ -338,6 +352,31 @@ class ModelManager(private val context: Context) {
     // ──────────────────────────────────────────────────────────────────────────
     // ZIP extraction
     // ──────────────────────────────────────────────────────────────────────────
+
+    /**
+     * P1 FIX (integrity): streaming SHA-256 check for a downloaded model file.
+     * Compares case-insensitively against the expected hex digest.
+     */
+    private fun verifySha256(file: File, expectedHex: String): Boolean {
+        return try {
+            val md = java.security.MessageDigest.getInstance("SHA-256")
+            file.inputStream().use { input ->
+                val buffer = ByteArray(1 shl 16)
+                var read = input.read(buffer)
+                while (read > 0) {
+                    md.update(buffer, 0, read)
+                    read = input.read(buffer)
+                }
+            }
+            val actual = md.digest().joinToString("") { "%02x".format(it) }
+            val match = actual.equals(expectedHex.trim().lowercase(), ignoreCase = true)
+            Log.i(TAG, "sha256 ${if (match) "OK" else "MISMATCH"} for ${file.name} (expected=${expectedHex.take(12)}… actual=${actual.take(12)}…)")
+            match
+        } catch (e: Exception) {
+            Log.e(TAG, "sha256 verification failed for ${file.name}", e)
+            false
+        }
+    }
 
     private fun extractModel(model: ModelDefinition, zipFile: File) {
         val targetDir = File(context.filesDir, model.relativePath)

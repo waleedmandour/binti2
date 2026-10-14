@@ -10,11 +10,11 @@
       "file": "vosk-model-ar-mgb2-0.4.zip",
       "download_url": "https://alphacephei.com/vosk/models/vosk-model-ar-mgb2-0.4.zip",
       "size_mb": 318,
-      "sha256": "",
+      "sha256": "357469ae1bb4d7a3810c9cd6b86d33bc135898dfc134e6df8bc2ddd28c5fe77a",
       "required": true,
       "extract": true,
       "relative_path": "models",
-      "notes": "Downloaded via Android DownloadManager from alphacephei.com. Recommend WiFi for download. Used for both ASR and wake word detection.",
+      "notes": "Downloaded via Android DownloadManager from alphacephei.com. Recommend WiFi for download. Used for both ASR and wake word detection. P1 FIX: sha256 now filled and verified by ModelManager before extraction (mirror: https://github.com/waleedmandour/binti2/releases — verify same hash).",
       "source": "https://alphacephei.com/vosk/models",
       "wake_word_support": {
         "method": "vosk_grammar",

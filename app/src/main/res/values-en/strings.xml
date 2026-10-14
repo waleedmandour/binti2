@@ -217,4 +217,8 @@
     <string name="advanced_telemetry_status_granted">Consent status: enabled since %1$s</string>
     <string name="advanced_telemetry_status_revoked">Consent status: you disabled it</string>
     <string name="advanced_telemetry_attribution">This build uses MIT-licensed reference research from github.com/wheregoes/byd-apps. See NOTICE file for details.</string>
+    <!-- Launch greeting (spoken + shown). Bundled female-voice clip: res/raw/launch_greeting.wav -->
+    <string name="launch_greeting">Ahlan bek! (Welcome!)</string>
+    <string name="section_system_maintenance">System Maintenance</string>
+    <string name="section_accessibility_diagnostics">Accessibility Diagnostics</string>
 </resources>

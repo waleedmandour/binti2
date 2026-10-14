@@ -45,11 +45,23 @@ object BydVehicleFields {
     object Speed {
         // BYDAutoFeatureIds.Speed.SPEED_AUTO_SPEED
         // Device 1013, fid -1807745016, transaction 7 (float)
+        // NOTE: raw value is ALREADY km/h — see BydSpeedDecoder.
         const val DEVICE = 1013
         const val FID = -1807745016
         const val TX = 7
 
         val COMMAND = getFloatCommand(DEVICE, FID)
+
+        // P0 FIX (DiLink 3 support): DiPlay's BydVehicleCapabilityProbe records
+        // a different speed address on controller-13 / DiLink 3 head units
+        // (the generation shipped on Egyptian Dolphin / Atto 3). The SDK 1.0.5
+        // address above is probed first; if it returns garbage we fall back to
+        // this legacy address.
+        const val FID_DILINK3 = -1176502256
+        val COMMAND_DILINK3 = getFloatCommand(DEVICE, FID_DILINK3)
+
+        /** Probe order: SDK 1.0.5 address first, then the DiLink 3 legacy one. */
+        val COMMAND_CANDIDATES = listOf(COMMAND, COMMAND_DILINK3)
     }
 
     // ──────────────────────────────────────────────────────────────────────────

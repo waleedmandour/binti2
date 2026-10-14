@@ -66,6 +66,45 @@ NOTICE file per Section 4(d) of the Apache License, Version 2.0.
    does NOT include any BUSL-1.1-licensed code.
 
 ────────────────────────────────────────────────────────────────────────
+3. shihabal3amri/DiPlay
+   URL:     https://github.com/shihabal3amri/DiPlay
+   License: GPL-3.0 (GNU General Public License v3.0)
+   Used:    DIRECT SOURCE PORTS. The following files in this repository are
+            ports/adaptations of DiPlay source code, as acknowledged in each
+            file's header:
+
+              app/src/enthusiast/java/com/binti/dilink/dilink/adb/LocalAdb.kt
+              app/src/enthusiast/java/com/binti/dilink/dilink/adb/AdbPacket.kt
+              app/src/enthusiast/java/com/binti/dilink/dilink/adb/AdbKeys.kt
+              app/src/enthusiast/java/com/binti/dilink/dilink/adb/BydAdbShell.kt
+              app/src/enthusiast/java/com/binti/dilink/dilink/vehicle/BydVehicleFields.kt
+              app/src/enthusiast/java/com/binti/dilink/dilink/vehicle/BydVehicleReader.kt
+              app/src/enthusiast/java/com/binti/dilink/dilink/vehicle/RecoveryJournal.kt
+              app/src/enthusiast/java/com/binti/dilink/dilink/vehicle/FirmwareGate.kt
+              app/src/enthusiast/java/com/binti/dilink/dilink/control/DirectControlInitializer.kt
+
+            Because DiPlay is licensed under GPL-3.0, these ported files
+            carry DiPlay's GPL-3.0 obligations. This NOTICE previously
+            omitted DiPlay — that omission is corrected as of the rebuild
+            pass (docs/REBUILD_PLAN.md §5).
+
+            **License resolution options** (one must be chosen before ANY
+            distribution of the enthusiast flavor):
+              a) Distribute the enthusiast flavor (or the whole app) under
+                 GPL-3.0, or
+              b) Obtain written permission from the DiPlay author, or
+              c) Clean-room reimplement these files from the AOSP ADB
+                 protocol documentation and remove the ports.
+            Option (a) is incompatible with the project's Apache-2.0
+            LICENSE for the work as a whole; until one of (a)/(b)/(c) is
+            completed, the enthusiast flavor must be treated as
+            GPL-3.0-encumbered and NOT redistributed.
+
+            The Apache-2.0 SPDX headers on the files listed above indicate
+            the project's intended license and DO NOT override DiPlay's
+            GPL-3.0 copyright in the ported code.
+
+────────────────────────────────────────────────────────────────────────
 
 Trademark notice
 ----------------

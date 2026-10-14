@@ -8,6 +8,11 @@ import android.util.Log
 import com.binti.dilink.dilink.DataSource
 import com.binti.dilink.dilink.VehicleSnapshot
 import com.binti.dilink.dilink.VehicleDataRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 /**
  * Binti DiLink Bridge — the enthusiast-flavor entry point for Tier 2
  * vehicle data via ADB + `service call autoservice`.
@@ -48,11 +53,15 @@ class BintiDiLinkBridge(private val context: Context) {
 
     private val vehicleReader = BydVehicleReader(context)
     private val recoveryJournal = RecoveryJournal(context)
-    // NOTE: VehicleDataRepository is a plain class (no singleton getInstance()).
-    // The enthusiast bridge creates its own instance for merging Tier 2 data.
-    // Phase 2's Hilt AppModule also provides a singleton instance — these
-    // will be unified when the accessibility service is migrated to Hilt.
-    private val vehicleDataRepository = VehicleDataRepository()
+    // P0 FIX (repository split): previously this bridge created its own
+    // private VehicleDataRepository() and published into it — the executor,
+    // widget and VehicleStateActivity all read a DIFFERENT instance, so Tier 2
+    // data never reached voice answers. Now everything shares the
+    // process-wide singleton.
+    private val vehicleDataRepository = VehicleDataRepository.getShared()
+
+    /** Scope used for the startup snapshot publish. */
+    private val bridgeScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     @Volatile
     private var initialized = false
@@ -76,6 +85,15 @@ class BintiDiLinkBridge(private val context: Context) {
         // Check if the privileged path (firmware-gated operations) is available
         val privilegedAvailable = FirmwareGate.isPrivilegedPathAvailable(context)
         Log.i(TAG, "Privileged path available: $privilegedAvailable")
+
+        // P0 FIX (dead publish path): readAndPublishVehicleSnapshot() existed
+        // but was never called, so Tier 2 data never reached the shared
+        // repository. Publish one snapshot at startup; voice queries refresh
+        // on demand via ControlBridge.refreshVehicleData().
+        bridgeScope.launch {
+            runCatching { readAndPublishVehicleSnapshot() }
+                .onFailure { Log.w(TAG, "Startup snapshot publish failed: ${it.message}") }
+        }
 
         Log.i(TAG, "✅ Binti DiLink Bridge initialized")
     }
@@ -133,6 +151,7 @@ class BintiDiLinkBridge(private val context: Context) {
      */
     fun close() {
         vehicleReader.close()
+        bridgeScope.cancel()
         Log.i(TAG, "Binti DiLink Bridge closed")
     }
 }

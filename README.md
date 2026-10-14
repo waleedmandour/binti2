@@ -20,7 +20,9 @@
 
 **BYD Binti** (بنتي - "my BYD daughter") is a professional-grade Egyptian Arabic voice assistant designed specifically for BYD DiLink infotainment systems. It enables drivers to control vehicle functions using natural Egyptian dialect, responding to the wake word **"يا بنتي"** (Ya Binti).
 
-Binti is optimized for the hardware and software environment of BYD vehicles, featuring a landscape-native UI and **Android Accessibility Service-based UI automation** to interact with DiLink system apps directly — no root or ADB required.
+Binti is optimized for the hardware and software environment of BYD vehicles, featuring a landscape-native UI and **Android Accessibility Service-based UI automation** to interact with DiLink system apps directly — no root required.
+
+> **Honest note on accessibility & ADB (fixed claim):** on BYD DiLink 3 (Android 10) the OEM-modified Settings app often blocks the standard Accessibility screen, so enabling Binti's service may require a one-time ADB step (see `scripts/enable-accessibility-adb.sh`). The optional **enthusiast** flavor additionally uses local-ADB vehicle reads (`service call autoservice`) for battery/range/speed. Earlier versions of this README claimed "no ADB required"; that was incorrect and has been corrected — see `docs/REBUILD_PLAN.md`.
 
 ### A note on "BYD D++"
 
@@ -352,8 +354,12 @@ AI models are hosted as GitHub Release assets, downloaded using Android's **Down
 
 The model URL format is:
 ```
-https://github.com/waleedmandour/binti2/releases/download/v2.2.0-beta/vosk-model-ar-mgb2-0.4.zip
+https://alphacephei.com/vosk/models/vosk-model-ar-mgb2-0.4.zip
 ```
+
+> **Canonical source (P1 fix):** `alphacephei.com` is the official Vosk host and the source the app downloads from. A GitHub-release mirror (`…/v2.2.0-beta/vosk-model-ar-mgb2-0.4.zip`) may exist but is unofficial — always verify the SHA-256:
+> `357469ae1bb4d7a3810c9cd6b86d33bc135898dfc134e6df8bc2ddd28c5fe77a`
+> ModelManager verifies this hash before extraction.
 
 After download, the ZIP archive is automatically extracted to the app's internal storage with zip-slip protection.
 

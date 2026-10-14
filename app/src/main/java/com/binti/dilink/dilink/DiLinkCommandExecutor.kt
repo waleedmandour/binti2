@@ -10,6 +10,8 @@ import android.provider.Settings
 import android.util.Log
 import android.view.accessibility.AccessibilityNodeInfo
 import com.binti.dilink.R
+import com.binti.dilink.dilink.bydapi.BydAcBridge
+import com.binti.dilink.dilink.control.ControlLoader
 import com.binti.dilink.nlp.IntentResult
 import com.binti.dilink.utils.StationManager
 import kotlinx.coroutines.Dispatchers
@@ -153,18 +155,29 @@ class DiLinkCommandExecutor(private val context: Context) {
             "شغل" in pattern || "افتح" in pattern -> setACPower(true)
             "طفي" in pattern || "قفل" in pattern  -> setACPower(false)
 
-            "زيود" in pattern || "زود" in pattern -> adjustACTemperature(1)
-            "قلل"  in pattern || "برودة" in pattern -> adjustACTemperature(-1)
-
+            // P0 FIX (routing order): the compound fan phrases MUST be tested
+            // BEFORE the bare temperature phrases. "زود سرعة المروحة" contains
+            // "زود", so the old branch order raised the TEMPERATURE and the
+            // fan branches below it were unreachable.
             "سرعة" in pattern && ("زيود" in pattern || "زود" in pattern) -> adjustFanSpeed(1)
             "سرعة" in pattern && "قلل" in pattern  -> adjustFanSpeed(-1)
 
-            else -> setACPower(true)
+            "زيود" in pattern || "زود" in pattern -> adjustACTemperature(1)
+            "قلل"  in pattern || "برودة" in pattern -> adjustACTemperature(-1)
+
+            // P0 FIX (default-to-on): an unrecognized AC phrase no longer
+            // silently switches the AC ON — that is a surprising side effect
+            // (and with the old blind toggle, often switched it OFF).
+            else -> CommandResult(
+                false,
+                "مش فاهم الأمر ده. قول زي: شغل المكيف، طفي المكيف، زود درجة الحرارة، أو زود سرعة المروحة"
+            )
         }
     }
 
     private suspend fun setACTemperature(temp: Int): CommandResult {
-        val targetTemp = temp.coerceIn(16, 32)
+        // P0 FIX (clamp): DiLink's documented AC range is 17–33 °C, not 16–32.
+        val targetTemp = temp.coerceIn(17, 33)
         Log.d(TAG, "Setting AC temperature to $targetTemp°C")
 
         return withService { service ->
@@ -224,6 +237,19 @@ class DiLinkCommandExecutor(private val context: Context) {
     private suspend fun setACPower(on: Boolean): CommandResult {
         Log.d(TAG, "Setting AC power: $on")
 
+        // P0 FIX (blind toggle): read the real AC state through BYD's
+        // framework API when available. Previously "شغل المكيف" on an already-
+        // running AC clicked the power node again and switched it OFF.
+        when (BydAcBridge.isOn(context)) {
+            on -> return CommandResult(
+                true,
+                if (on) "المكيف شغال بالفعل" else "المكيف مطفي بالفعل"
+            )
+            // state known and differs → proceed with the click (and verify after)
+            // state unknown (null) → scrape path unchanged, but be honest about it
+            else -> {}
+        }
+
         return withService { service ->
             ensureApp(service, DILINK_AC_PACKAGE)
 
@@ -231,9 +257,18 @@ class DiLinkCommandExecutor(private val context: Context) {
                       ?: service.findNodeByContentDescription(if (on) "تشغيل" else "إيقاف")
 
             // FIX #1
-            if (node != null && service.performClick(node))
-                CommandResult(true, if (on) "تم تشغيل المكيف" else "تم إطفاء المكيف")
-            else
+            if (node != null && service.performClick(node)) {
+                // Verify by read-back when the framework API is available
+                val confirmed = BydAcBridge.isOn(context)
+                when (confirmed) {
+                    on   -> CommandResult(true, if (on) "تم تشغيل المكيف" else "تم إطفاء المكيف")
+                    null -> CommandResult(true, if (on) "تم تشغيل المكيف" else "تم إطفاء المكيف")
+                    else -> CommandResult(
+                        false,
+                        "المكيف مش في الحالة المطلوبة — جرب تاني أو تحقق من شاشة المكيف"
+                    )
+                }
+            } else
                 CommandResult(false, if (on) "معرفتش أشغل المكيف" else "معرفتش أطفي المكيف")
         }
     }
@@ -705,6 +740,18 @@ class DiLinkCommandExecutor(private val context: Context) {
             }
         }
 
+        // 2.5) P0 FIX (Tier 2 wiring): enthusiast flavor — refresh the shared
+        // repository from the ADB autoservice path before degrading to the
+        // head-unit battery. Previously BintiDiLinkBridge published into a
+        // private repository nobody read, so this data never arrived.
+        runCatching { ControlLoader.get().refreshVehicleData() }
+            .getOrDefault(false)
+            .takeIf { it }?.let {
+                repo.freshOrNull()?.batteryPercent?.let { pct ->
+                    return CommandResult(true, formatBatteryMessage(pct, repo.current().hasAdvancedTelemetry), isInfo = true)
+                }
+            }
+
         // 3) Final fallback: Android sticky battery broadcast (tablet battery, not EV HV — but better than nothing)
         val batteryIntent = context.registerReceiver(
             null,
@@ -740,6 +787,16 @@ class DiLinkCommandExecutor(private val context: Context) {
                 return CommandResult(true, formatRangeMessage(km, snap.hasAdvancedTelemetry), isInfo = true)
             }
         }
+
+        // P0 FIX (Tier 2 wiring): enthusiast flavor — refresh from the ADB
+        // autoservice path before giving up with the "open the app" hint.
+        runCatching { ControlLoader.get().refreshVehicleData() }
+            .getOrDefault(false)
+            .takeIf { it }?.let {
+                repo.freshOrNull()?.estimatedRangeKm?.let { km ->
+                    return CommandResult(true, formatRangeMessage(km, repo.current().hasAdvancedTelemetry), isInfo = true)
+                }
+            }
         return CommandResult(false, "افتح تطبيق معلومات العربية للمزيد")
     }
 
@@ -774,7 +831,10 @@ class DiLinkCommandExecutor(private val context: Context) {
         val snap = repo.freshOrNull() ?: accessibilityService?.forceRefreshSnapshot() ?: repo.current()
 
         val parts = mutableListOf<String>()
-        snap.outsideTempC?.let  { parts.add("الخارج $it°") }
+        // P1 FIX: prefer the BYD framework API's real outside sensor when the
+        // head unit exposes it; fall back to the scraped snapshot value.
+        val outside = BydAcBridge.outsideTempC(context) ?: snap.outsideTempC
+        outside?.let    { parts.add("الخارج $it°") }
         snap.acTargetTempC?.let { parts.add("المكيف $it°") }
 
         return if (parts.isNotEmpty())

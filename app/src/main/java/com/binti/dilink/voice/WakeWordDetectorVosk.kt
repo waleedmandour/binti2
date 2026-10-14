@@ -14,9 +14,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
-import org.vosk.Model
 import org.vosk.Recognizer
-import java.io.File
 
 /**
  * Wake Word Detector using Vosk Grammar - "يا بنتي" (Ya Binti)
@@ -47,9 +45,6 @@ class WakeWordDetectorVosk(private val context: Context) {
         // Grammar for wake word detection
         private const val GRAMMAR_JSON = """["يا بنتي", "[unk]"]"""
         
-        // Vosk model path
-        private const val VOSK_MODEL_PATH = "models/vosk-model-ar-mgb2"
-        
         // Detection settings
         private const val COOLDOWN_MS = 3000L
         
@@ -57,8 +52,9 @@ class WakeWordDetectorVosk(private val context: Context) {
         private const val BUFFER_SIZE_MULTIPLIER = 2
     }
 
-    // Vosk components
-    private var voskModel: Model? = null
+    // Vosk components — P1 FIX: the heavy Model is shared process-wide via
+    // VoskModelProvider; this detector only owns its (cheap) Recognizer with
+    // the wake-word grammar.
     private var recognizer: Recognizer? = null
     
     // Audio recording
@@ -78,25 +74,13 @@ class WakeWordDetectorVosk(private val context: Context) {
     suspend fun initialize() = withContext(Dispatchers.IO) {
         try {
             Log.d(TAG, "Initializing Vosk wake word detector...")
-            
-            val modelDir = File(context.filesDir, VOSK_MODEL_PATH)
-            val possiblePaths = listOf(
-                modelDir,
-                File(context.filesDir, "models/vosk-model-ar-mgb2-0.4"),
-                File(context.filesDir, "vosk-model-ar-mgb2"),
-                File(context.filesDir, "models/asr/vosk-model-ar-mgb2")
-            )
-            
-            val actualModelDir = possiblePaths.firstOrNull { it.exists() && it.isDirectory }
-            
-            if (actualModelDir == null) {
-                Log.e(TAG, "Vosk model not found.")
-                throw IllegalStateException("Vosk model not found. Please download the Arabic model first.")
-            }
-            
-            voskModel = Model(actualModelDir.absolutePath)
-            recognizer = Recognizer(voskModel, SAMPLE_RATE, GRAMMAR_JSON)
-            
+
+            // P1 FIX: share the single process-wide Model instead of loading
+            // a second 318 MB copy. Throws IllegalStateException when the
+            // model hasn't been downloaded.
+            val model = VoskModelProvider.obtain(context)
+            recognizer = Recognizer(model, SAMPLE_RATE, GRAMMAR_JSON)
+
             Log.i(TAG, "✅ Vosk wake word detector initialized successfully")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to initialize Vosk wake word detector", e)
@@ -212,11 +196,12 @@ class WakeWordDetectorVosk(private val context: Context) {
             .replace(Regex("\\s+"), " ")
     }
 
-    fun isReady(): Boolean = voskModel != null && recognizer != null
+    fun isReady(): Boolean = recognizer != null
 
     fun release() {
         stopListening()
         recognizer?.close()
         recognizer = null
+        // NOTE: do NOT close the shared Model here — VoskModelProvider owns it.
     }
 }

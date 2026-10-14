@@ -5,8 +5,9 @@ package com.binti.dilink.dilink.vehicle
 
 import android.content.Context
 import android.util.Log
+import com.binti.dilink.dilink.BydParcel
+import com.binti.dilink.dilink.BydSpeedDecoder
 import com.binti.dilink.dilink.adb.BydAdbShell
-import com.binti.dilink.dilink.adb.BydParcel
 
 /**
  * Reads BYD vehicle data via `service call autoservice` over ADB.
@@ -83,6 +84,12 @@ class BydVehicleReader(private val context: Context) {
         val output = shell.run(context, command) ?: return null
         val rawBits = BydParcel.value(output) ?: return null
         val percent = Float.fromBits(rawBits)
+        // Sanity check like the speed path — an SoC of -3% or 900% is garbage.
+        val valid = BydSpeedDecoder.sanitizeKmh(percent)?.let { it in 0f..100f } == true
+        if (!valid) {
+            Log.w(TAG, "Battery SoC out of range: $percent% — treating as unread")
+            return null
+        }
         Log.v(TAG, "Battery SoC: $percent% (raw bits: $rawBits)")
         return percent
     }
@@ -105,17 +112,55 @@ class BydVehicleReader(private val context: Context) {
     // ──────────────────────────────────────────────────────────────────────────
 
     /**
+     * Speed-field command that answered with a sane reading last time we
+     * probed. Null until the first successful read. See [readSpeedKmh].
+     */
+    @Volatile
+    private var cachedSpeedCommand: String? = null
+
+    /** Invalidate the speed-address probe cache (e.g. when reads go stale). */
+    fun invalidateSpeedProbe() {
+        cachedSpeedCommand = null
+    }
+
+    /**
      * Read the current vehicle speed in km/h.
-     * The autoservice returns speed in meters/second as a float; we convert to km/h.
+     *
+     * P0 FIX (unit): the raw autoservice speed value is ALREADY km/h —
+     * DiPlay's test vector 0x42100000 → 36.0 means 36 km/h. The previous code
+     * treated it as m/s and multiplied by 3.6, announcing real 36 km/h as
+     * ~130 km/h. Decoding is delegated to [BydSpeedDecoder], which also
+     * rejects NaN/negative/absurd readings.
+     *
+     * P0 FIX (DiLink 3): the SDK 1.0.5 speed address reads garbage on
+     * controller-13 / DiLink 3 head units, so we probe the SDK address first
+     * and fall back to the DiLink 3 legacy address recorded by DiPlay. The
+     * first address that returns a sane value is cached for subsequent reads.
+     *
+     * NOTE: while PARKED both addresses legitimately read 0.0, so the probe
+     * cannot distinguish firmware generations at standstill — verify the
+     * cached choice during the first drive (see docs/REBUILD_PLAN.md).
+     *
      * Returns null if ADB is unavailable or the read failed.
      */
     fun readSpeedKmh(): Float? {
-        val output = shell.run(context, BydVehicleFields.Speed.COMMAND) ?: return null
+        cachedSpeedCommand?.let { return readSpeedVia(it) }
+
+        for (command in BydVehicleFields.Speed.COMMAND_CANDIDATES) {
+            val kmh = readSpeedVia(command)
+            if (kmh != null) {
+                cachedSpeedCommand = command
+                Log.d(TAG, "Speed address probed OK: $command")
+                return kmh
+            }
+        }
+        return null
+    }
+
+    private fun readSpeedVia(command: String): Float? {
+        val output = shell.run(context, command) ?: return null
         val rawBits = BydParcel.value(output) ?: return null
-        val mps = Float.fromBits(rawBits)
-        val kmh = mps * 3.6f
-        Log.v(TAG, "Speed: $kmh km/h ($mps m/s)")
-        return kmh
+        return BydSpeedDecoder.decodeKmh(rawBits)
     }
 
     /**

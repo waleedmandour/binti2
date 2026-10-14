@@ -128,6 +128,14 @@ class BintiService : Service() {
         // FIX #5 — cancel scope before super so coroutines don't outlive the service
         wakeWordJob?.cancel()
         serviceScope.cancel()
+        // P0 FIX: release the native Vosk recognizer + AudioRecord; cancelling
+        // the scope alone leaves the mic handle open until GC.
+        if (this::wakeWordDetector.isInitialized) {
+            runCatching { wakeWordDetector.release() }
+        }
+        if (this::voiceProcessor.isInitialized) {
+            runCatching { voiceProcessor.release() }
+        }
         _isRunning.set(false)
         // FIX #6 — hide overlay on main thread; windowManager calls must be on main
         hideOverlay()
@@ -210,14 +218,49 @@ class BintiService : Service() {
     // Wake word loop
     // ──────────────────────────────────────────────────────────────────────────
 
+    /**
+     * P0 FIX (wake-word drop): the previous code called startListening()
+     * BEFORE collecting wakeWordFlow. startListening() is a blocking audio
+     * loop that only returns when recording stops, so the collector below it
+     * never subscribed while the loop ran — and wakeWordFlow is a
+     * SharedFlow(replay = 0), meaning every tryEmit() with no subscriber is
+     * dropped on the floor. The wake word could never fire.
+     *
+     * New structure:
+     *  1. A collector is launched with CoroutineStart.UNDISPATCHED so the
+     *     subscription exists before the audio loop emits anything.
+     *  2. The blocking audio loop runs inside try/finally that cancels the
+     *     collector.
+     *  3. An outer while-loop re-arms detection after each command session,
+     *     but waits while [isListening] is true so the command listener can
+     *     own the microphone exclusively (two concurrent AudioRecord
+     *     instances steal frames from each other on DiLink).
+     */
     private fun startWakeWordDetection() {
         if (wakeWordJob?.isActive == true) return
 
         wakeWordJob = serviceScope.launch {
-            _serviceState.value = ServiceState.ListeningForWakeWord
-            wakeWordDetector.startListening()
-            wakeWordDetector.wakeWordFlow.collect { detected ->
-                if (detected) onWakeWordDetected()
+            while (isActive) {
+                // Wait while a command session owns the microphone
+                while (isListening.get() && isActive) delay(200)
+                if (!isActive) break
+
+                _serviceState.value = ServiceState.ListeningForWakeWord
+
+                // Subscriber FIRST (UNDISPATCHED enters the block immediately
+                // until first suspension), THEN the audio loop.
+                val collector = launch(start = CoroutineStart.UNDISPATCHED) {
+                    wakeWordDetector.wakeWordFlow.collect { detected ->
+                        if (detected) onWakeWordDetected()
+                    }
+                }
+                try {
+                    wakeWordDetector.startListening()
+                } finally {
+                    collector.cancel()
+                }
+
+                if (isActive) delay(300) // brief pause before re-arming the mic
             }
         }
     }
@@ -227,10 +270,29 @@ class BintiService : Service() {
         // entering the command flow
         if (!isListening.compareAndSet(false, true)) return
 
+        // P0 FIX: an external trigger (widget / binti://) can arrive before
+        // initializeComponents() has finished — every field below is lateinit.
+        val componentsReady = this::wakeWordDetector.isInitialized &&
+                              this::voiceProcessor.isInitialized &&
+                              this::commandExecutor.isInitialized &&
+                              this::egyptianTTS.isInitialized
+        if (!componentsReady) {
+            Log.w(TAG, "Wake trigger ignored — components not initialised yet")
+            isListening.set(false)
+            return
+        }
+
         serviceScope.launch {
             try {
                 _serviceState.value = ServiceState.ListeningForCommand
                 broadcastState("listening")
+
+                // P0 FIX (mic ownership): release the wake-word AudioRecord
+                // BEFORE the command listener opens its own, otherwise the two
+                // recordings compete for mic frames. The supervised wake loop
+                // in startWakeWordDetection() waits for isListening to clear
+                // before re-arming.
+                runCatching { wakeWordDetector.stopListening() }
 
                 // FIX #6 — overlay must be touched on the main thread
                 withContext(Dispatchers.Main) {
@@ -270,10 +332,10 @@ class BintiService : Service() {
                 withContext(Dispatchers.Main) { hideOverlay() }
                 _serviceState.value = ServiceState.Ready
                 broadcastState("ready")
-                // FIX #10 — restart wake word detection after each command;
-                // the original left a comment saying "not needed" but wakeWordFlow
-                // collect() exits when the flow completes or the job is cancelled,
-                // so we must relaunch if the job ended
+                // P0 FIX: the supervised wake loop re-arms itself once
+                // isListening clears. This relaunch only matters when the
+                // trigger came from outside (widget / binti://) and the wake
+                // loop was never running at all.
                 if (wakeWordJob?.isActive != true) startWakeWordDetection()
             }
         }

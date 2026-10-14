@@ -31,6 +31,18 @@
          fragment at app/src/enthusiast/AndroidManifest.xml declares the permission;
          the store flavor never includes it. -->
 
+    <!-- BYD framework API (read-first): BydAcBridge reads AC state via
+         android.hardware.bydauto.ac.BYDAutoAcDevice. Community research on
+         DiLink 3 shows AC state GETTERS work without permission checks, but
+         we declare the permission defensively. The exact permission string
+         varies by firmware — verify on the car with:
+             adb shell pm list permissions | grep -i bydauto
+         Unknown permission names are ignored by the platform, so declaring
+         both spellings is harmless. WRITE permissions (BYDAUTO_AC_SET) are
+         deliberately NOT declared yet — see docs/REBUILD_PLAN.md §"AC bridge". -->
+    <uses-permission android:name="android.permission.BYDAUTO_AC_GET" />
+    <uses-permission android:name="bydauto.permission.AC_GET" />
+
     <!-- Connectivity & background -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />

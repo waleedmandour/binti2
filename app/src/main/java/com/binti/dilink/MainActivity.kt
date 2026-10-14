@@ -38,6 +38,7 @@ import com.binti.dilink.databinding.CardPermissionMicBinding
 import com.binti.dilink.dilink.DiLinkAccessibilityService
 import com.binti.dilink.response.EgyptianTTS
 import com.binti.dilink.utils.ModelManager
+import com.binti.dilink.voice.LaunchGreeting
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
@@ -51,7 +52,6 @@ class MainActivity : AppCompatActivity() {
         private const val KEY_USER_NAME         = "user_name"
         private const val KEY_TONE_FORMAL       = "tone_formal"
         private const val KEY_PROACTIVE_ENABLED = "proactive_enabled"
-        private const val KEY_DEMO_PLAYED       = "demo_voice_played"
     }
 
     private lateinit var binding: ActivityMainBinding
@@ -97,8 +97,11 @@ class MainActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try { egyptianTTS.initialize() } catch (e: Exception) { Log.e(TAG, "TTS init failed", e) }
-            playDemoIfFirstLaunch()
         }
+
+        // Launch greeting — plays IMMEDIATELY from the bundled clip, without
+        // waiting for any TTS engine to warm up (see playLaunchGreeting).
+        playLaunchGreeting()
 
         setupUI()
         loadSettings()
@@ -729,23 +732,31 @@ class MainActivity : AppCompatActivity() {
     }
 
     // ──────────────────────────────────────────────────────────────────────────
-    // Demo voice
+    // Launch greeting
     // ──────────────────────────────────────────────────────────────────────────
 
-    private fun playDemoIfFirstLaunch() {
-        if (sharedPreferences.getBoolean(KEY_DEMO_PLAYED, false)) return
-        sharedPreferences.edit { putBoolean(KEY_DEMO_PLAYED, true) }
-
-        // FIX #8 — postDelayed posts a Runnable that captures `this` (Activity).
-        // If the Activity is destroyed before the 1500 ms fire, the Runnable leaks
-        // the Activity and launches a coroutine on a destroyed lifecycleScope.
-        // Use lifecycle-aware posting instead.
-        binding.root.postDelayed({
-            if (!isDestroyed && !isFinishing) {
+    /**
+     * Launch greeting — "أهلا بيك" spoken in a clear female voice IMMEDIATELY
+     * on every app launch.
+     *
+     * Uses the bundled studio-style clip (res/raw/launch_greeting.wav) via
+     * [LaunchGreeting] so it plays instantly without waiting for any TTS
+     * engine to warm up, and sounds the same on every car. If the clip is
+     * unavailable or fails, fall back to the configured EgyptianTTS engine.
+     *
+     * [LaunchGreeting] self-guards: rotation/activity recreation in the same
+     * process won't replay it — a fresh process (a real "launch") does.
+     */
+    private fun playLaunchGreeting() {
+        val started = LaunchGreeting.play(this)
+        if (!started) {
+            // Clip missing/failed or already played — TTS fallback keeps the
+            // behaviour present but never double-plays.
+            if (!LaunchGreeting.hasGreetedThisProcess && !isDestroyed && !isFinishing) {
                 lifecycleScope.launch {
-                    egyptianTTS.speak(getString(R.string.demo_voice_message))
+                    egyptianTTS.speak(getString(R.string.launch_greeting))
                 }
             }
-        }, 1500)
+        }
     }
 }

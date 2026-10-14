@@ -42,6 +42,21 @@ class VehicleDataRepository {
          * screen on every utterance.
          */
         const val STALE_AFTER_MS: Long = 15_000L
+
+        // P0 FIX (repository split): BintiDiLinkBridge used to create its own
+        // private instance, so every Tier 2 reading it published vanished into
+        // a repository nobody read — the executor and UI all query the
+        // accessibility service's instance. All producers and consumers now
+        // share ONE process-wide instance via [getShared]. The public
+        // constructor is kept for unit tests only.
+        @Volatile
+        private var shared: VehicleDataRepository? = null
+
+        /** Process-wide shared repository used by ALL production code paths. */
+        fun getShared(): VehicleDataRepository =
+            shared ?: synchronized(this) {
+                shared ?: VehicleDataRepository().also { shared = it }
+            }
     }
 
     private val _snapshot = MutableStateFlow(VehicleSnapshot(timestamp = 0L))

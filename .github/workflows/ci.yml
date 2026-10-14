@@ -142,6 +142,11 @@ jobs:
       - name: Run unit tests (store flavor)
         run: ./gradlew testStoreDebugUnitTest --stacktrace --continue
 
+      # P1 FIX: the enthusiast flavor contains the ADB / parcel / control code
+      # with zero test coverage in CI. Run its unit tests too.
+      - name: Run unit tests (enthusiast flavor)
+        run: ./gradlew testEnthusiastDebugUnitTest --stacktrace --continue
+
       - name: Upload test report
         if: always()
         uses: actions/upload-artifact@v4

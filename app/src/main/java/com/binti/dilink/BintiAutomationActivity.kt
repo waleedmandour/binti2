@@ -3,6 +3,7 @@
 
 package com.binti.dilink
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -46,11 +47,32 @@ class BintiAutomationActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "BintiAutomation"
+        private const val PREFS_NAME = "binti_prefs"
+
+        /**
+         * When false (default), only Binti itself or apps signed with the
+         * same key may fire binti:// triggers. Set this pref to true to
+         * re-enable third-party automation (Tasker, MacroDroid, ADB scripts).
+         */
+        const val KEY_ALLOW_EXTERNAL_AUTOMATION = "allow_external_automation"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "Automation activity triggered")
+
+        // P1 FIX (open entry point): the activity used to accept binti://
+        // triggers from ANY installed app — any app could toggle the AC or
+        // start a voice session silently. Same-signature callers (and ADB,
+        // which has no referrer) pass; third-party apps now need the user's
+        // explicit opt-in.
+        if (!isCallerAllowed()) {
+            Log.w(TAG, "Blocked binti:// trigger from untrusted caller " +
+                       "(referrer=${referrer?.host ?: "null"}). " +
+                       "Enable '$KEY_ALLOW_EXTERNAL_AUTOMATION' to allow third-party automation.")
+            finish()
+            return
+        }
 
         val data = intent?.data
         if (data == null) {
@@ -77,6 +99,38 @@ class BintiAutomationActivity : AppCompatActivity() {
 
         // Always finish immediately — this is a trampoline, not a UI
         finish()
+    }
+
+    /**
+     * P1 FIX: caller policy for the automation trampoline.
+     *
+     * Allowed without opt-in:
+     *  - callers with no referrer (ADB shell, system trampolines)
+     *  - Binti's own components
+     *  - apps signed with the same signing key
+     *
+     * Everything else (Tasker, MacroDroid, unknown apps) requires the user
+     * to have set [KEY_ALLOW_EXTERNAL_AUTOMATION] in binti_prefs.
+     */
+    private fun isCallerAllowed(): Boolean {
+        val caller = try { referrer?.host } catch (e: Exception) { null }
+
+        // ADB `am start` and system-intent trampolines carry no referrer
+        if (caller.isNullOrBlank()) return true
+
+        // Our own components
+        if (caller == packageName) return true
+
+        // Same signing key (e.g. a future Binti companion)
+        try {
+            val pm = packageManager
+            if (pm.checkSignatures(packageName, caller) ==
+                android.content.pm.PackageManager.SIGNATURE_MATCH) return true
+        } catch (e: Exception) { /* caller not installed / unknown — fall through */ }
+
+        // Explicit user opt-in for third-party automation
+        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getBoolean(KEY_ALLOW_EXTERNAL_AUTOMATION, false)
     }
 
     /**

@@ -95,6 +95,15 @@ class DirectControlBridge(private val context: Context) : ControlBridge {
     }
 
     /**
+     * P0 FIX (Tier 2 wiring): publish a fresh ADB autoservice snapshot into
+     * the SHARED VehicleDataRepository so voice queries see Tier 2 data.
+     */
+    override suspend fun refreshVehicleData(): Boolean {
+        val published = BintiDiLinkBridge.getInstance(context).readAndPublishVehicleSnapshot()
+        return published != null
+    }
+
+    /**
      * Send a control command via reflection against bydauto.* services.
      *
      * This is a BEST-EFFORT implementation — the exact method names vary

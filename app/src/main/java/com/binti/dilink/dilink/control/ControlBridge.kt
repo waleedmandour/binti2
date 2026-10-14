@@ -73,6 +73,19 @@ interface ControlBridge {
 
     /** Release any resources. Called on shutdown. */
     fun release()
+
+    /**
+     * P0 FIX (Tier 2 wiring): best-effort refresh of the shared
+     * [VehicleDataRepository] from this bridge's data source BEFORE a voice
+     * query answers from it. Returns true when fresh data was published.
+     *
+     * - AccessibilityControlBridge: no separate refresh needed (the service
+     *   publishes on screen events; callers use forceRefreshSnapshot).
+     * - DirectControlBridge (enthusiast): re-runs the ADB autoservice reads
+     *   and merges them into the shared repository.
+     * - NoOpControlBridge: always false.
+     */
+    suspend fun refreshVehicleData(): Boolean = false
 }
 
 /**

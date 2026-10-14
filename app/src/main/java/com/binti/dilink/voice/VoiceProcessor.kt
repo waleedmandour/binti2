@@ -9,16 +9,11 @@ import android.media.MediaRecorder
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.json.JSONObject
-import org.vosk.Model
 import org.vosk.Recognizer
-import java.io.File
 import java.io.IOException
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 
 class VoiceProcessor(private val context: Context) {
 
@@ -29,7 +24,6 @@ class VoiceProcessor(private val context: Context) {
         private const val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
         private const val AUDIO_FORMAT   = AudioFormat.ENCODING_PCM_16BIT
 
-        private const val VOSK_MODEL_PATH        = "vosk-model-ar-mgb2"
         private const val MAX_RECORDING_TIME_MS  = 15000L
         // FIX #1 — silence threshold was 20 loop iterations with no guaranteed
         // timing. Each AudioRecord.read() blocks for ~bufferSize/sampleRate seconds.
@@ -39,7 +33,8 @@ class VoiceProcessor(private val context: Context) {
         private const val SILENCE_THRESHOLD_MS   = 1500L
     }
 
-    private var voskModel: Model? = null
+    // P1 FIX: the heavy Vosk Model is shared process-wide (VoskModelProvider);
+    // this processor only creates its own full-vocabulary Recognizer per session.
     private var isInitialized = false
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -59,12 +54,11 @@ class VoiceProcessor(private val context: Context) {
     }
 
     private fun initializeVosk() {
-        val modelDir = File(context.filesDir, "models/$VOSK_MODEL_PATH")
-        if (!modelDir.exists()) {
-            throw IOException("Vosk model not found at ${modelDir.absolutePath}. Download it first.")
-        }
-        voskModel = Model(modelDir.absolutePath)
-        Log.d(TAG, "Vosk model loaded from ${modelDir.absolutePath}")
+        // P1 FIX: share the single process-wide Model instead of loading a
+        // second 318 MB copy. Throws IllegalStateException when the model
+        // hasn't been downloaded yet.
+        VoskModelProvider.obtain(context)
+        Log.d(TAG, "Vosk shared model ready (${VoskModelProvider.resolveModelDir(context)?.absolutePath})")
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -88,7 +82,8 @@ class VoiceProcessor(private val context: Context) {
     // blocking loop must not sit inside a continuation. Restructured to run
     // entirely on Dispatchers.IO (called from listenAndTranscribe above).
     private suspend fun transcribeWithVosk(): String = withContext(Dispatchers.IO) {
-        val model = voskModel ?: throw IOException("Vosk model not loaded")
+        // Shared model — never closed by this class.
+        val model = VoskModelProvider.obtain(context)
 
         val bufferSize = maxOf(
             AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT),
@@ -195,9 +190,9 @@ class VoiceProcessor(private val context: Context) {
     fun isReady(): Boolean = isInitialized
 
     fun release() {
-        voskModel?.close()
-        voskModel     = null
+        // P1 FIX: the Model is owned by VoskModelProvider and must NOT be
+        // closed here — it is still in use by the wake-word detector.
         isInitialized = false
-        Log.d(TAG, "Voice processor released")
+        Log.d(TAG, "Voice processor released (shared model kept alive)")
     }
 }
