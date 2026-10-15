@@ -16,9 +16,15 @@ import android.view.accessibility.AccessibilityNodeInfo
  * Changes from original:
  * 1.  [FIX] Singleton `instance` set to null BEFORE super.onDestroy() to avoid
  *     a window where a caller grabs a half-destroyed service reference.
- * 2.  [FIX] `onServiceConnected()` kept the default `packageNames = null` (monitor
- *     ALL packages). This is a significant battery/performance drain on a car head
- *     unit. Changed to explicitly list only `com.byd.auto.*` packages.
+ * 2.  v3.0.2 CHANGE (reverted): the intermediate version explicitly filtered
+ *     `packageNames` to a GUESSED `com.byd.auto.*` list. Field testing on the
+ *     real head unit showed the guess list is wrong/incomplete — the service
+ *     silently DROPPED events from every package it did not name (launcher,
+ *     system UI, real DiLink app ids that differ per firmware). The filter is
+ *     now REMOVED: `packageNames` stays null (monitor ALL packages) and the
+ *     event-level handler decides what is interesting. The per-event work is
+ *     cheap and the expensive snapshot scraping is still gated by
+ *     VEHICLE_DATA_PACKAGES + throttling.
  * 3.  [FIX] `findNodeRecursive()` had no depth limit — on a deep or pathological
  *     view tree it could StackOverflow. Added MAX_TREE_DEPTH guard.
  * 4.  [FIX] `performLongClick()` and `scrollForward()` / `scrollBackward()` and
@@ -86,19 +92,13 @@ class DiLinkAccessibilityService : AccessibilityService() {
         val vehicleDataRepository: VehicleDataRepository = VehicleDataRepository.getShared()
     }
 
-    // FIX #2 — explicit package list instead of null (monitor all)
-    private val monitoredPackages = setOf(
-        "com.byd.auto.ac",
-        "com.byd.auto.navigation",
-        "com.byd.auto.media",
-        "com.byd.auto.settings",
-        "com.byd.auto.phone",
-        "com.byd.auto.launcher",
-        "com.byd.auto.climate",
-        "com.byd.auto.vehicleinfo",
-        "com.byd.auto.energy",
-        "com.byd.auto.camera"
-    )
+    // FIX #2 — REVERTED in v3.0.2: no package filter. The guessed
+    // `com.byd.auto.*` list silently dropped events from packages that were
+    // not on it (the real DiLink app ids differ per firmware, plus launcher /
+    // system UI events). `packageNames` stays null → the framework delivers
+    // events from ALL packages and the event handler below decides what is
+    // relevant. Expensive work (snapshot scraping) is still gated by
+    // VEHICLE_DATA_PACKAGES and throttled.
 
     private var currentPackage: String? = null
     private var commandExecutor: DiLinkCommandExecutor? = null
@@ -137,29 +137,19 @@ class DiLinkAccessibilityService : AccessibilityService() {
         //   - canRequestFilterKeyEvents="true"
         //   - notificationTimeout="0"
         //
-        // The ONLY thing the XML can't declare is `packageNames` (the package filter).
-        // We set that here via `serviceInfo = serviceInfo.apply { packageNames = ... }`
-        // — this MUTATES the existing AccessibilityServiceInfo (loaded from XML) instead
-        // of REPLACING it with a new one, which is the safe pattern recommended by the
-        // Android accessibility docs for Android 10+ head units.
+        // v3.0.2 FIX (events silently dropped): the code below used to assign
+        // `info.packageNames = guessedBydPackages` — a hand-written list of
+        // package names that was never verified against a real car. On the
+        // actual head unit the real app package names did not all match, so
+        // the framework FILTERED OUT their events before they ever reached
+        // onAccessibilityEvent(). The filter is now left as null (monitor ALL
+        // packages, the platform default for an XML config without
+        // android:packageNames). What is relevant is decided per-event below:
+        // current-app tracking is trivial, and the expensive snapshot scrape
+        // only runs for VEHICLE_DATA_PACKAGES and is throttled to 2 s.
         //
         // Reference: https://developer.android.com/guide/topics/ui/accessibility/service
-        //   "To make sure the settings button works, declare the settingsActivity..."
-        //   and: "You must check the SDK version before accessing [canRetrieveWindowContent]
-        //         to prevent crashes on older devices."
-        try {
-            val info = serviceInfo  // get the XML-loaded config (never null after onServiceConnected)
-            info.packageNames = monitoredPackages.toTypedArray()
-            // notificationTimeout: keep the XML value (0). Don't override to 100 here —
-            // the mismatch was another crash trigger on DiLink 3.
-            serviceInfo = info  // re-assign the mutated info — safe, same object
-            Log.i(TAG, "📋 Accessibility service configured: ${monitoredPackages.size} packages monitored")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to configure accessibility serviceInfo — using XML defaults", e)
-            // If the programmatic config fails, the XML config is still active.
-            // The service will work but monitor all packages (slightly more battery).
-            // This is better than crashing.
-        }
+        Log.i(TAG, "📋 Accessibility service connected — monitoring ALL packages (no filter)")
 
         broadcastServiceState(true)
     }
@@ -167,9 +157,13 @@ class DiLinkAccessibilityService : AccessibilityService() {
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
         val packageName = event.packageName?.toString() ?: return
 
-        // Still guard — some events may slip through before serviceInfo is applied
-        if (packageName !in monitoredPackages && !packageName.startsWith("com.byd")) return
-
+        // v3.0.2 FIX: no package guard here either — the previous
+        // `packageName !in monitoredPackages && !startsWith("com.byd")` early
+        // return silently discarded events from system UI, the launcher and
+        // any DiLink component whose real package id was not on the guessed
+        // list. The branches below are cheap; the only expensive path
+        // (publishSnapshotFromCurrentScreen) is gated by VEHICLE_DATA_PACKAGES
+        // and throttled.
         when (event.eventType) {
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
                 if (packageName != currentPackage) {

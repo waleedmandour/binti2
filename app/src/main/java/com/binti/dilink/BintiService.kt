@@ -12,6 +12,7 @@ import android.graphics.PixelFormat
 import android.media.AudioManager
 import android.os.Build
 import android.os.IBinder
+import android.os.SystemClock
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -25,6 +26,7 @@ import com.binti.dilink.dilink.DiLinkCommandExecutor
 import com.binti.dilink.nlp.IntentClassifier
 import com.binti.dilink.nlp.IntentResult
 import com.binti.dilink.response.EgyptianTTS
+import com.binti.dilink.voice.MicRetryPolicy
 import com.binti.dilink.voice.VoiceProcessor
 import com.binti.dilink.voice.WakeWordDetectorVosk
 import kotlinx.coroutines.*
@@ -53,13 +55,46 @@ class BintiService : Service() {
         private const val KEY_TONE_FORMAL      = "tone_formal"
         private const val KEY_PROACTIVE_ENABLED = "proactive_enabled"
 
+        /**
+         * v3.0.2 FIX (boot auto-start never fired): the flag BootReceiver reads
+         * — now actually persisted by MainActivity.startBintiService() /
+         * stopBintiService() via [MainActivity.persistAutoStart]. Lives here so
+         * both the service and the activity share ONE key name.
+         */
+        const val KEY_AUTO_START = "auto_start"
+
+        private const val MIC_UNAVAILABLE_NOTIFICATION_ID = 1002
+
         // FIX #1 — use AtomicBoolean so cross-thread reads/writes are safe
         private val _isRunning = java.util.concurrent.atomic.AtomicBoolean(false)
         fun isServiceRunning(): Boolean = _isRunning.get()
     }
 
+    // v3.0.2 FIX (cold-start crash hardening): without a handler, ANY uncaught
+    // exception inside a serviceScope.launch{} tore the whole process down —
+    // on a head unit that means Binti silently disappears until the user
+    // manually restarts it. The handler logs the failure and surfaces it in
+    // serviceState instead of crashing.
+    private val serviceExceptionHandler = CoroutineExceptionHandler { _, e ->
+        Log.e(TAG, "❌ Uncaught service coroutine failure", e)
+        _serviceState.value = ServiceState.Error(e.message ?: "Unexpected error")
+    }
+
     // FIX #2 — Main dispatcher for UI operations; Default for CPU work
-    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val serviceScope =
+        CoroutineScope(SupervisorJob() + Dispatchers.Default + serviceExceptionHandler)
+
+    /**
+     * v3.0.2 FIX (cold-start race): completed once every lateinit component
+     * (wakeWordDetector / voiceProcessor / intentClassifier / commandExecutor /
+     * egyptianTTS) is fully initialised. onStartCommand can fire BEFORE that
+     * (startForegroundService → onCreate → onStartCommand while init still
+     * runs on a background dispatcher), so any path that touches the lateinits
+     * must first await this. CompletableDeferred gives the happens-before
+     * guarantee that all assignments made before complete() are visible after
+     * await() returns.
+     */
+    private val componentsReady = CompletableDeferred<Unit>()
 
     private lateinit var wakeWordDetector: WakeWordDetectorVosk
     private lateinit var voiceProcessor: VoiceProcessor
@@ -137,6 +172,9 @@ class BintiService : Service() {
             runCatching { voiceProcessor.release() }
         }
         _isRunning.set(false)
+        // v3.0.2 FIX: a lingering "mic unavailable" notification must not
+        // outlive the service that posted it.
+        cancelMicUnavailableNotification()
         // FIX #6 — hide overlay on main thread; windowManager calls must be on main
         hideOverlay()
         super.onDestroy()
@@ -172,13 +210,20 @@ class BintiService : Service() {
 
                 _serviceState.value = ServiceState.Ready
                 broadcastState("ready")
+
+                // v3.0.2 FIX: publish readiness BEFORE arming the wake loop so
+                // every lateinit assignment above is visible to any coroutine
+                // waiting on componentsReady.
+                componentsReady.complete(Unit)
                 startWakeWordDetection()
 
             } catch (e: Exception) {
                 Log.e(TAG, "❌ Initialization failed", e)
                 _serviceState.value = ServiceState.Error(e.message ?: "Init error")
                 // FIX #7 — stop the service if init fails; otherwise it sits in a
-                // broken state silently consuming resources
+                // broken state silently consuming resources. componentsReady is
+                // deliberately left incomplete: every await() on it will be
+                // cancelled by serviceScope.cancel() in onDestroy().
                 stopSelf()
             }
         }
@@ -240,6 +285,21 @@ class BintiService : Service() {
         if (wakeWordJob?.isActive == true) return
 
         wakeWordJob = serviceScope.launch {
+            // v3.0.2 FIX (cold-start crash): onStartCommand can deliver
+            // ACTION_START while initializeComponents() is still loading the
+            // Vosk model on a background dispatcher. The old code immediately
+            // touched the uninitialized `wakeWordDetector` lateinit and the
+            // UninitializedPropertyAccessException killed the whole process on
+            // a cold start — exactly the path BootReceiver takes. Await the
+            // readiness signal instead; it is only completed AFTER every
+            // component is assigned, with a happens-before guarantee.
+            componentsReady.await()
+
+            // v3.0.2 FIX (dead mic): consecutive AudioRecord failures back off
+            // exponentially instead of spinning every 300 ms, and the user is
+            // told about the problem instead of it being invisible.
+            var consecutiveMicFailures = 0
+
             while (isActive) {
                 // Wait while a command session owns the microphone
                 while (isListening.get() && isActive) delay(200)
@@ -254,13 +314,40 @@ class BintiService : Service() {
                         if (detected) onWakeWordDetected()
                     }
                 }
+                val sessionStart = SystemClock.elapsedRealtime()
                 try {
                     wakeWordDetector.startListening()
                 } finally {
                     collector.cancel()
                 }
+                val sessionMs = SystemClock.elapsedRealtime() - sessionStart
 
-                if (isActive) delay(300) // brief pause before re-arming the mic
+                // startListening() catches AudioRecord failures internally and
+                // returns within milliseconds. A healthy session can only end
+                // by handing the mic to a command session (isListening == true
+                // while the wake loop is parked at the top of this loop). A
+                // SHORT session with isListening still false therefore means
+                // the mic could not be opened (dead / held / revoked).
+                val micFailed = sessionMs < MicRetryPolicy.MIN_HEALTHY_SESSION_MS &&
+                        !isListening.get()
+                if (micFailed) {
+                    consecutiveMicFailures++
+                    val backoffMs = MicRetryPolicy.backoffMs(consecutiveMicFailures)
+                    Log.w(
+                        TAG,
+                        "Mic unavailable (failure #$consecutiveMicFailures, " +
+                            "session=${sessionMs}ms) — retrying in ${backoffMs}ms"
+                    )
+                    notifyMicUnavailable()
+                    delay(backoffMs)
+                } else {
+                    if (consecutiveMicFailures > 0) {
+                        consecutiveMicFailures = 0
+                        // Mic recovered — remove the warning notification.
+                        cancelMicUnavailableNotification()
+                    }
+                    delay(300) // brief pause before re-arming the mic
+                }
             }
         }
     }
@@ -347,6 +434,12 @@ class BintiService : Service() {
 
     private fun executeDirectCommand(commandJson: String) {
         serviceScope.launch {
+            // v3.0.2 FIX: same cold-start race as onWakeWordDetected — a widget
+            // / binti:// trigger can beat initializeComponents(). Waiting on
+            // componentsReady is safe even if init ultimately fails: the
+            // awaiting coroutine is cancelled together with the scope when the
+            // service stops itself.
+            componentsReady.await()
             try {
                 val json      = JSONObject(commandJson)
                 val actionStr = json.optString("action")
@@ -451,6 +544,54 @@ class BintiService : Service() {
             })
         } catch (e: Exception) {
             Log.w(TAG, "Failed to broadcast state", e)
+        }
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Mic-unavailable notification (v3.0.2)
+    // ────────────────────────────────────────────────────────────────────────
+
+    @Volatile
+    private var micNotificationActive = false
+
+    /**
+     * v3.0.2 FIX — make a dead microphone VISIBLE. Posted once when the wake
+     * loop enters failure mode; stays until the mic recovers (or the service
+     * dies). Silent so it never chirps in the cabin; the foreground-service
+     * notification channel already exists.
+     */
+    private fun notifyMicUnavailable() {
+        if (micNotificationActive) return
+        micNotificationActive = true
+        try {
+            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+            val contentIntent = PendingIntent.getActivity(
+                this, 0,
+                Intent(this, MainActivity::class.java),
+                PendingIntent.FLAG_IMMUTABLE
+            )
+            val text = getString(R.string.mic_unavailable_text)
+            val notification = NotificationCompat.Builder(this, BintiApplication.NOTIFICATION_CHANNEL_ID)
+                .setContentTitle(getString(R.string.mic_unavailable_title))
+                .setContentText(text)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+                .setSmallIcon(R.drawable.ic_mic)
+                .setContentIntent(contentIntent)
+                .setOngoing(true)
+                .setSilent(true)
+                .build()
+            manager.notify(MIC_UNAVAILABLE_NOTIFICATION_ID, notification)
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to post mic-unavailable notification", e)
+        }
+    }
+
+    private fun cancelMicUnavailableNotification() {
+        if (!micNotificationActive) return
+        micNotificationActive = false
+        runCatching {
+            (getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager)
+                .cancel(MIC_UNAVAILABLE_NOTIFICATION_ID)
         }
     }
 

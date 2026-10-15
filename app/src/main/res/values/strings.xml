@@ -102,6 +102,10 @@
     <string name="notification_title">مساعد يا بنتي</string>
     <string name="notification_listening">أنا أستمع إليك... 🎤</string>
 
+    <!-- Microphone failure (v3.0.2): shown once when the wake loop cannot open the mic -->
+    <string name="mic_unavailable_title">الميكروفون غير متاح</string>
+    <string name="mic_unavailable_text">مفيش صوت واصل للميكروفون. بتحاول تاني كل شوية — لو الإشعار فضل موجود، افتح التطبيق وشيك على صلاحية الميكروفون.</string>
+
     <!-- Service States -->
     <string name="state_ready">جاهز يا غالي ✅</string>
     <string name="state_listening">أستمع... 🎧</string>

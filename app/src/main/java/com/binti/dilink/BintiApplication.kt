@@ -7,6 +7,8 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
 import android.util.Log
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import com.binti.dilink.utils.ModelManager
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
@@ -68,6 +70,15 @@ class BintiApplication : Application() {
         instance = this
 
         Log.d(TAG, "🚗 Binti Application starting... (flavor=${BuildConfig.FLAVOR})")
+
+        // v3.0.2 FIX (English UI on English devices): Binti is Egyptian-market
+        // only and ships ONE Arabic UI. values-en / values-ar are deleted, so
+        // the default (Arabic) resources resolve on every device. This explicit
+        // per-app locale lock makes that guarantee airtight — even if some OEM
+        // ROM or future resource set would otherwise resolve to the device
+        // locale, AppCompat wraps every activity context in Arabic.
+        // appcompat 1.7.0 backports per-app locales to all supported API levels.
+        AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("ar"))
 
         // Tier 2 wiring — flavor-dependent. The active flavor's
         // TelemetryInitializer is in `src/<flavor>/java/...`. Both flavors

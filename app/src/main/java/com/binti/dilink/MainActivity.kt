@@ -49,6 +49,9 @@ class MainActivity : AppCompatActivity() {
         private const val PREFS_NAME = "binti_prefs"
         private const val DOWNLOAD_NOTIFICATION_ID = 2001
 
+        /** Minimum time away from the app before the greeting replays (60 s). */
+        private const val GREETING_REPLAY_MIN_GAP_MS = 60_000L
+
         private const val KEY_USER_NAME         = "user_name"
         private const val KEY_TONE_FORMAL       = "tone_formal"
         private const val KEY_PROACTIVE_ENABLED = "proactive_enabled"
@@ -68,6 +71,16 @@ class MainActivity : AppCompatActivity() {
     private var hasOverlayPermission     = false
     private var hasLocationPermission    = false
     private var hasPhonePermission       = false
+
+    // v3.0.2 FIX (greeting only once per process): the old process-wide guard
+    // never reset while the foreground service kept the process alive, so
+    // closing and reopening the app never greeted again. The policy is now:
+    //  - a FRESH launch (onCreate with savedInstanceState == null) greets,
+    //  - returning to the app after >= GREETING_REPLAY_MIN_GAP_MS away greets
+    //    again (covers reopening from the launcher while the process/task is
+    //    still alive — no onCreate happens on that path),
+    //  - rotations and quick app switches (< 60 s away) do NOT.
+    private var lastStoppedAtMs: Long = 0L
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -101,7 +114,11 @@ class MainActivity : AppCompatActivity() {
 
         // Launch greeting — plays IMMEDIATELY from the bundled clip, without
         // waiting for any TTS engine to warm up (see playLaunchGreeting).
-        playLaunchGreeting()
+        // v3.0.2 FIX: only on a FRESH launch — an activity recreation
+        // (rotation, locale change…) restores state and must stay silent.
+        if (savedInstanceState == null) {
+            playLaunchGreeting()
+        }
 
         setupUI()
         loadSettings()
@@ -111,8 +128,23 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        // v3.0.2 FIX — replay the greeting when the user comes back to the app
+        // after a real absence. This covers the common in-car path where the
+        // process and task are still alive (foreground service!), so tapping
+        // the launcher icon brings the EXISTING activity forward without any
+        // onCreate — the old code never greeted on that path either.
+        val awayMs = if (lastStoppedAtMs > 0) System.currentTimeMillis() - lastStoppedAtMs else 0L
+        if (lastStoppedAtMs > 0 && awayMs >= GREETING_REPLAY_MIN_GAP_MS) {
+            playLaunchGreeting()
+        }
+        lastStoppedAtMs = 0L
         checkPermissions()
         updateServiceState(if (BintiService.isServiceRunning()) "ready" else "off")
+    }
+
+    override fun onStop() {
+        super.onStop()
+        lastStoppedAtMs = System.currentTimeMillis()
     }
 
     override fun onDestroy() {
@@ -689,12 +721,45 @@ class MainActivity : AppCompatActivity() {
     private fun startBintiService() {
         val intent = Intent(this, BintiService::class.java).apply { action = BintiService.ACTION_START }
         ContextCompat.startForegroundService(this, intent)   // FIX #7 — use ContextCompat helper
+        // v3.0.2 FIX (boot auto-start never fired): the BootReceiver reads the
+        // "auto_start" flag but NOTHING ever wrote it, so auto-start could never
+        // trigger. Persist the user's intent here: starting the service from the
+        // UI means "keep me running across reboots". Storing it in BOTH the
+        // default (credential-encrypted) prefs and the device-protected prefs
+        // matters because BootReceiver handles ACTION_LOCKED_BOOT_COMPLETED too,
+        // which runs BEFORE user unlock and can only read device-protected
+        // storage — a CE-only flag would always read false there.
+        persistAutoStart(true)
         updateServiceState("ready")
     }
 
     private fun stopBintiService() {
         startService(Intent(this, BintiService::class.java).apply { action = BintiService.ACTION_STOP })
+        // v3.0.2 FIX: the mirror of startBintiService() — if the user explicitly
+        // stopped Binti, a reboot must NOT silently restart it.
+        persistAutoStart(false)
         updateServiceState("off")
+    }
+
+    /**
+     * v3.0.2 FIX — persist the auto-start flag to BOTH preference stores:
+     *  1. the normal (credential-encrypted) "binti_prefs" — read by
+     *     BootReceiver for ACTION_BOOT_COMPLETED / QUICKBOOT_POWERON,
+     *  2. the device-protected "binti_prefs" — read by BootReceiver for
+     *     ACTION_LOCKED_BOOT_COMPLETED (Direct Boot, pre-unlock).
+     *
+     * These are two physically different files; writing only one of them
+     * silently breaks the other boot path.
+     */
+    private fun persistAutoStart(enabled: Boolean) {
+        sharedPreferences.edit { putBoolean(BintiService.KEY_AUTO_START, enabled) }
+        try {
+            createDeviceProtectedStorageContext()
+                .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .edit { putBoolean(BintiService.KEY_AUTO_START, enabled) }
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not persist auto_start to device-protected storage", e)
+        }
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -736,23 +801,25 @@ class MainActivity : AppCompatActivity() {
     // ──────────────────────────────────────────────────────────────────────────
 
     /**
-     * Launch greeting — "أهلا بيك" spoken in a clear female voice IMMEDIATELY
-     * on every app launch.
+     * Launch greeting — "أهلا بيك" spoken in a clear female voice on EVERY
+     * app open.
      *
-     * Uses the bundled studio-style clip (res/raw/launch_greeting.wav) via
-     * [LaunchGreeting] so it plays instantly without waiting for any TTS
-     * engine to warm up, and sounds the same on every car. If the clip is
-     * unavailable or fails, fall back to the configured EgyptianTTS engine.
+     * Uses the bundled clip (res/raw/launch_greeting.wav) via [LaunchGreeting]
+     * so it plays instantly without waiting for any TTS engine to warm up,
+     * and sounds the same on every car. If the clip is unavailable or fails,
+     * fall back to the configured EgyptianTTS engine.
      *
-     * [LaunchGreeting] self-guards: rotation/activity recreation in the same
-     * process won't replay it — a fresh process (a real "launch") does.
+     * v3.0.2 FIX — WHEN it plays is decided here (see class-level comments):
+     * fresh onCreate (savedInstanceState == null) and re-entry after ≥ 60 s
+     * away. Rotations and quick switches stay silent. [LaunchGreeting] itself
+     * only guards against two overlapping playbacks.
      */
     private fun playLaunchGreeting() {
         val started = LaunchGreeting.play(this)
         if (!started) {
-            // Clip missing/failed or already played — TTS fallback keeps the
+            // Clip missing/failed or already playing — TTS fallback keeps the
             // behaviour present but never double-plays.
-            if (!LaunchGreeting.hasGreetedThisProcess && !isDestroyed && !isFinishing) {
+            if (!LaunchGreeting.isPlaying && !isDestroyed && !isFinishing) {
                 lifecycleScope.launch {
                     egyptianTTS.speak(getString(R.string.launch_greeting))
                 }

@@ -3,16 +3,18 @@
   Accessibility Service configuration for Binti.
 
   CRITICAL: This config is the single source of truth for the service.
-  DiLinkAccessibilityService.onServiceConnected() only sets `packageNames`
-  programmatically (by mutating the existing AccessibilityServiceInfo);
-  it does NOT create a new AccessibilityServiceInfo that would override
-  these XML values. This avoids the crash-on-enable that happened on
-  DiLink 3 (Android 10) when the programmatic config conflicted with
-  the XML config.
+  onServiceConnected() no longer mutates serviceInfo at all (v3.0.2) —
+  everything is declared here. Mutating AccessibilityServiceInfo after the
+  framework applied the XML config was one of the crash-on-enable triggers
+  on DiLink 3 (Android 10) head units.
 
   Design decisions:
-  - packageNames: omitted here, set programmatically in onServiceConnected()
-    so the service picks up DiLink apps that launch after the initial bind.
+  - packageNames: intentionally OMITTED — v3.0.2 removed the programmatic
+    guessed-package filter because it silently dropped events from real
+    DiLink/system packages that were not on the list. With no filter set
+    (null), the framework delivers events from ALL packages; relevance is
+    decided per-event in onAccessibilityEvent() and the expensive snapshot
+    scraping stays gated by VEHICLE_DATA_PACKAGES + a 2s throttle.
   - accessibilityEventTypes: includes typeViewTextChanged (for nav search
     field detection) and typeViewScrolled (for recent-calls list).
   - accessibilityFlags: flagIncludeNotImportantViews + flagReportViewIds +
